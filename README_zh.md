@@ -170,11 +170,6 @@ docs/            架构、数据、配置、评估说明
 | [推理与评估](docs/evaluation.md) | 响应字段、confidence 公式、指标和计时口径 |
 | [任务评测](evaluation/README.md) | Sokoban 数据生成、完整游戏评测、策略比较和轨迹回放 |
 
-详细文档目前以中文为主；中英文 README 均包含安装和训练流程。CPU 测试命令（未准备基础模型处理器时，相关测试会跳过）：
-
-```bash
-python -m pytest -q
-```
 
 ## 许可与致谢
 
