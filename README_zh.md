@@ -165,7 +165,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 ### Sokoban：推箱子游戏
 
-四个 `Valen-Sokoban-*` 模型从通用实验的 100k SFT decision head出发，在 Sokoban 数据上以 `vision_top` 模式续训 3 个 epoch。六个模型使用同一批来自 100 关的 500 道单步题；**预测属于任一最优动作即算正确**。
+四个 `Valen-Sokoban-*` 模型从通用实验的 100k SFT decision head出发，在 [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 数据上以 `vision_top` 模式续训 3 个 epoch。六个模型使用同一批来自 100 关的 500 道单步题；**预测属于任一最优动作即算正确**。
 
 <p align="center">
   <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="六个模型在 500 道 Sokoban 单步题上的准确率与平均端到端耗时。" width="1000"></a>
