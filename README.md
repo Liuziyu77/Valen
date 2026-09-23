@@ -170,6 +170,31 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ## Results
 
+### Model Card
+
+Training methods and data for each model:
+
+| Model | Training method | Data | Datasets |
+| --- | --- | --- | --- |
+| Valen-Base-SFT-0.8B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-SFT-2B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-0.8B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-2B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+| Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+
+#### Training Loss
+
+<p align="center">
+  <a href="assets/figures/training/sft100k_loss.png"><img src="assets/figures/training/sft100k_loss.png" alt="Training loss for Valen-Base-SFT-0.8B and 2B on General 100k data." width="1000"></a><br>
+  <sub>General SFT: training loss for the 0.8B and 2B models.</sub>
+</p>
+
+<p align="center">
+  <a href="assets/figures/training/sokoban_rlcd_loss_reward.png"><img src="assets/figures/training/sokoban_rlcd_loss_reward.png" alt="Training loss and mean reward for the 0.8B and 2B Valen-Sokoban-RLCD models." width="1000"></a><br>
+  <sub>Sokoban RLCD: training loss and reward for the 0.8B and 2B models.</sub>
+</p>
+
 ### General image questions
 
 The experiments train on [100k records](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) and test on [5k questions](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k), using Qwen3.5-0.8B and 2B backbones. Each run used eight H200 GPUs and updated only the decision head: SFT used all 100k records, while the two-stage run used 70k for SFT and the remaining 30k for RLCD. The figures label the trained models `Valen-Base-*`; `Qwen3.5-*` are the original generation baselines.
