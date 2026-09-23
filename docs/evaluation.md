@@ -16,7 +16,7 @@ python -m visualjev.inference \
   --output output/predictions/smoke.jsonl
 ```
 
-三个路径参数均必填。`--output` 是文件路径，父目录需事先存在；已有文件会被覆盖。`--device` 默认 `cuda`，可指定如 `cuda:1`。该 CLI 是单进程推理，没有按 rank 分片的逻辑。
+三个路径参数均必填。`--output` 是文件路径，已有文件会被覆盖。`--device` 默认 `cuda`，可指定如 `cuda:1`。该 CLI 是单进程推理，没有按 rank 分片的逻辑。
 
 推理处理全部问题，输入可省略 `targets`；仍需保留 `group_id`。输出行按输入记录顺序排列，不附带 `group_id` 或 `meta`，通过行序和 `answers` 中的问题 ID 对应输入。
 
@@ -61,13 +61,13 @@ uniform_mad = sum(abs(i - (K-1)/2)) / K
 confidence = max(0, 1 - distance / uniform_mad)
 ```
 
-并列最大值取当前候选顺序中的第一个。Score 的 `score` 是期望值，不是众数，也不自动缩放到 0–1。例如 `[0.1, 0.3, 0.6]` 对应 `score=1.5`、`confidence=0.25`。`confidence` 描述分布集中程度，不能直接解释成“有多少概率答对”。
+并列最大值取当前候选顺序中的第一个。Score 的 `score` 是期望值，不是众数，也不自动缩放到 0–1。例如 `[0.1, 0.3, 0.6]` 对应 `score=1.5`、`confidence=0.25`。`confidence` 描述分布集中程度。
 
-### 温度设置
+### Temperature设置
 
-推理支持 `--calibration path/to/calibration.json`，文件格式为 `{"temperature": 1.0}`。温度必须有限且大于 0，对本次推理的所有问题统一使用。仓库没有拟合温度的命令；若自行拟合，应使用独立验证集。
+推理支持 `--calibration path/to/calibration.json`，文件格式为 `{"temperature": 1.0}`。
 
-**评估 CLI 没有 `--calibration` 参数，固定使用温度 1。** 它的结果不能作为带温度校准的推理结果来报告。
+**评估 CLI 没有 `--calibration` 参数，固定使用温度 1。**
 
 ## 评估命令与产物
 
@@ -111,9 +111,9 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 | `rps` | Score，包括软标签 | 前 K−1 个累积分布差的平方平均 |
 | `macro_f1` | Noul 硬标签 | true/false 两类 F1 的算术平均；某类分母为 0 时该类 F1 记为 0 |
 
-汇总按**题目等权平均**。`metric_counts` 给出每项指标的有效题数；软标签不计 accuracy，因此该分母通常不同于 `questions`。Noul 的混淆矩阵与 `macro_f1` 只出现在 `task/noul` 和 `task_modality/noul/*` 分组，不出现在 overall 或单独的语言、领域分组。
+汇总按**题目等权平均**。`metric_counts` 给出每项指标的有效题数；软标签不计 accuracy，因此该分母通常不同于 `questions`。Noul 的混淆矩阵与 `macro_f1` 只出现在 `task/noul` 和 `task_modality/noul/*` 分组。
 
-分组键包括 `overall`、`task/*`、`modality/*`、`task_modality/*/*`、`language/*`、`domain/*`。模态优先读取 `meta.modality`；未提供时只有 `text` 和 `media` 两种分类，不自动区分图片与视频。语言读取 `meta.language_bucket`，领域读取 `meta.domain`，未提供均为 `unknown`，不自动检测。
+分组key包括 `overall`、`task/*`、`modality/*`、`task_modality/*/*`、`language/*`、`domain/*`。模态优先读取 `meta.modality`；未提供时只有 `text` 和 `media` 两种分类，不自动区分图片与视频。
 
 ## 如何读计时
 
@@ -123,4 +123,4 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 - `evaluation_wall_seconds` 取各卡评估循环的最大耗时；`load_and_evaluation_wall_seconds` 还包含初始化和模型加载。
 - `questions_per_second` 为有标签题数除以 `evaluation_wall_seconds`。
 
-延迟的 mean、p50、p95 按逐题记录计算。同一 state 的编译时间会重复计入，所以不能把逐题延迟求和当成整个数据集耗时。训练中的 state 等权损失、评估中的逐题均值和这些耗时应分别报告。
+延迟的 mean、p50、p95 按逐题记录计算。同一 state 的编译时间会重复计入，所以不能把逐题延迟求和当成整个数据集耗时。
