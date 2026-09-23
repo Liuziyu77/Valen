@@ -33,9 +33,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000">
-    <a href="assets/demos/sokoban-model-comparison.mp4">观看视频（MP4）</a>
-  </video><br>
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
   <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
 </p>
 
@@ -265,9 +263,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
 
 <p align="center">
-  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000">
-    <a href="assets/demos/sokoban-four-game-showcase.mp4">观看视频（MP4）</a>
-  </video><br>
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。" width="1000"></a><br>
 </p>
 
 

@@ -32,9 +32,7 @@ Valen brings visual perception to System One decision-making. Inspired by [Jev](
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000">
-    <a href="assets/demos/sokoban-model-comparison.mp4">Watch video (MP4)</a>
-  </video><br>
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Preview-0923 with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
   <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
 </p>
 
@@ -264,9 +262,7 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 Four successful **Valen-Preview-0923** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
 
 <p align="center">
-  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000">
-    <a href="assets/demos/sokoban-four-game-showcase.mp4">Watch video (MP4)</a>
-  </video><br>
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-Preview-0923 games replayed in parallel at recorded speed." width="1000"></a><br>
 </p>
 
 
