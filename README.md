@@ -97,19 +97,19 @@ hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
 # Download the Qwen3.5-2B base model.
 hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
-# Train a decision head on the bundled synthetic examples.
+# Train the model with your own configuration.
 python -m valen.train \
   --config configs/train/sft_warmup.json
 
-# Run inference with the resulting checkpoint.
+# Run inference with the downloaded Valen-Preview-0923 checkpoint.
 python -m valen.inference \
-  --checkpoint output/sft_warmup/latest \
+  --checkpoint models/Valen-Preview-0923 \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # Check the evaluation pipeline on the same synthetic examples.
 python -m valen.evaluate \
-  --checkpoint output/sft_warmup/latest \
+  --checkpoint models/Valen-Preview-0923 \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
 ```

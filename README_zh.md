@@ -97,19 +97,19 @@ hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
 # 下载 Qwen3.5-2B Base 模型。
 hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
-# 用随仓库提供的合成样本训练决策头。
+# 使用自己的配置训练模型。
 python -m valen.train \
   --config configs/train/sft_warmup.json
 
-# 加载训练得到的 checkpoint 进行推理。
+# 加载下载好的 Valen-Preview-0923 进行推理。
 python -m valen.inference \
-  --checkpoint output/sft_warmup/latest \
+  --checkpoint models/Valen-Preview-0923 \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # 用同一组合成样本检查评估流程。
 python -m valen.evaluate \
-  --checkpoint output/sft_warmup/latest \
+  --checkpoint models/Valen-Preview-0923 \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
 ```
