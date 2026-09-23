@@ -1,11 +1,10 @@
 <p align="center">
-  <img src="assets/branding/valen-logo.png" alt="Valen — 融合王冠与速度流线的红色 V 标志" width="720">
+  <img src="assets/branding/valen-logo-v2.png" alt="Valen — 灰蓝色 V 形速度流线与灰玫瑰色王冠标志" width="720">
 </p>
 
-<h1 align="center">Valen · 万澜</h1>
+<h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
-  <strong>System One Model, now with vision.</strong><br>
   A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
 </p>
 
@@ -23,12 +22,30 @@
 
 <p align="center">
   <a href="README.md">English</a> · <b>简体中文</b><br>
-  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#演示">演示</a> · <a href="#文档">文档</a>
+  <a href="#环境要求">🛠️ 环境要求</a> · <a href="#快速开始">🚀 快速开始</a> · <a href="#训练">🧠 训练</a> · <a href="#实验结果">📊 实验结果</a> · <a href="#demo-comparison">🎬 演示</a> · <a href="#文档">📚 文档</a>
 </p>
+
+Valen 的名字来自生物学家 Leigh Van Valen 提出的“红皇后假说”：环境不断变化，想留在原地也得不停进化————AI时代，智能也要持续适应新的任务和环境。
+Valen：奔跑才能留在原地，进化才能向前。
 
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
 
-## 输出类型
+<a id="demo-comparison"></a>
+
+<p align="center">
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
+  <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
+</p>
+
+<p align="center">
+  <video src="assets/demos/observation.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/observation.mp4">观看视频（MP4）</a>
+  </video>
+</p>
+
+<a id="输出类型"></a>
+
+## 🎯 输出类型
 
 | 类型 | 用途 | 返回内容 |
 | --- | --- | --- |
@@ -44,9 +61,11 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级单独执行backbone forward pass，再将 logits 一起归一化。公共 state 只编码一次，但在backbone的每个分支中重复计算。详见[架构说明](docs/architecture.md)和[响应字段与公式](docs/evaluation.md)。
 
-## 环境要求
+<a id="环境要求"></a>
 
-- Linux、Python 3.10+，以及支持 BF16 的 NVIDIA GPU 和兼容 CUDA 12.4 的驱动。
+## 🛠️ 环境要求
+
+- Linux、Python 3.10+，NVIDIA GPU。
 - PyTorch 2.6.0、torchvision 0.21.0、Transformers 5.4.0、PEFT 0.18.1。
 - 完整依赖见 [pyproject.toml](pyproject.toml)，安装脚本会自动安装。
 
@@ -59,13 +78,15 @@ source .venv/bin/activate
 
 已有 Conda 或 virtualenv 环境时，参见[手动安装说明](scripts/README.md#installation)。安装脚本创建 `.venv`，模型权重需要另行下载。
 
-## 快速开始
+<a id="快速开始"></a>
 
-先按[环境要求](#环境要求)安装依赖，并保持该环境处于激活状态。Python 依赖安装完成后，还需单独下载模型权重。
+## 🚀 快速开始
+
+先按[环境要求](#环境要求)安装依赖。依赖安装完成后，需下载模型权重。
 
 ```bash
-# 下载并核验固定版本的 Qwen3.5-0.8B。
-python scripts/setup/prepare_model.py
+# 下载 Qwen3.5-2B Base 模型。
+hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # 用随仓库提供的合成样本训练决策头。
 python -m valen.train \
@@ -84,9 +105,7 @@ python -m valen.evaluate \
   --output output/sft_warmup/smoke_eval
 ```
 
-合成集有 6 条记录、15 道题，其中 13 道有标签。推理生成 6 行响应；评估生成 13 行逐题预测和 `metrics.json`。这些样本用于检查流程。
-
-命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件所在目录。
+`data/smoke` 有少量简单题目，仅仅用于测试功能是否正常运行。
 
 <details>
 <summary>一条带图片输入的标注记录</summary>
@@ -125,9 +144,11 @@ JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](as
 ```
 </details>
 
-## 训练
+<a id="训练"></a>
 
-`method` 决定训练目标，`stage` 决定更新哪些参数。可选四种 stage 配置。
+## 🧠 训练
+
+当前 Valen 支持 `SFT` 和 `RLCD` 两种训练 `method`，`stage` 决定更新哪些参数，当前支持四种 stage 配置。
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="先用 SFT 训练，可选择从其 checkpoint 初始化 RLCD，再用独立测试集评估。" width="1000">
@@ -148,7 +169,7 @@ SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都�
 # 单机八卡；每次独立实验使用新的输出目录。
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/sft_warmup.json
 
-# RLCD 从已有决策头 checkpoint 初始化。
+# RLCD 从已的 SFT 的决策头的 checkpoint 上初始化。
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
@@ -157,18 +178,36 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
 
 checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
 
-## 实验结果
+<a id="实验结果"></a>
 
-### Model Card：初步消融对比
+## 📊 实验结果
 
-| 模型 | 每步均值 ms | P50 ms | P95 ms | 平均每局 s | 无效动作率 | 实际模型调用 |
-|---|---:|---:|---:|---:|---:|---:|
-| Valen-Base-SFT-0.8B | 123.77 | 121.85 | 128.96 | 22.43 | 77.05% | 36195 |
-| Valen-Base-SFT-2B | 126.80 | 125.13 | 131.00 | 22.61 | 78.62% | 35614 |
-| Valen-Base-RLCD-0.8B | 122.02 | 120.81 | 127.18 | 21.18 | 75.79% | 34669 |
-| Valen-Base-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
-| Valen-Sokoban-SFT-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
-| Valen-Sokoban-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
+### Model Card
+
+我们对模型的训练方法，训练数据进行了消融实验：
+
+| 模型 | 训练方法 | 数据 | 数据集 |
+| --- | --- | --- | --- |
+| Valen-Base-SFT-0.8B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-SFT-2B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-0.8B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-2B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)&nbsp;[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+| Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)&nbsp;[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+
+Sokoban 的训练集和评测集均包含在 [Valen-Eval-Game](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 中，训练与评测分别使用对应划分。
+
+#### Training Loss
+
+<p align="center">
+  <a href="assets/figures/training/sft100k_loss.png"><img src="assets/figures/training/sft100k_loss.png" alt="Valen-Base-SFT-0.8B 和 2B 在 General 100k 数据上的训练损失曲线。" width="1000"></a><br>
+  <sub>General SFT：0.8B 与 2B 的训练 loss。</sub>
+</p>
+
+<p align="center">
+  <a href="assets/figures/training/sokoban_rlcd_loss_reward.png"><img src="assets/figures/training/sokoban_rlcd_loss_reward.png" alt="Valen-Sokoban-RLCD 的 0.8B 和 2B 模型在训练过程中的 loss 与平均 reward。" width="1000"></a><br>
+  <sub>Sokoban RLCD：0.8B 与 2B 的训练 loss 和 reward。</sub>
+</p>
 
 ### General：通用VQA
 
@@ -215,7 +254,9 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="100 局 Sokoban 完整游戏的通关数量，以及各模型成功局的实测通关时间分布。" width="1000"></a>
 </p>
 
-## 演示
+<a id="演示"></a>
+
+## 🎬 演示
 
 ### 图像模糊与动作置信度
 
@@ -228,26 +269,18 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
   <sub>点击动画打开 MP4。曲线上的每个点对应一次模型推理，采样点之间的数值为播放插值。</sub>
 </p>
 
-### Valen 与 27B 生成模型对比
-
-三个模型在相同关卡、相同 10 步上限下运行。**Valen-Sokoban-SFT-RLCD-2B** 用 9 次决策通关，记录的单步延迟之和为 1.13 秒（平均 125 毫秒/步）。Qwen3.8-27B-FP8 在 no-thinking 模式下达到步数上限但未通关；thinking 模式成功通关，耗时 198.05 秒。为了控制演示时长，仅 thinking 轨迹以 20× 加速播放，Valen 和 no-thinking 均保持 1×。
-
-<p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Sokoban-SFT-RLCD-2B 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
-  <sub>点击动画打开 MP4。画面中的延迟是评测器记录的各步端到端决策延迟之和。</sub>
-</p>
-
 ### 四局并行能力展示
 
-四条成功的 **Valen-Sokoban-SFT-RLCD-2B** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒；在并行回放时间轴上，四局均于 1.24 秒内完成。
+四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Sokoban-SFT-RLCD-2B 成功轨迹以记录速度并行播放。" width="1000"></a><br>
-  <sub>点击动画打开 MP4。每次模型决策完成时，画面按记录的真实延迟推进。</sub>
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。" width="1000"></a><br>
 </p>
 
 
-## 仓库结构
+<a id="仓库结构"></a>
+
+## 📁 仓库结构
 
 ```text
 valen/
@@ -263,9 +296,9 @@ tests/           CPU 测试，包含双进程训练与恢复检查
 docs/            架构、数据、配置、评估说明
 ```
 
-顶层 `valen/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](valen/README.md)列出了实现入口和对应测试。
+<a id="文档"></a>
 
-## 文档
+## 📚 文档
 
 | 文档 | 内容 |
 | --- | --- |
@@ -280,8 +313,12 @@ docs/            架构、数据、配置、评估说明
 | [任务评测](evaluation/README.md) | Sokoban 数据生成、完整游戏评测、策略比较和轨迹回放 |
 
 
-## 许可与致谢
+<a id="许可与致谢"></a>
+
+## 🤝 许可与致谢
 
 代码使用 [Apache 2.0](LICENSE) 许可。基础模型和来源数据集遵循各自的许可。
 
 模型基于 [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B)，决策接口受 [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发。
+
+欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。

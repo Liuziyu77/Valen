@@ -31,7 +31,7 @@ def test_pre_audited_media_skips_hash_io_but_keeps_same_inputs(compiler, monkeyp
 @pytest.fixture(scope="module")
 def compiler():
     from transformers import AutoProcessor
-    path = Path("models/Qwen3.5-0.8B")
+    path = Path("models/Qwen3.5-2B")
     if not (path / "tokenizer.json").exists():
         pytest.skip("Prepare the official processor first")
     return Compiler(AutoProcessor.from_pretrained(path, local_files_only=True), "data/smoke", 8192)
@@ -95,7 +95,7 @@ def test_multimodal_expansion(compiler):
 def test_video_rope_matches_expanded_sequence(compiler):
     # Regression: Transformers 5.3.0 exhausted the video-grid iterator on frame 2.
     from transformers import AutoConfig, Qwen3_5Model
-    config = AutoConfig.from_pretrained("models/Qwen3.5-0.8B", local_files_only=True)
+    config = AutoConfig.from_pretrained("models/Qwen3.5-2B", local_files_only=True)
     with torch.device("meta"):
         backbone = Qwen3_5Model(config)
     record = next(r for r in read_jsonl("data/smoke/train.jsonl") if r["group_id"] == "synthetic-video")
