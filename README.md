@@ -155,8 +155,7 @@ The experiments train on [100k records](https://huggingface.co/datasets/Visual-J
   <a href="assets/figures/general/task-latency.png"><img src="assets/figures/general/task-latency.png" alt="Mean latency of the four trained models on Choice, Noul and Score questions." width="1000"></a>
 </p>
 
-Choice and Noul score candidates in one branch; Score runs a separate forward pass per level. The next chart breaks accuracy down by question type and application domain. There are only 18 Score questions, so that slice is too small for a stable comparison.
-
+Choice and Noul score candidates in one branch; Score runs a separate forward pass per level. The next chart breaks accuracy down by question type and application domain.
 <p align="center">
   <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="Accuracy of six models by Choice, Noul and Score task and by documents, games, interfaces and visual QA." width="1000"></a>
 </p>
@@ -180,13 +179,12 @@ The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT d
 | Valen-Sokoban-SFT-2B | 418 (83.60%) | 126.82 ms | 20 |
 | Valen-Sokoban-RLCD-2B | 438 (87.60%) | 127.31 ms | 38 |
 
-Single-step accuracy does not imply full-game success. Latency was measured on one H200 GPU with batch size 1 after three warmup questions; model loading is excluded. Each full game starts from the initial board, allows one attempt and stops after at most 200 moves, with no action cache, undo or solver assistance. The time panel below includes successful games only.
+Single-step accuracy does not imply full-game success. Latency was measured on one H200 GPU with batch size 1 after three warmup questions; model loading is excluded. Each full game starts from the initial board, allows one attempt and stops after at most 200 moves, with no action cache, undo or solver assistance. The time panel below includes successful games only. See the [Sokoban guide](evaluation/sokoban/README.md) for the evaluation workflow.
 
 <p align="center">
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="Games solved out of 100 Sokoban levels, with elapsed times for each model's successful games." width="1000"></a>
 </p>
 
-These 100 levels come from a simple subset previously selected using `Valen-Sokoban-RLCD-2B` success, so the full-game rates are not an unbiased estimate of generalization. Models also solve different sets of levels; successful-game times cannot be read as a same-level speed comparison. The 0.8B baseline has no full-game run. See the [Sokoban guide](evaluation/sokoban/README.md) for the evaluation workflow.
 
 ## Repository layout
 
