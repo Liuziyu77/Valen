@@ -23,10 +23,17 @@
 
 <p align="center">
   <a href="README.md">English</a> · <b>简体中文</b><br>
-  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#演示">演示</a> · <a href="#文档">文档</a>
+  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#demo-comparison">演示</a> · <a href="#文档">文档</a>
 </p>
 
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
+
+<a id="demo-comparison"></a>
+
+<p align="center">
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Sokoban-SFT-RLCD-2B 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
+  <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
+</p>
 
 ## 输出类型
 
@@ -46,7 +53,7 @@ Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级�
 
 ## 环境要求
 
-- Linux、Python 3.10+，以及支持 BF16 的 NVIDIA GPU 和兼容 CUDA 12.4 的驱动。
+- Linux、Python 3.10+，NVIDIA GPU。
 - PyTorch 2.6.0、torchvision 0.21.0、Transformers 5.4.0、PEFT 0.18.1。
 - 完整依赖见 [pyproject.toml](pyproject.toml)，安装脚本会自动安装。
 
@@ -61,11 +68,11 @@ source .venv/bin/activate
 
 ## 快速开始
 
-先按[环境要求](#环境要求)安装依赖，并保持该环境处于激活状态。Python 依赖安装完成后，还需单独下载模型权重。
+先按[环境要求](#环境要求)安装依赖。依赖安装完成后，需下载模型权重。
 
 ```bash
-# 下载并核验固定版本的 Qwen3.5-0.8B。
-python scripts/setup/prepare_model.py
+# 下载 Qwen3.5-2B Base 模型。
+hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # 用随仓库提供的合成样本训练决策头。
 python -m valen.train \
@@ -84,9 +91,7 @@ python -m valen.evaluate \
   --output output/sft_warmup/smoke_eval
 ```
 
-合成集有 6 条记录、15 道题，其中 13 道有标签。推理生成 6 行响应；评估生成 13 行逐题预测和 `metrics.json`。这些样本用于检查流程。
-
-命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件所在目录。
+`data/smoke` 有少量简单题目，仅仅用于测试功能是否正常运行。
 
 <details>
 <summary>一条带图片输入的标注记录</summary>
@@ -216,15 +221,6 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 </p>
 
 ## 演示
-
-### Valen 与 27B 生成模型对比
-
-三个模型在相同关卡、相同 10 步上限下运行。**Valen-Sokoban-SFT-RLCD-2B** 用 9 次决策通关，记录的单步延迟之和为 1.13 秒（平均 125 毫秒/步）。Qwen3.8-27B-FP8 在 no-thinking 模式下达到步数上限但未通关；thinking 模式成功通关，耗时 198.05 秒。为了控制演示时长，仅 thinking 轨迹以 20× 加速播放，Valen 和 no-thinking 均保持 1×。
-
-<p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Sokoban-SFT-RLCD-2B 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
-  <sub>点击动画打开 MP4。画面中的延迟是评测器记录的各步端到端决策延迟之和。</sub>
-</p>
 
 ### 四局并行能力展示
 

@@ -23,10 +23,18 @@
 
 <p align="center">
   <b>English</b> · <a href="README_zh.md">简体中文</a><br>
-  <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#demos">Demos</a> · <a href="#documentation">Documentation</a>
+  <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#demo-comparison">Demos</a> · <a href="#documentation">Documentation</a>
 </p>
 
 Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
+
+<a id="demo-comparison"></a>
+
+<p align="center">
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
+  <sub><strong>On this level, Valen-Sokoban-SFT-RLCD-2B solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
+  <sub>Click the animation to open the MP4. Times sum the recorded end-to-end decision latencies. Thinking plays at 20×; the other tracks play at 1×. All modes use a 10-step limit.</sub>
+</p>
 
 ## What it returns
 
@@ -61,11 +69,14 @@ For an existing Conda or virtualenv environment, see [manual installation](scrip
 
 ## Quick start
 
-Install the [requirements](#requirements) and keep that environment activated. Model weights are downloaded separately from the Python packages.
+Install the [requirements](#requirements), then download both models below. They are loaded together at runtime:
+
+- [Valen-Preview-0923](https://huggingface.co/Valen-Team/Valen-Preview-0923): the Valen checkpoint.
+- [Qwen3.5-2B](https://huggingface.co/Qwen/Qwen3.5-2B): the required base model.
 
 ```bash
-# Download and verify the pinned Qwen3.5-0.8B snapshot.
-python scripts/setup/prepare_model.py
+# Download the Qwen3.5-2B base model.
+hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # Train a decision head on the bundled synthetic examples.
 python -m valen.train \
@@ -195,15 +206,6 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 </p>
 
 ## Demos
-
-### Valen vs. a 27B generation model
-
-The same Sokoban level is played with the same 10-step cap. **Valen-Sokoban-SFT-RLCD-2B** solves it in 9 decisions with 1.13 seconds of recorded step latency (125 ms/step). Qwen3.8-27B-FP8 without thinking reaches the step limit; with thinking it solves the level in 198.05 seconds. To keep the comparison watchable, only the thinking track is played at 20× speed; Valen and no-thinking remain at 1×.
-
-<p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
-  <sub>Click the animation to open the MP4. Displayed latency is the sum of recorded end-to-end evaluator latency for each completed decision.</sub>
-</p>
 
 ### Four games in parallel
 
