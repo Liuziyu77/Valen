@@ -4,7 +4,7 @@
 
 <h1 align="center">Visual-Jev</h1>
 
-<p align="center">根据文本、图片和视频，对给定候选评分。</p>
+<p align="center">根据text，image或video，对给定的candidates评分。</p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-0F766E?style=flat-square" alt="许可证：Apache 2.0"></a>
@@ -18,8 +18,6 @@
 </p>
 
 Visual-Jev 可以根据文本、图片或视频，对提供的候选评分。模型由 Qwen3.5 backbone和共享decision head组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。现有配置使用 Qwen3.5-0.8B/2B 进行训练。
-
-本项目受 [Jev 和 System One 模型](https://typesafe.ai/blog/introducing-system-one-models-and-jev)启发。
 
 ## 输出类型
 
