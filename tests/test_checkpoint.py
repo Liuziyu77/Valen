@@ -2,8 +2,8 @@ import json
 import random
 import torch
 import pytest
-from visualjev.training.checkpoint import save_checkpoint, load_checkpoint
-from visualjev.modeling.manifest import read_base_manifest
+from valen.training.checkpoint import save_checkpoint, load_checkpoint
+from valen.modeling.manifest import read_base_manifest
 
 
 def test_checkpoint_restores_optimizer_rng_and_frozen_parameters_stay_untouched(tmp_path):

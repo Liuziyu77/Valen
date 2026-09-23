@@ -3,10 +3,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visualjev.training.rlcd import (
+from valen.training.rlcd import (
     RLCDObjective, clipped_policy_loss, decision_reward, group_advantages, validate_options,
 )
-from visualjev.training.runner import run
+from valen.training.runner import run
 
 
 def test_reward_penalizes_confident_errors_and_rewards_confident_correct_answers():

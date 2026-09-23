@@ -1,4 +1,4 @@
-# Visual-Jev 合成训练测试数据
+# Valen 合成训练测试数据
 
 由 `scripts/data/make_smoke_data.py` 生成，素材与规则均为本项目合成内容。
 

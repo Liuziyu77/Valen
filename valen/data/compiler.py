@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import hashlib
 import torch
-from visualjev.data.schema import candidates, target_distribution
+from valen.data.schema import candidates, target_distribution
 
 
 @dataclass

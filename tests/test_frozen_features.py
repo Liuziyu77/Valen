@@ -4,8 +4,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visualjev.modeling.model import VisualJev
-from visualjev.training.rlcd import RLCDObjective
+from valen.modeling.model import Valen
+from valen.training.rlcd import RLCDObjective
 
 
 class Backbone(torch.nn.Module):
@@ -23,7 +23,7 @@ class Backbone(torch.nn.Module):
 @pytest.mark.parametrize("branches", [1, 3])
 def test_cached_rollout_matches_full_forward_losses_gradients_and_updates(branches):
     torch.manual_seed(8)
-    a = VisualJev(Backbone(), projection_dim=4)
+    a = Valen(Backbone(), projection_dim=4)
     a.backbone.requires_grad_(False)
     b = deepcopy(a)
     q = SimpleNamespace(qid="q", target=[1.] + [0.] * (2 * branches - 1),
@@ -62,4 +62,4 @@ def test_cached_rollout_matches_full_forward_losses_gradients_and_updates(branch
 
 def test_cache_rejects_trainable_backbone():
     with pytest.raises(ValueError, match="fully frozen"):
-        RLCDObjective(VisualJev(Backbone(), 4), {}, cache_frozen_features=True)
+        RLCDObjective(Valen(Backbone(), 4), {}, cache_frozen_features=True)

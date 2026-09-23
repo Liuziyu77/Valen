@@ -8,7 +8,7 @@
 | --- | --- |
 | `env.py`、`render.py` | 确定性规则、符号状态和截图渲染 |
 | `solver.py`、`generator.py` | 精确搜索、最优动作集合及关卡生成 |
-| `dataset.py`、`build_dataset.py` | Visual-Jev 记录格式及训练/测试数据生成 |
+| `dataset.py`、`build_dataset.py` | Valen 记录格式及训练/测试数据生成 |
 | `validate_dataset.py` | 标签、轨迹、媒体哈希与跨划分去重校验 |
 | `evaluate.py` | 完整游戏评测和四种策略适配器 |
 | `compare.py` | 完整分片合并、两组策略结果的配对比较 |
@@ -45,8 +45,8 @@ python -m evaluation.sokoban.evaluate \
 
 # 替换为需要评测的已训练 checkpoint。
 python -m evaluation.sokoban.evaluate \
-  --policy visualjev --checkpoint output/sft_warmup/latest \
-  --output evaluation/sokoban/results/visualjev
+  --policy valen --checkpoint output/sft_warmup/latest \
+  --output evaluation/sokoban/results/valen
 
 # 使用与决策头相同的基础模型及图片预处理配置。
 python -m evaluation.sokoban.evaluate \
@@ -57,7 +57,7 @@ python -m evaluation.sokoban.evaluate \
 
 每次运行使用新的输出目录。自定义数据路径用 `--eval-dir` 指定。
 
-每关从初态开始，默认生成的关卡最多执行 200 步。每局一次尝试，不自动重开、纠错或屏蔽非法动作。Visual-Jev 选择概率最大的动作；Qwen 使用Non-thinking 生成，要求输出一个方向词。格式错误或推理异常计为该局失败。
+每关从初态开始，默认生成的关卡最多执行 200 步。每局一次尝试，不自动重开、纠错或屏蔽非法动作。Valen 选择概率最大的动作；Qwen 使用Non-thinking 生成，要求输出一个方向词。格式错误或推理异常计为该局失败。
 
 `--limit` 仅用于接口短测，结果标记为 `smoke_subset`，不能作为完整评估合并。`--wall-timeout` 默认 1,200 秒，在模型调用之间及动作执行前检查。
 
@@ -79,7 +79,7 @@ python -m evaluation.sokoban.compare merge \
   --directory evaluation/sokoban/results/oracle_sharded
 
 python -m evaluation.sokoban.compare compare \
-  --first evaluation/sokoban/results/visualjev \
+  --first evaluation/sokoban/results/valen \
   --second evaluation/sokoban/results/qwen \
   --output evaluation/sokoban/results/comparison
 ```

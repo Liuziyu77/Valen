@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/branding/visual-jev-banner.png" alt="Visual-Jev" width="720">
+  <img src="assets/branding/valen-banner.svg" alt="Valen" width="720">
 </p>
 
-<h1 align="center">Visual-Jev</h1>
+<h1 align="center">Valen</h1>
 
 <p align="center">输入text，image或video，对给定的candidates评分。</p>
 
@@ -17,7 +17,7 @@
   <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#文档">文档</a>
 </p>
 
-Visual-Jev 可以根据文本、图片或视频，对提供的候选评分。模型由 Qwen3.5 backbone和共享decision head组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。现有配置使用 Qwen3.5-0.8B/2B 进行训练。
+Valen 可以根据文本、图片或视频，对提供的候选评分。模型由 Qwen3.5 backbone和共享decision head组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。现有配置使用 Qwen3.5-0.8B/2B 进行训练。
 
 ## 输出类型
 
@@ -30,7 +30,7 @@ Visual-Jev 可以根据文本、图片或视频，对提供的候选评分。模
 候选随问题传入，不同任务和候选数量共用决策头。`confidence` 描述分布集中度。
 
 <p align="center">
-  <img src="assets/figures/readme-architecture.png" alt="Visual-Jev 架构：多模态输入和候选经过 Qwen3.5 骨干、额外的共享决策头和 softmax，得到 Choice、Noul 或 Score 输出。" width="1000">
+  <img src="assets/figures/readme-architecture.png" alt="Valen 架构：多模态输入和候选经过 Qwen3.5 骨干、额外的共享决策头和 softmax，得到 Choice、Noul 或 Score 输出。" width="1000">
 </p>
 
 Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级单独执行backbone forward pass，再将 logits 一起归一化。公共 state 只编码一次，但在backbone的每个分支中重复计算。详见[架构说明](docs/architecture.md)和[响应字段与公式](docs/evaluation.md)。
@@ -42,8 +42,8 @@ Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级�
 - 完整依赖见 [pyproject.toml](pyproject.toml)，安装脚本会自动安装。
 
 ```bash
-git clone https://github.com/Liuziyu77/Visual-Jev.git Visual-Jev
-cd Visual-Jev
+git clone https://github.com/Liuziyu77/Valen.git Valen
+cd Valen
 bash scripts/setup/bootstrap.sh
 source .venv/bin/activate
 ```
@@ -59,17 +59,17 @@ source .venv/bin/activate
 python scripts/setup/prepare_model.py
 
 # 用随仓库提供的合成样本训练决策头。
-python -m visualjev.train \
+python -m valen.train \
   --config configs/train/sft_warmup.json
 
 # 加载训练得到的 checkpoint 进行推理。
-python -m visualjev.inference \
+python -m valen.inference \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # 用同一组合成样本检查评估流程。
-python -m visualjev.evaluate \
+python -m valen.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
@@ -135,7 +135,7 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](visualjev/training/README.md)。
+目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](valen/training/README.md)。
 
 checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
 
@@ -143,7 +143,7 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ### General：通用VQA
 
-[100k 训练集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k)、[5k 测试集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)，底座为 Qwen3.5-0.8B 和 2B。每次训练使用八张 H200，仅更新决策头：SFT 使用全部 100k 数据；两阶段方案先用 70k 做 SFT，再用剩余 30k 做 RLCD。图中的 `Valen-Base-*` 是训练后的决策模型，`Qwen3.5-*` 是原始生成基线。
+[100k 训练集](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)、[5k 测试集](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k)，底座为 Qwen3.5-0.8B 和 2B。每次训练使用八张 H200，仅更新决策头：SFT 使用全部 100k 数据；两阶段方案先用 70k 做 SFT，再用剩余 30k 做 RLCD。图中的 `Valen-Base-*` 是训练后的决策模型，`Qwen3.5-*` 是原始生成基线。
 
 <p align="center">
   <a href="assets/figures/general/overview.png"><img src="assets/figures/general/overview.png" alt="六个模型在 5,000 道通用题上的准确率与单题平均端到端耗时。" width="1000"></a>
@@ -190,7 +190,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 ## 仓库结构
 
 ```text
-visualjev/
+valen/
   data/          记录校验、媒体读取、候选编译
   modeling/      Qwen3.5 backbone、decision head、可训练参数组
   training/      SFT/RLCD 目标、共用循环、梯度同步、checkpoint
@@ -203,7 +203,7 @@ tests/           CPU 测试，包含双进程训练与恢复检查
 docs/            架构、数据、配置、评估说明
 ```
 
-顶层 `visualjev/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](visualjev/README.md)列出了实现入口和对应测试。
+顶层 `valen/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](valen/README.md)列出了实现入口和对应测试。
 
 ## 文档
 
@@ -211,9 +211,9 @@ docs/            架构、数据、配置、评估说明
 | --- | --- |
 | [架构说明](docs/architecture.md) | 编译流程、候选评分、分支开销、梯度同步 |
 | [配置参考](docs/configuration.md) | 默认值、token 预算、优化器和 RLCD 参数 |
-| [训练说明](visualjev/training/README.md) | SFT/RLCD 目标、多卡训练、断点恢复 |
+| [训练说明](valen/training/README.md) | SFT/RLCD 目标、多卡训练、断点恢复 |
 | [脚本说明](scripts/README.md) | 环境、训练、评估和数据工具 |
-| [代码目录](visualjev/README.md) | 数据、模型、训练和评估模块 |
+| [代码目录](valen/README.md) | 数据、模型、训练和评估模块 |
 | [数据格式](docs/data-format.md) | 完整样例、标签、本地媒体和数据划分 |
 | [推理与评估](docs/evaluation.md) | 响应字段、confidence 公式、指标和计时口径 |
 | [实验结果](docs/experiments/eval3.md) | 100k 训练对照、完整分数和统一测速条件 |

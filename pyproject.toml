@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visualjev"
+name = "valen"
 version = "0.1.0"
-description = "Visual-Jev: multimodal decisions with Qwen3.5, SFT and experimental RLCD"
+description = "Valen: multimodal decisions with Qwen3.5, SFT and experimental RLCD"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
@@ -15,11 +15,11 @@ dependencies = ["torch==2.6.0", "torchvision==0.21.0", "transformers==5.4.0", "p
 test = ["pytest==8.4.2"]
 
 [project.urls]
-Repository = "https://github.com/Liuziyu77/Visual-Jev"
-Issues = "https://github.com/Liuziyu77/Visual-Jev/issues"
+Repository = "https://github.com/Liuziyu77/Valen"
+Issues = "https://github.com/Liuziyu77/Valen/issues"
 
 [tool.setuptools.packages.find]
-include = ["visualjev*", "evaluation*"]
+include = ["valen*", "evaluation*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

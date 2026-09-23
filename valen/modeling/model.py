@@ -1,8 +1,8 @@
 import math
 import torch
 from torch import nn
-from visualjev import MODEL_NAME
-from visualjev.modeling.manifest import read_base_manifest
+from valen import MODEL_NAME
+from valen.modeling.manifest import read_base_manifest
 
 
 class DecisionHead(nn.Module):
@@ -19,7 +19,7 @@ class DecisionHead(nn.Module):
         return (c * d).sum(-1) / self.scale
 
 
-class VisualJev(nn.Module):
+class Valen(nn.Module):
     model_name = MODEL_NAME
 
     def __init__(self, backbone, projection_dim=256):
@@ -85,7 +85,7 @@ def build_model(config):
             block.requires_grad_(True)
     if config.get("gradient_checkpointing", True) and stage != "warmup":
         backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-    model = VisualJev(backbone, config.get("projection_dim", 256))
+    model = Valen(backbone, config.get("projection_dim", 256))
     model.base_manifest = read_base_manifest(config["model_path"])
     model.to(config.get("device", "cuda"))
     model.lora_targets = targets

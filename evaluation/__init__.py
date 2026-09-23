@@ -1,1 +1,1 @@
-"""Task environments and end-to-end evaluation tools for Visual-Jev."""
+"""Task environments and end-to-end evaluation tools for Valen."""

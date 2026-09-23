@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/branding/visual-jev-banner.png" alt="Visual-Jev" width="720">
+  <img src="assets/branding/valen-banner.svg" alt="Valen" width="720">
 </p>
 
-<h1 align="center">Visual-Jev</h1>
+<h1 align="center">Valen</h1>
 
 <p align="center">Candidate scoring for text, images and video.</p>
 
@@ -17,7 +17,7 @@
   <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#documentation">Documentation</a>
 </p>
 
-Visual-Jev scores candidates based on text, images or video. It combines a Qwen3.5-0.8B or 2B backbone with a shared decision head to return probabilities without generating answer tokens. The repository includes the model, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands.
+Valen scores candidates based on text, images or video. It combines a Qwen3.5-0.8B or 2B backbone with a shared decision head to return probabilities without generating answer tokens. The repository includes the model, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands.
 
 ## What it returns
 
@@ -30,7 +30,7 @@ Visual-Jev scores candidates based on text, images or video. It combines a Qwen3
 Candidates are supplied with each question. Tasks with different candidate counts share the same decision head. `confidence` measures how concentrated the distribution is.
 
 <p align="center">
-  <img src="assets/figures/readme-architecture.png" alt="Visual-Jev architecture: multimodal input and candidates pass through Qwen3.5, an added shared decision head and softmax to produce Choice, Noul or Score outputs." width="1000">
+  <img src="assets/figures/readme-architecture.png" alt="Valen architecture: multimodal input and candidates pass through Qwen3.5, an added shared decision head and softmax to produce Choice, Noul or Score outputs." width="1000">
 </p>
 
 Choice and Noul score all candidates in one branch per question. Score runs a separate backbone forward pass for each level, then normalizes the logits together. The shared state is encoded once by the input compiler and processed by the backbone in each branch. See the [architecture](docs/architecture.md) and [response fields and formulas](docs/evaluation.md).
@@ -42,8 +42,8 @@ Choice and Noul score all candidates in one branch per question. Score runs a se
 - All dependencies are declared in [pyproject.toml](pyproject.toml) and installed by the setup script.
 
 ```bash
-git clone https://github.com/Liuziyu77/Visual-Jev.git Visual-Jev
-cd Visual-Jev
+git clone https://github.com/Liuziyu77/Valen.git Valen
+cd Valen
 bash scripts/setup/bootstrap.sh
 source .venv/bin/activate
 ```
@@ -59,17 +59,17 @@ Install the [requirements](#requirements) and keep that environment activated. M
 python scripts/setup/prepare_model.py
 
 # Train a decision head on the bundled synthetic examples.
-python -m visualjev.train \
+python -m valen.train \
   --config configs/train/sft_warmup.json
 
 # Run inference with the resulting checkpoint.
-python -m visualjev.inference \
+python -m valen.inference \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # Check the evaluation pipeline on the same synthetic examples.
-python -m visualjev.evaluate \
+python -m valen.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
@@ -135,7 +135,7 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-SFT trains on supervised labels. RLCD uses a GRPO-style objective with rewards based on correctness and confidence error, a KL penalty against a fixed reference policy, and an optional Brier loss. Equations, initialization and resume commands are in the [training guide](visualjev/training/README.md).
+SFT trains on supervised labels. RLCD uses a GRPO-style objective with rewards based on correctness and confidence error, a KL penalty against a fixed reference policy, and an optional Brier loss. Equations, initialization and resume commands are in the [training guide](valen/training/README.md).
 
 Checkpoints store trainable parameter values and training state under `<output>/latest/`; the frozen base model is loaded separately. Each save overwrites `latest/`. `--initialize` starts a new experiment from existing weights; `--resume` restores the optimizer, data cursor and per-rank state and requires the same process count. `launch_sft.sh` supports both SFT and RLCD; use `VJ_PYTHON` to select an interpreter.
 
@@ -143,7 +143,7 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ### General image questions
 
-The experiments train on [100k records](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) and test on [5k questions](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k), using Qwen3.5-0.8B and 2B backbones. Each run used eight H200 GPUs and updated only the decision head: SFT used all 100k records, while the two-stage run used 70k for SFT and the remaining 30k for RLCD. The figures label the trained models `Valen-Base-*`; `Qwen3.5-*` are the original generation baselines.
+The experiments train on [100k records](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) and test on [5k questions](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k), using Qwen3.5-0.8B and 2B backbones. Each run used eight H200 GPUs and updated only the decision head: SFT used all 100k records, while the two-stage run used 70k for SFT and the remaining 30k for RLCD. The figures label the trained models `Valen-Base-*`; `Qwen3.5-*` are the original generation baselines.
 
 <p align="center">
   <a href="assets/figures/general/overview.png"><img src="assets/figures/general/overview.png" alt="Accuracy and mean end-to-end latency for six models on 5,000 general image questions." width="1000"></a>
@@ -189,7 +189,7 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 ## Repository layout
 
 ```text
-visualjev/
+valen/
   data/          Record validation, media loading and candidate compilation
   modeling/      Qwen3.5 backbone, decision head and trainable parameter groups
   training/      SFT/RLCD objectives, shared loop, gradient sync and checkpoints
@@ -202,7 +202,7 @@ tests/           CPU tests, including two-process training and resume checks
 docs/            Architecture, data, configuration and evaluation references
 ```
 
-The top-level `visualjev/train.py`, `inference.py` and `evaluate.py` forward to the corresponding subpackages. The [code map](visualjev/README.md) lists implementation entry points and their tests.
+The top-level `valen/train.py`, `inference.py` and `evaluate.py` forward to the corresponding subpackages. The [code map](valen/README.md) lists implementation entry points and their tests.
 
 ## Documentation
 
@@ -210,9 +210,9 @@ The top-level `visualjev/train.py`, `inference.py` and `evaluate.py` forward to 
 | --- | --- |
 | [Architecture](docs/architecture.md) | Compilation, candidate scoring, branch cost and gradient synchronization |
 | [Configuration reference](docs/configuration.md) | Defaults, token budgets, optimizer settings and RLCD options |
-| [Training guide](visualjev/training/README.md) | SFT/RLCD objectives, distributed training and checkpoint recovery |
+| [Training guide](valen/training/README.md) | SFT/RLCD objectives, distributed training and checkpoint recovery |
 | [Script guide](scripts/README.md) | Setup, training, evaluation and smoke checks |
-| [Code map](visualjev/README.md) | Data, modeling, training and evaluation modules |
+| [Code map](valen/README.md) | Data, modeling, training and evaluation modules |
 | [Data format](docs/data-format.md) | Complete examples, labels, local media and split conventions |
 | [Inference and evaluation](docs/evaluation.md) | Response fields, confidence formulas, metrics and timing |
 | [Experiment report](docs/experiments/eval3.md) | 100k training comparison, full scores and latency protocol |

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from visualjev.modeling.manifest import read_base_manifest
+from valen.modeling.manifest import read_base_manifest
 
 
 def test_manifest_reader_keeps_existing_snapshot_metadata(tmp_path):
@@ -11,7 +11,7 @@ def test_manifest_reader_keeps_existing_snapshot_metadata(tmp_path):
     assert read_base_manifest(tmp_path) == manifest
 
     preferred = {"revision": "new-revision", "weight_sha256": {}}
-    (tmp_path / "visualjev_manifest.json").write_text(json.dumps(preferred))
+    (tmp_path / "valen_manifest.json").write_text(json.dumps(preferred))
     assert read_base_manifest(tmp_path) == preferred
 
 
