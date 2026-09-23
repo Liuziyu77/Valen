@@ -2,8 +2,6 @@
   <img src="assets/branding/valen-logo-v2.png" alt="Valen — a slate-blue V with flowing motion trails and a muted rose crown" width="720">
 </p>
 
-<h1 align="center"><img src="assets/branding/valen-motto.svg" alt="Valen — Run to stay in place. Evolve to move forward." width="700"></h1>
-
 <h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
@@ -34,8 +32,16 @@ Valen brings visual perception to System One decision-making. Inspired by [Jev](
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
+  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-model-comparison.mp4">Watch video (MP4)</a>
+  </video><br>
   <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
+</p>
+
+<p align="center">
+  <video src="assets/demos/observation.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/observation.mp4">Watch video (MP4)</a>
+  </video>
 </p>
 
 <a id="output-types"></a>
@@ -258,7 +264,9 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 Four successful **Valen-Preview-0923** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-Preview-0923 games replayed in parallel at recorded speed." width="1000"></a><br>
+  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-four-game-showcase.mp4">Watch video (MP4)</a>
+  </video><br>
 </p>
 
 

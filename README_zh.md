@@ -2,8 +2,6 @@
   <img src="assets/branding/valen-logo-v2.png" alt="Valen — 灰蓝色 V 形速度流线与灰玫瑰色王冠标志" width="720">
 </p>
 
-<h1 align="center"><img src="assets/branding/valen-motto.svg" alt="Valen：奔跑才能留在原地，进化才能向前。" width="700"></h1>
-
 <h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
@@ -27,13 +25,24 @@
   <a href="#环境要求">🛠️ 环境要求</a> · <a href="#快速开始">🚀 快速开始</a> · <a href="#训练">🧠 训练</a> · <a href="#实验结果">📊 实验结果</a> · <a href="#demo-comparison">🎬 演示</a> · <a href="#文档">📚 文档</a>
 </p>
 
+Valen 的名字来自生物学家 Leigh Van Valen 提出的“红皇后假说”：环境不断变化，想留在原地也得不停进化————AI时代，智能也要持续适应新的任务和环境。
+Valen：奔跑才能留在原地，进化才能向前。
+
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
 
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Sokoban-SFT-RLCD-2B 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
+  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-model-comparison.mp4">观看视频（MP4）</a>
+  </video><br>
   <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
+</p>
+
+<p align="center">
+  <video src="assets/demos/observation.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/observation.mp4">观看视频（MP4）</a>
+  </video>
 </p>
 
 <a id="输出类型"></a>
@@ -256,7 +265,9 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。" width="1000"></a><br>
+  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-four-game-showcase.mp4">观看视频（MP4）</a>
+  </video><br>
 </p>
 
 
