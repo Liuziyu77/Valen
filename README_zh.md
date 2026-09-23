@@ -2,7 +2,7 @@
   <img src="assets/branding/valen-logo.png" alt="Valen — 融合王冠与速度流线的红色 V 标志" width="720">
 </p>
 
-<h1 align="center">Valen · 万澜</h1>
+<h1 align="center"><img src="assets/branding/valen-motto.svg" alt="Valen：奔跑才能留在原地，进化才能向前。" width="700"></h1>
 
 <h2 align="center">System One Model, now with vision.</h2>
 
@@ -26,6 +26,8 @@
   <a href="README.md">English</a> · <b>简体中文</b><br>
   <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#demo-comparison">演示</a> · <a href="#文档">文档</a>
 </p>
+
+Valen 的名字来自生物学家 Leigh Van Valen 提出的“红皇后假说”：环境不断变化，想留在原地也得不停进化。放到 AI 时代，这个名字提醒我们，智能也要持续适应新的任务和环境。
 
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
 
