@@ -77,33 +77,45 @@ python -m valen.evaluate \
 
 合成集有 6 条记录、15 道题，其中 13 道有标签。推理生成 6 行响应；评估生成 13 行逐题预测和 `metrics.json`。这些样本用于检查流程。
 
-命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件
+命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件所在目录。
 
 <details>
-<summary>一条最小的带标签记录</summary>
+<summary>一条带图片输入的标注记录</summary>
 
-JSONL 每行是一条记录。下例为展开显示的二分类问题，使用硬标签；也支持概率形式的软标签。
+JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](assets/figures/general/overview.png)，假设保存为仓库根目录的 `example.jsonl`。这里为便于阅读展开显示，写入文件时需压成一行。
 
 ```json
 {
-  "group_id": "traffic-light-001",
+  "group_id": "general-overview-2b",
   "request": {
-    "state": "当前交通灯是绿灯。",
+    "state": {
+      "messages": [{
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "比较图中 2B 模型的准确率和平均单题耗时。"},
+          {"type": "image_url", "image_url": {"url": "assets/figures/general/overview.png"}}
+        ]
+      }]
+    },
     "questions": {
-      "go": {
-        "type": "noul",
-        "instructions": "规则：只有绿灯可以通行。当前可以通行吗？"
+      "best_2b": {
+        "type": "choice",
+        "instructions": "在平均单题耗时低于 200 ms 的 2B 模型中，哪个准确率最高？",
+        "criteria": {
+          "qwen": "Qwen3.5-2B",
+          "sft": "Valen-Base-SFT-2B",
+          "rlcd": "Valen-Base-RLCD-2B"
+        }
       }
     }
   },
   "targets": {
-    "go": {"probabilities": {"true": 1.0, "false": 0.0}}
-  },
-  "assets": []
+    "best_2b": {"probabilities": {"qwen": 0.0, "sft": 1.0, "rlcd": 0.0}}
+  }
 }
 ```
 
-`targets` 用于训练和评估，不进入模型输入。推理可以省略标签，但仍需 `group_id`。Noul 答案形如 `{"type": "noul", "noul": 0.8}`，其中数值为 `P(true)`。Choice、Score 及媒体记录的示例见[合成数据](data/smoke/)和[数据格式](docs/data-format.md)。
+图中 2B SFT 模型的准确率为 79.02%，平均耗时为 176.8 ms，因此标签是 `sft`。`targets` 用于训练和评估，不进入模型输入；推理可以省略标签，但仍需 `group_id`。Noul、Score 及其他媒体记录见[合成数据](data/smoke/)和[数据格式](docs/data-format.md)。
 
 </details>
 
