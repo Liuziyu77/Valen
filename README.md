@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/branding/valen-logo-v2.png" alt="Valen — a slate-blue V with flowing motion trails and a muted rose crown" width="720">
+  <img src="assets/branding/valen-logo-v4.png" alt="Valen — an evolving aperture with blue, violet and coral gradients" width="720">
 </p>
 
 <h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
@@ -32,14 +32,11 @@ Valen brings visual perception to System One decision-making. Inspired by [Jev](
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Preview-0923 with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
+  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000" aria-label="Side-by-side Sokoban demo comparing Valen-Preview-0923 with Qwen3.8-27B-FP8 in no-thinking and thinking modes.">
+    <a href="assets/demos/sokoban-model-comparison.mp4">Watch video (MP4)</a>
+  </video><br>
   <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
-</p>
-
-<p align="center">
-  <video src="assets/demos/observation.mp4" controls muted playsinline width="1000">
-    <a href="assets/demos/observation.mp4">Watch video (MP4)</a>
-  </video>
+  <a href="#demos">See more demos below ↓</a>
 </p>
 
 <a id="output-types"></a>
@@ -264,8 +261,10 @@ The solver certifies a 22-move shortest solution for this three-box state, with 
 The measured choices are shown exactly as returned by the model: `RIGHT` at 12 and 20 px, `UP` at 48 px, and `DOWN` at the other six radii. At 72 px, `DOWN` has 39.4% probability and decision confidence is 19.2%.
 
 <p align="center">
-  <a href="assets/demos/valen-preview-0923-blur-confidence.mp4"><img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 action probabilities and decision confidence across nine measured levels of Gaussian image blur." width="1000"></a><br>
-  <sub>Click the animation to open the MP4. Each plot dot is one model inference; values between samples are interpolated for playback.</sub>
+  <video src="assets/demos/valen-preview-0923-blur-confidence.mp4" controls muted playsinline width="1000" aria-label="Valen-Preview-0923 action probabilities and decision confidence across nine measured levels of Gaussian image blur.">
+    <a href="assets/demos/valen-preview-0923-blur-confidence.mp4">Watch video (MP4)</a>
+  </video><br>
+  <sub>Each plot dot is one model inference; values between samples are interpolated for playback.</sub>
 </p>
 
 ### Four games in parallel
@@ -273,7 +272,9 @@ The measured choices are shown exactly as returned by the model: `RIGHT` at 12 a
 Four successful **Valen-Preview-0923** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-Preview-0923 games replayed in parallel at recorded speed." width="1000"></a><br>
+  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000" aria-label="Four successful Valen-Preview-0923 games replayed in parallel at recorded speed.">
+    <a href="assets/demos/sokoban-four-game-showcase.mp4">Watch video (MP4)</a>
+  </video><br>
 </p>
 
 
