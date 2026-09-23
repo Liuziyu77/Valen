@@ -258,6 +258,17 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 ## 🎬 演示
 
+### 图像模糊与动作置信度
+
+求解器证明这个三箱关卡的最短解为 22 步，唯一最优首步是 `DOWN`。在清晰图像上，**Valen-Preview-0923** 为 `DOWN` 分配了 93.7% 的概率，决策置信度为 91.6%。视频包含高斯模糊半径从 0 到 72 px 的九次独立推理；采样点之间的图像和数值用于动画过渡。
+
+视频完整保留模型的实测选择：12 和 20 px 时为 `RIGHT`，48 px 时为 `UP`，其余六档为 `DOWN`。在 72 px 时，`DOWN` 的概率为 39.4%，决策置信度为 19.2%。
+
+<p align="center">
+  <a href="assets/demos/valen-preview-0923-blur-confidence.mp4"><img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"></a><br>
+  <sub>点击动画打开 MP4。曲线上的每个点对应一次模型推理，采样点之间的数值为播放插值。</sub>
+</p>
+
 ### 四局并行能力展示
 
 四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。

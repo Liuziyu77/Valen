@@ -257,6 +257,17 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 
 ## 🎬 Demos
 
+### Image blur and action confidence
+
+The solver certifies a 22-move shortest solution for this three-box state, with `DOWN` as its unique optimal first move. On the clear image, **Valen-Preview-0923** assigns `DOWN` a probability of 93.7% with 91.6% decision confidence. The video uses nine separate inferences at Gaussian blur radii from 0 to 72 px. Intermediate frames interpolate the displayed image and values for playback.
+
+The measured choices are shown exactly as returned by the model: `RIGHT` at 12 and 20 px, `UP` at 48 px, and `DOWN` at the other six radii. At 72 px, `DOWN` has 39.4% probability and decision confidence is 19.2%.
+
+<p align="center">
+  <a href="assets/demos/valen-preview-0923-blur-confidence.mp4"><img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 action probabilities and decision confidence across nine measured levels of Gaussian image blur." width="1000"></a><br>
+  <sub>Click the animation to open the MP4. Each plot dot is one model inference; values between samples are interpolated for playback.</sub>
+</p>
+
 ### Four games in parallel
 
 Four successful **Valen-Preview-0923** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
