@@ -7,7 +7,7 @@
 | `setup/` | 安装依赖，下载并核验 Qwen3.5-0.8B |
 | `train/` | 单机多卡 SFT/RLCD 启动器 |
 | `data/` | 生成随仓库提供的合成样例 |
-| `eval/` | 从 Eval_3 结果快照重绘 README 中的实验图 |
+| `eval/` | 从通用实验快照绘制额外的详细图 |
 | `smoke/` | 单卡、双卡训练与恢复集成检查 |
 
 <a id="installation"></a>
@@ -97,14 +97,14 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 
 ## 实验图
 
-`scripts/eval/plot_eval3.py` 读取 `assets/figures/eval3/results.json`，输出四张图的 PNG、SVG 和 PDF。需要另行安装 Matplotlib，不需要模型、GPU 或原始评测目录。
+`scripts/eval/plot_general.py` 读取 `assets/figures/general/results.json`，在指定目录输出四张详细图的 PNG、SVG 和 PDF。它不重绘 README 中的三张汇总图。需要另行安装 Matplotlib，不需要模型、GPU 或原始评测目录。
 
 ```bash
 python -m pip install matplotlib
-python scripts/eval/plot_eval3.py --output-dir /tmp/valen-eval3-preview
+python scripts/eval/plot_general.py --output-dir /tmp/valen-general-details
 ```
 
-省略 `--output-dir` 时覆盖 `assets/figures/eval3/` 中的配图。实验设置和结果见[Eval_3 报告](../docs/experiments/eval3.md)。
+`--output-dir` 是必填参数，避免重绘结果混入仓库中的展示图。实验设置和结果见[通用实验报告](../docs/experiments/general.md)。
 
 ## 验证
 

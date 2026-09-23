@@ -160,7 +160,7 @@ Choice and Noul score candidates in one branch; Score runs a separate forward pa
   <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="Accuracy of six models by Choice, Noul and Score task and by documents, games, interfaces and visual QA." width="1000"></a>
 </p>
 
-See [Eval_3](docs/experiments/eval3.md) for the full setup, per-source scores, P50/P95 latency and probability metrics.
+See the [general experiment report](docs/experiments/general.md) for the full setup, per-source scores, P50/P95 latency and probability metrics.
 
 ### Sokoban: single-step decisions and full games
 
@@ -215,7 +215,7 @@ The top-level `valen/train.py`, `inference.py` and `evaluate.py` forward to the 
 | [Code map](valen/README.md) | Data, modeling, training and evaluation modules |
 | [Data format](docs/data-format.md) | Complete examples, labels, local media and split conventions |
 | [Inference and evaluation](docs/evaluation.md) | Response fields, confidence formulas, metrics and timing |
-| [Experiment report](docs/experiments/eval3.md) | 100k training comparison, full scores and latency protocol |
+| [Experiment report](docs/experiments/general.md) | 100k training comparison, full scores and latency protocol |
 | [Task evaluation](evaluation/README.md) | Sokoban generation, full-game evaluation, policy comparison and replay |
 
 The detailed guides are currently in Chinese; both READMEs cover setup and training. To run the CPU suite (processor tests skip until the base-model processor is available):
