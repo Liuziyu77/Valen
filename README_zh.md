@@ -141,6 +141,17 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ## 实验结果
 
+### Model Card：初步消融对比
+
+| 模型 | 每步均值 ms | P50 ms | P95 ms | 平均每局 s | 无效动作率 | 实际模型调用 |
+|---|---:|---:|---:|---:|---:|---:|
+| Valen-Base-SFT-0.8B | 123.77 | 121.85 | 128.96 | 22.43 | 77.05% | 36195 |
+| Valen-Base-SFT-2B | 126.80 | 125.13 | 131.00 | 22.61 | 78.62% | 35614 |
+| Valen-Base-RLCD-0.8B | 122.02 | 120.81 | 127.18 | 21.18 | 75.79% | 34669 |
+| Valen-Base-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
+| Valen-Sokoban-SFT-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
+| Valen-Sokoban-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
+
 ### General：通用VQA
 
 [100k 训练集](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)、[5k 测试集](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k)，底座为 Qwen3.5-0.8B 和 2B。每次训练使用八张 H200，仅更新决策头：SFT 使用全部 100k 数据；两阶段方案先用 70k 做 SFT，再用剩余 30k 做 RLCD。图中的 `Valen-Base-*` 是训练后的决策模型，`Qwen3.5-*` 是原始生成基线。
