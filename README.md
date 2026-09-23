@@ -2,8 +2,6 @@
   <img src="assets/branding/valen-logo-v2.png" alt="Valen — a slate-blue V with flowing motion trails and a muted rose crown" width="720">
 </p>
 
-<h1 align="center"><img src="assets/branding/valen-motto.svg" alt="Valen — Run to stay in place. Evolve to move forward." width="700"></h1>
-
 <h2 align="center">System One Model, now with vision.</h2>
 
 <p align="center">
@@ -27,15 +25,24 @@
   <a href="#requirements">🛠️ Requirements</a> · <a href="#quick-start">🚀 Quick start</a> · <a href="#training">🧠 Training</a> · <a href="#results">📊 Results</a> · <a href="#demo-comparison">🎬 Demos</a> · <a href="#documentation">📚 Documentation</a>
 </p>
 
-The Red Queen hypothesis (proposed by Leigh Maiorana Van Valen) in the age of AI: intelligence must keep pace with new tasks and environments.
+The Red Queen hypothesis (proposed by Leigh Maiorana Van Valen) in the age of AI: intelligence must keep pace with new tasks and environments. 
+Valen — Run to stay in place. Evolve to move forward.
 
 Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
+  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-model-comparison.mp4">Watch video (MP4)</a>
+  </video><br>
   <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
+</p>
+
+<p align="center">
+  <video src="assets/demos/observation.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/observation.mp4">Watch video (MP4)</a>
+  </video>
 </p>
 
 <a id="output-types"></a>
@@ -258,7 +265,9 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 Four successful **Valen-Preview-0923** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-Preview-0923 games replayed in parallel at recorded speed." width="1000"></a><br>
+  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000">
+    <a href="assets/demos/sokoban-four-game-showcase.mp4">Watch video (MP4)</a>
+  </video><br>
 </p>
 
 
