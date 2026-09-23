@@ -141,45 +141,52 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ## Results
 
-### Training setup (general)
+### General image questions
 
-[**100k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) VQA training records · [**5k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k) evaluation questions · Qwen3.5-0.8B and 2B backbones. Each training run used eight H200 GPUs and updated only the decision head. SFT used all 100k records; the two-stage run used 70k for SFT and the remaining 30k for RLCD.
-
-**Visual-Jev-2B-SFT reached 79.02% accuracy**, 3.52 percentage points above the original Qwen baseline. The **0.8B decision models ran about 1.51× faster end to end** than the baseline.
-
-#### Accuracy
-
-All six models use the same 5,000 test questions. `Qwen3.5-*` denotes the generation baselines; `Visual-Jev-{size}-SFT/RLCD` denotes the trained decision models. The accuracy bars use a **60–85%** scale.
+The experiments train on [100k records](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) and test on [5k questions](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k), using Qwen3.5-0.8B and 2B backbones. Each run used eight H200 GPUs and updated only the decision head: SFT used all 100k records, while the two-stage run used 70k for SFT and the remaining 30k for RLCD. The figures label the trained models `Valen-Base-*`; `Qwen3.5-*` are the original generation baselines.
 
 <p align="center">
-  <a href="assets/figures/eval3/accuracy.svg"><img src="assets/figures/eval3/accuracy.png" alt="Accuracy for all six models: 0.8B baseline 72.66%, SFT 74.82%, RLCD 75.02%; 2B baseline 75.50%, SFT 79.02%, RLCD 78.44%." width="1000"></a>
+  <a href="assets/figures/general/overview.png"><img src="assets/figures/general/overview.png" alt="Accuracy and mean end-to-end latency for six models on 5,000 general image questions." width="1000"></a>
 </p>
 
-#### Inference time
-
-The figure shows only the SFT and RLCD decision heads. Mean end-to-end latency includes preprocessing, model computation and output handling. Baseline timings used for the speedup comparison are in [Eval_3](docs/experiments/eval3.md).
+**Valen-Base-SFT-2B scored 79.02%**, 3.52 percentage points above the same-size baseline. The 0.8B SFT and RLCD models averaged 156.65 and 155.82 ms per question, about 1.51 times faster than the 235.98 ms baseline. End-to-end latency includes preprocessing, model computation and output handling.
 
 <p align="center">
-  <a href="assets/figures/eval3/latency.svg"><img src="assets/figures/eval3/latency.png" alt="Mean end-to-end latency for the four trained heads: 0.8B SFT 156.65 ms and RLCD 155.82 ms; 2B SFT 176.80 ms and RLCD 177.55 ms. Baselines are not plotted." width="1000"></a>
+  <a href="assets/figures/general/task-latency.png"><img src="assets/figures/general/task-latency.png" alt="Mean latency of the four trained models on Choice, Noul and Score questions." width="1000"></a>
 </p>
 
-#### Inference time by question type
-
-SFT and RLCD latency for Choice, Noul and Score at both model sizes. Choice and Noul score candidates in one branch; Score runs a separate forward pass per level.
+Choice and Noul score candidates in one branch; Score runs a separate forward pass per level. The next chart breaks accuracy down by question type and application domain. There are only 18 Score questions, so that slice is too small for a stable comparison.
 
 <p align="center">
-  <a href="assets/figures/eval3/latency-by-task.svg"><img src="assets/figures/eval3/latency-by-task.png" alt="SFT and RLCD latency for Choice, Noul and Score, comparing the four trained decision heads. Baselines are not included in this figure." width="1000"></a>
+  <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="Accuracy of six models by Choice, Noul and Score task and by documents, games, interfaces and visual QA." width="1000"></a>
 </p>
 
-#### Accuracy by application domain
+See [Eval_3](docs/experiments/eval3.md) for the full setup, per-source scores, P50/P95 latency and probability metrics.
 
-Accuracy across visual question answering, user interfaces, games, and documents/charts. Highlighted cells mark the highest score in each domain within the same model size.
+### Sokoban: single-step decisions and full games
+
+The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT decision head and continue training on Sokoban data for three epochs at the `vision_top` stage. All six models were tested on the same 500 single-step questions drawn from 100 levels. Any optimal action counts as correct.
 
 <p align="center">
-  <a href="assets/figures/eval3/accuracy-by-domain.svg"><img src="assets/figures/eval3/accuracy-by-domain.png" alt="Accuracy of all six models in all four application domains, with exact values and sample counts." width="1000"></a>
+  <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="Accuracy and mean end-to-end latency for six models on 500 Sokoban single-step questions." width="1000"></a>
 </p>
 
-See [Eval_3](docs/experiments/eval3.md) for the full experiment setup, per-source scores, P50/P95 latency and probability metrics.
+| Model | Correct / 500 | Mean single-step latency | Full games solved / 100 |
+| --- | ---: | ---: | ---: |
+| Qwen3.5-0.8B | 158 (31.60%) | 152.54 ms | Not evaluated |
+| Valen-Sokoban-SFT-0.8B | 403 (80.60%) | 114.06 ms | 18 |
+| Valen-Sokoban-RLCD-0.8B | 415 (83.00%) | 113.95 ms | 24 |
+| Qwen3.5-2B | 136 (27.20%) | 155.73 ms | 0 |
+| Valen-Sokoban-SFT-2B | 418 (83.60%) | 126.82 ms | 20 |
+| Valen-Sokoban-RLCD-2B | 438 (87.60%) | 127.31 ms | 38 |
+
+Single-step accuracy does not imply full-game success. Latency was measured on one H200 GPU with batch size 1 after three warmup questions; model loading is excluded. Each full game starts from the initial board, allows one attempt and stops after at most 200 moves, with no action cache, undo or solver assistance. The time panel below includes successful games only.
+
+<p align="center">
+  <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="Games solved out of 100 Sokoban levels, with elapsed times for each model's successful games." width="1000"></a>
+</p>
+
+These 100 levels come from a simple subset previously selected using `Valen-Sokoban-RLCD-2B` success, so the full-game rates are not an unbiased estimate of generalization. Models also solve different sets of levels; successful-game times cannot be read as a same-level speed comparison. The 0.8B baseline has no full-game run. See the [Sokoban guide](evaluation/sokoban/README.md) for the evaluation workflow.
 
 ## Repository layout
 
