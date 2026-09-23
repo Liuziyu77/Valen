@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="README.md">English</a> · <b>简体中文</b><br>
-  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#文档">文档</a>
+  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#演示">演示</a> · <a href="#文档">文档</a>
 </p>
 
 Valen 可以根据文本、图片或视频，对提供的候选评分。模型由 Qwen3.5 backbone和共享decision head组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。现有配置使用 Qwen3.5-0.8B/2B 进行训练。
@@ -184,6 +184,26 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 <p align="center">
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="100 局 Sokoban 完整游戏的通关数量，以及各模型成功局的实测通关时间分布。" width="1000"></a>
+</p>
+
+## 演示
+
+### Valen 与 27B 生成模型对比
+
+三个模型在相同关卡、相同 10 步上限下运行。**Valen-Sokoban-SFT-RLCD-2B** 用 9 次决策通关，记录的单步延迟之和为 1.13 秒（平均 125 毫秒/步）。Qwen3.8-27B-FP8 在 no-thinking 模式下达到步数上限但未通关；thinking 模式成功通关，耗时 198.05 秒。为了控制演示时长，仅 thinking 轨迹以 20× 加速播放，Valen 和 no-thinking 均保持 1×。
+
+<p align="center">
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Sokoban-SFT-RLCD-2B 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
+  <sub>点击动画打开 MP4。画面中的延迟是评测器记录的各步端到端决策延迟之和。</sub>
+</p>
+
+### 四局并行能力展示
+
+四条成功的 **Valen-Sokoban-SFT-RLCD-2B** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒；在并行回放时间轴上，四局均于 1.24 秒内完成。
+
+<p align="center">
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Sokoban-SFT-RLCD-2B 成功轨迹以记录速度并行播放。" width="1000"></a><br>
+  <sub>点击动画打开 MP4。每次模型决策完成时，画面按记录的真实延迟推进。</sub>
 </p>
 
 

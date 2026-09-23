@@ -14,7 +14,7 @@
 
 <p align="center">
   <b>English</b> · <a href="README_zh.md">简体中文</a><br>
-  <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#documentation">Documentation</a>
+  <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#demos">Demos</a> · <a href="#documentation">Documentation</a>
 </p>
 
 Valen scores candidates based on text, images or video. It combines a Qwen3.5-0.8B or 2B backbone with a shared decision head to return probabilities without generating answer tokens. The repository includes the model, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands.
@@ -183,6 +183,26 @@ Single-step accuracy does not imply full-game success. Latency was measured on o
 
 <p align="center">
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="Games solved out of 100 Sokoban levels, with elapsed times for each model's successful games." width="1000"></a>
+</p>
+
+## Demos
+
+### Valen vs. a 27B generation model
+
+The same Sokoban level is played with the same 10-step cap. **Valen-Sokoban-SFT-RLCD-2B** solves it in 9 decisions with 1.13 seconds of recorded step latency (125 ms/step). Qwen3.8-27B-FP8 without thinking reaches the step limit; with thinking it solves the level in 198.05 seconds. To keep the comparison watchable, only the thinking track is played at 20× speed; Valen and no-thinking remain at 1×.
+
+<p align="center">
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
+  <sub>Click the animation to open the MP4. Displayed latency is the sum of recorded end-to-end evaluator latency for each completed decision.</sub>
+</p>
+
+### Four games in parallel
+
+Four successful **Valen-Sokoban-SFT-RLCD-2B** trajectories run side by side at 1× speed with no playback acceleration. The games take 7–10 decisions, average 122–128 ms per step, and all finish within 1.24 seconds on the parallel replay timeline.
+
+<p align="center">
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-Sokoban-SFT-RLCD-2B games replayed in parallel at recorded speed." width="1000"></a><br>
+  <sub>Click the animation to open the MP4. Frames advance when each recorded model decision completes.</sub>
 </p>
 
 
