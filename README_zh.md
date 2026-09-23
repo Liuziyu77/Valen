@@ -36,16 +36,17 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 <a id="demo-comparison"></a>
 
+### 与 27B 生成模型对比
+
+在相同推箱子关卡、相同 10 步上限下，**Valen-Preview-0923** 用 9 次决策通关，累计决策耗时为 1.13 秒。Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。thinking 轨迹以 20× 加速回放，其余两条保持 1×。
+
 <p align="center">
   <img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"><br>
-  <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
 </p>
 
 ### 图像模糊与动作置信度
 
-求解器证明这个三箱关卡的最短解为 22 步，唯一最优首步是 `DOWN`。在清晰图像上，**Valen-Preview-0923** 为 `DOWN` 分配了 93.7% 的概率，决策置信度为 91.6%。视频包含高斯模糊半径从 0 到 72 px 的九次独立推理；采样点之间的图像和数值用于动画过渡。
-
-视频完整保留模型的实测选择：12 和 20 px 时为 `RIGHT`，48 px 时为 `UP`，其余六档为 `DOWN`。在 72 px 时，`DOWN` 的概率为 39.4%，决策置信度为 19.2%。
+九档高斯模糊展示了视觉信息逐渐变得不清晰时，**Valen-Preview-0923** 的动作概率与决策置信度如何变化。清晰图像上，最优动作 `DOWN` 的概率为 93.7%，决策置信度为 91.6%；模糊半径达到 72 px 时，两者分别为 39.4% 和 19.2%。
 
 <p align="center">
   <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"><br>
@@ -91,9 +92,12 @@ General 上，**Valen-2B(SFT) 达到 79.02%**；推箱子上，**Valen-2B(RL) �
 
 ## 🚀 快速开始
 
-先按[环境要求](docs/technical.md#环境要求)安装依赖。依赖安装完成后，需下载模型权重。
+先按[环境要求](docs/technical.md#环境要求)安装依赖，再下载 Preview checkpoint 及其对应的 Qwen3.5-2B Base 模型。
 
 ```bash
+# 下载 Valen-Preview-0923 checkpoint。
+hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
+
 # 下载 Qwen3.5-2B Base 模型。
 hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
@@ -153,12 +157,22 @@ JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](as
 ```
 </details>
 
+<a id="参与贡献"></a>
+
+## 🤝 参与贡献
+
+欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。
+
+欢迎扫描下方二维码加入 Valen 微信群，一起讨论项目、交流使用体验和实验结果。
+
+<p align="center">
+  <img src="assets/figures/wechat_0930.jpg" alt="Valen 微信讨论群二维码" width="200">
+</p>
+
 <a id="许可与致谢"></a>
 
-## 🤝 许可与致谢
+## 📄 许可与致谢
 
 代码使用 [Apache 2.0](LICENSE) 许可。基础模型和来源数据集遵循各自的许可。
 
 模型基于 [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B)，决策接口受 [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发。
-
-欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。

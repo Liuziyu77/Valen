@@ -38,16 +38,17 @@ Valen brings visual perception to System One decision-making. Inspired by [Jev](
 
 <a id="demo-comparison"></a>
 
+### Against a 27B generation model
+
+On the same Sokoban level with a 10-step cap, **Valen-Preview-0923** solves the puzzle in 9 decisions with 1.13 seconds of cumulative decision latency. Qwen3.8-27B-FP8 takes 198.05 seconds in thinking mode and fails to solve it in no-thinking mode. The thinking replay runs at 20× speed; the other two run at 1×.
+
 <p align="center">
   <img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Preview-0923 with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"><br>
-  <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
 </p>
 
 ### Image blur and action confidence
 
-The solver certifies a 22-move shortest solution for this three-box state, with `DOWN` as its unique optimal first move. On the clear image, **Valen-Preview-0923** assigns `DOWN` a probability of 93.7% with 91.6% decision confidence. The video uses nine separate inferences at Gaussian blur radii from 0 to 72 px. Intermediate frames interpolate the displayed image and values for playback.
-
-The measured choices are shown exactly as returned by the model: `RIGHT` at 12 and 20 px, `UP` at 48 px, and `DOWN` at the other six radii. At 72 px, `DOWN` has 39.4% probability and decision confidence is 19.2%.
+Nine Gaussian blur levels show how **Valen-Preview-0923** changes its action probabilities and decision confidence as visual information becomes less clear. On the clear image, the optimal action `DOWN` has 93.7% probability and decision confidence is 91.6%; at 72 px blur, these values are 39.4% and 19.2%.
 
 <p align="center">
   <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 action probabilities and decision confidence across nine measured levels of Gaussian image blur." width="1000"><br>
@@ -93,9 +94,12 @@ See the [technical notes](docs/technical.md#完整实验) for training data, the
 
 ## 🚀 Quick start
 
-Install the dependencies listed in [requirements](docs/technical.md#环境要求), then download the model weights.
+Install the dependencies listed in [requirements](docs/technical.md#环境要求), then download both the Preview checkpoint and its Qwen3.5-2B base model.
 
 ```bash
+# Download the Valen-Preview-0923 checkpoint.
+hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
+
 # Download the Qwen3.5-2B base model.
 hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
@@ -155,12 +159,22 @@ Each JSONL line contains one record. The example below uses the [general experim
 ```
 </details>
 
+<a id="contributions"></a>
+
+## 🤝 Contributions
+
+Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77/Valen/issues) to report a problem, share a use case or discuss experimental results. Submit a [pull request](https://github.com/Liuziyu77/Valen/pulls) to improve the code or documentation, contribute training data or add evaluation tasks.
+
+Scan the QR code below to join the Valen WeChat group, discuss the project and share your experiments.
+
+<p align="center">
+  <img src="assets/figures/wechat_0930.jpg" alt="QR code for the Valen WeChat discussion group" width="200">
+</p>
+
 <a id="license-and-acknowledgments"></a>
 
-## 🤝 License and acknowledgments
+## 📄 License and acknowledgments
 
 The code is released under [Apache 2.0](LICENSE). Base models and source datasets retain their respective licenses.
 
 Built on [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B), with the decision interface inspired by [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
-
-Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77/Valen/issues) to report a problem, share a use case or discuss experimental results. Submit a [pull request](https://github.com/Liuziyu77/Valen/pulls) to improve the code or documentation, contribute training data or add evaluation tasks.
