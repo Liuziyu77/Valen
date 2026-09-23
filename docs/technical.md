@@ -219,7 +219,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 ### 首页总览图的数据与复现
 
-横轴为平均单题端到端耗时（毫秒），纵轴为准确率（%）。General 使用 5,000 道题；Sokoban 使用 100 关中的 500 道单步题，分数不是完整游戏通关率。两个面板的坐标范围不同。
+首页分别展示 General 和 Sokoban 的六模型柱状图。每张图左侧为准确率（%，越高越好），右侧为平均单题端到端耗时（毫秒，越低越好）；横轴均为模型。General 准确率纵轴截取 70–82%，图中明确标注该范围；Sokoban 准确率和两张耗时图的纵轴均从零开始。General 使用 5,000 道题；Sokoban 使用 100 关中的 500 道单步题，分数不是完整游戏通关率。两张图使用相同的模型顺序，粗体数值标出各指标的最佳结果。
 
 General 的完整精度数值来自 [results.json](../assets/figures/general/results.json)；Sokoban 使用上方单步评测表中的两位小数数值。首页图保留这些数值，不从图片像素反推数据。
 
@@ -228,7 +228,7 @@ python -m pip install matplotlib
 python scripts/eval/plot_readme_overview.py
 ```
 
-输出为 `assets/figures/evaluation-overview.png`、`.svg` 和 `.pdf`。
+输出为 `assets/figures/general/readme-results` 和 `assets/figures/sokoban/readme-results`，各包含 `.png`、`.svg` 和 `.pdf`。配色与排版参考 [Atria Dawn Preview 的评测图](https://huggingface.co/internlm/Atria-Dawn-Preview#evaluation-results)：白底、灰色基线、蓝色重点模型与直接数值标注。
 
 <a id="演示测量说明"></a>
 

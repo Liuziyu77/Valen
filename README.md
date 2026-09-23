@@ -69,7 +69,6 @@ Running Valen requires both the **Valen checkpoint** and the **Qwen3.5-2B base m
 | Model | Role | Download |
 | --- | --- | --- |
 | Valen-Preview-0923 | Valen checkpoint | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
-| Qwen3.5-2B | Base model | [🤗 Hugging Face](https://huggingface.co/Qwen/Qwen3.5-2B) |
 
 Datasets: [General 100k training](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) · [General 5k evaluation](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) · [Sokoban training and evaluation](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game).
 
@@ -77,13 +76,17 @@ Datasets: [General 100k training](https://huggingface.co/datasets/Valen-Team/Val
 
 ## 📊 Evaluation results
 
-**Lower latency, higher accuracy.** General is on the left (5,000 questions); Sokoban is on the right (500 single-step questions from 100 levels). The upper-left direction is better.
+**Lower latency, higher accuracy.** Each chart compares six models: accuracy on the left (higher is better), mean end-to-end latency on the right (lower is better). General uses 5,000 questions; Sokoban uses 500 single-step questions from 100 levels.
 
 <p align="center">
-  <a href="assets/figures/evaluation-overview.png"><img src="assets/figures/evaluation-overview.png" alt="Accuracy versus latency on General and Sokoban: mean end-to-end latency on the x-axis and accuracy on the y-axis." width="1200"></a>
+  <a href="assets/figures/general/readme-results.png"><img src="assets/figures/general/readme-results.png" alt="General: six models compared by accuracy and mean end-to-end latency on 5,000 questions." width="1200"></a>
 </p>
 
-**Valen-2B(SFT) reaches 79.02% on General**, and **Valen-2B(RL) reaches 87.60% on Sokoban**. `RL` denotes RLCD. Each panel uses models trained for that task; the Sokoban score measures single-step accuracy.
+<p align="center">
+  <a href="assets/figures/sokoban/readme-results.png"><img src="assets/figures/sokoban/readme-results.png" alt="Sokoban: six models compared by accuracy and mean end-to-end latency on 500 single-step questions from 100 levels." width="1200"></a>
+</p>
+
+**Valen-2B(SFT) reaches 79.02% on General**, and **Valen-2B(RL) reaches 87.60% on Sokoban**. `RL` denotes RLCD. Each task uses its own trained models; the Sokoban score measures single-step accuracy.
 
 See the [technical notes](docs/technical.md#完整实验) for training data, the Model Card, loss curves, timing conditions and full results.
 

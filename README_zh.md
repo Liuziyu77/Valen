@@ -69,7 +69,6 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 | 模型 | 用途 | 下载 |
 | --- | --- | --- |
 | Valen-Preview-0923 | Valen checkpoint | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
-| Qwen3.5-2B | Base 模型 | [🤗 Hugging Face](https://huggingface.co/Qwen/Qwen3.5-2B) |
 
 数据集：[General 100k 训练集](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) · [General 5k 评测集](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) · [Sokoban 训练与评测集](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game)。
 
@@ -77,13 +76,17 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 📊 评测结果
 
-**更低的延迟，更高的准确率。** 左图为 General（5,000 题），右图为推箱子（500 道单步题，来自 100 关）；越靠左上越好。
+**更低的延迟，更高的准确率。** 每张图比较六个模型：左侧为准确率（越高越好），右侧为平均端到端耗时（越低越好）。General 使用 5,000 道题；推箱子使用来自 100 关的 500 道单步题。
 
 <p align="center">
-  <a href="assets/figures/evaluation-overview.png"><img src="assets/figures/evaluation-overview.png" alt="General 与 Sokoban 的准确率—延迟散点图：横轴为平均端到端耗时，纵轴为准确率。" width="1200"></a>
+  <a href="assets/figures/general/readme-results.png"><img src="assets/figures/general/readme-results.png" alt="General：六个模型在 5,000 道题上的准确率与平均端到端耗时对比。" width="1200"></a>
 </p>
 
-General 上，**Valen-2B(SFT) 达到 79.02%**；推箱子上，**Valen-2B(RL) 达到 87.60%**。`RL` 指 RLCD；两个面板使用各自任务训练的模型，推箱子分数为单步准确率。
+<p align="center">
+  <a href="assets/figures/sokoban/readme-results.png"><img src="assets/figures/sokoban/readme-results.png" alt="Sokoban：六个模型在来自 100 关的 500 道单步题上的准确率与平均端到端耗时对比。" width="1200"></a>
+</p>
+
+General 上，**Valen-2B(SFT) 达到 79.02%**；推箱子上，**Valen-2B(RL) 达到 87.60%**。`RL` 指 RLCD；两个任务使用各自训练的模型，推箱子分数为单步准确率。
 
 训练数据、Model Card、loss 曲线、测速条件和完整结果见[技术说明](docs/technical.md#完整实验)。
 
