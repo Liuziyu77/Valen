@@ -42,8 +42,8 @@
 | `request.state` | 文本字符串，或 `{"messages": [...]}` 对象 | 是 |
 | `request.questions` | 非空映射；键是返回答案时使用的问题 ID | ID 不进入，问题内容进入 |
 | `targets` | 可选的问题 ID → 标签映射；不能包含未知问题 ID | 否 |
-| `assets` | 可选媒体清单，每项包含 `path`、`sha256` | 否 |
-| `meta` | 可选审计信息；评估读取 `record_id`、`domain`、`modality`、`language_bucket` | 否 |
+| `assets` | 可选meida清单，每项包含 `path`、`sha256` | 否 |
+| `meta` | 可选元信息；评估读取 `record_id`、`domain`、`modality`、`language_bucket` | 否 |
 
 每道题都需要小写的 `type` 和非空字符串 `instructions`。`criteria` 的格式由任务决定：
 
@@ -53,19 +53,19 @@
 | `noul` | 不需要，提供时也不参与候选构造 | `"true"`、`"false"` | 固定 true 在前 |
 | `score` | 2–10 个非空等级描述的列表 | `"0"` 到 `"K-1"` | 保留列表顺序，从 0 开始 |
 
-Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分支只看到自己的等级描述，输出的数值按列表索引计算，范围为 `[0, K-1]`。如果业务需要 1–5 分或 0–100 分，在调用端转换。
+Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分支只看到自己的等级描述，输出的数值按列表索引计算，范围为 `[0, K-1]`。如果业务需要 1–5 分或 0–100 分，可以在调用端转换。
 
 ## 标签与缺失值
 
-`probabilities` 必须恰好覆盖当前题的全部候选键。每个值是有限、非负的数字，不能是布尔值；总和按 `abs_tol=1e-6` 校验为 1。单个候选为 1、其余为 0 是硬标签；标注者分歧等场景可以保留软标签。
+`probabilities` 必须恰好覆盖当前题的全部候选键。每个值是有限、非负的数字；总和按 `abs_tol=1e-6` 校验为 1。单个候选为 1、其余为 0 是硬标签；部分场景可以保留软标签。
 
 以下写法都表示该题无标签：省略对应的 target、target 为 `null`、省略 `probabilities`、`probabilities` 为 `null`。若完全没有标签，省略 `targets` 或使用 `{}`，不要把整个 `targets` 写成 `null`。
 
-- 训练、评估：跳过无标签问题；整条记录无标签时不读取其媒体。
+- 训练、评估：跳过无标签问题；整条记录无标签时不读取其media。
 - 推理：返回所有问题的答案，即使没有标签。若提供了标签，读取器仍会校验它们。
 - 软标签：参与交叉熵、Brier、RPS 等分布指标，不计入硬标签准确率和 Noul 混淆矩阵。
 
-`label_source`、`votes` 等附加标签字段可以用于记录来源，训练不读取这些字段，也不会按投票数额外加权。训练先在每个 state 内平均题目损失，再按 state 平均；评估按题汇总，两者分母不同。
+`label_source`、`votes` 等附加标签字段可以用于记录来源，训练不读取这些字段。训练先在每个 state 内平均题目损失，再按 state 平均；评估按题汇总，两者分母不同。
 
 ## 图片和视频
 
@@ -83,19 +83,19 @@ Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分
 }
 ```
 
-视频条目使用 `{"type": "video_url", "video_url": {"url": "assets/clip.mp4"}}`。可以在消息中放多个媒体条目。角色支持 `user`、`assistant`、`system`；`content` 也可以直接是文本字符串。
+视频条目使用 `{"type": "video_url", "video_url": {"url": "assets/clip.mp4"}}`。可以在消息中放多个media条目。角色支持 `user`、`assistant`、`system`；`content` 也可以直接是文本字符串。
 
-媒体路径相对于 **JSONL 文件所在目录**，也可使用本地绝对路径。例如 `data/train.jsonl` 中的 `assets/light.png` 对应 `data/assets/light.png`。包含 `://` 的路径会被拒绝，包括 HTTP URL 和 `file://`；需要先将远程素材保存到本地。文本、指令和候选中不能包含 tokenizer 保留的控制 token。
+media路径相对于 **JSONL 文件所在目录**，也可使用本地绝对路径。例如 `data/train.jsonl` 中的 `assets/light.png` 对应 `data/assets/light.png`。包含 `://` 的路径会被拒绝，包括 HTTP URL 和 `file://`；需要先将素材保存到本地。
 
-编译时会为实际使用的媒体计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的媒体仍会被读取并记录摘要。当前代码不强制清单覆盖全部媒体，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../visualjev/data/compiler.py)。
+编译时会为实际使用的media计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的media仍会被读取并记录摘要。当前代码不强制清单覆盖全部media，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../visualjev/data/compiler.py)。
 
-`media_kwargs` 从训练配置传给处理器，随后保存在 checkpoint 中供推理和评估使用。默认读取基础模型的处理器设置；项目没有独立实现图片缩放或视频采样。媒体日志记录路径、摘要、视觉网格、视觉 token 数，以及处理器返回的帧索引、时间戳等信息。视频题目涉及“最后状态”时，应检查实际采到的帧是否覆盖目标时刻。
+`media_kwargs` 从训练配置传给处理器，随后保存在 checkpoint 中供推理和评估使用。默认读取基础模型的处理器设置；当前没有独立实现图片缩放或视频采样。media日志记录路径、摘要、视觉网格、视觉 token 数，以及处理器返回的帧索引、时间戳等信息。
 
 ## 划分与检查
 
-`group_id` 用来支持按素材分组划分，但读取器只检查它存在，不会自动生成训练/验证/测试集，也不会检查跨文件重复。准备正式数据时，按组隔离同一素材、连续片段和改写样本，并检查跨划分的媒体重叠。
+`group_id` 用来支持按素材分组划分，但读取器只检查它存在，不会自动生成训练/验证/测试集，也不会检查跨文件重复。准备正式数据时，按组隔离同一素材、连续片段和改写样本，并检查跨划分的media重叠。
 
-只检查 JSONL 结构和标签、不加载模型或解码媒体，可在仓库根目录运行：
+只检查 JSONL 结构和标签、不加载模型或解码media，可在仓库根目录运行：
 
 ```bash
 python - <<'CHECK'
@@ -105,6 +105,6 @@ print(f"{len(records)} records")
 CHECK
 ```
 
-读取错误会带文件名和行号。媒体存在性、消息角色、控制 token 和长度限制在之后的 `Compiler.compile` 中检查，因此通过上述校验不代表媒体已可用。
+读取错误会带文件名和行号。media存在性、消息角色、控制 token 和长度限制在之后的 `Compiler.compile` 中检查，因此通过上述校验不代表media已可用。
 
-合成集包含 6 条记录、15 道题，其中 13 道有标签。`text.jsonl` 是 `train.jsonl` 的纯文本子集，两者不能作为独立训练/测试划分。生成方法及素材说明见[合成数据说明](../data/smoke/README.md)。
+合成集包含 6 条记录、15 道题，其中 13 道有标签。`text.jsonl` 是 `train.jsonl` 的纯文本子集。生成方法及素材说明见[合成数据说明](../data/smoke/README.md)。
