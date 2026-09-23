@@ -1,8 +1,8 @@
 # Visual-Jev：SFT 与 RLCD
 
-`runner.py` 共用数据分片、token 预算、梯度同步和 checkpoint 流程。`sft.py` 实现标签监督，`rlcd.py` 实现基于 GRPO 的决策策略优化。四个 `stage` 决定更新哪些参数，`method` 决定训练目标，两者独立。
+`runner.py` 共用数据分片、token 预算、梯度同步和 checkpoint 流程。`sft.py` 实现标签监督，`rlcd.py` 实现基于 GRPO 的优化。四个 `stage` 决定更新哪些参数，`method` 决定训练目标，两者独立。
 
-这里的 RLCD 是 Visual-Jev 的实验实现，组内优势和裁剪目标参考 [DeepSeekMath 的 GRPO](https://arxiv.org/abs/2402.03300)。奖励公式以本仓库的 [rlcd.py](rlcd.py) 为准，不代表 TypeSafe 的训练方案。
+这里的 RLCD 是 Visual-Jev 的实验实现，奖励公式以本仓库的 [rlcd.py](rlcd.py) 为准。
 
 ## SFT 损失
 
