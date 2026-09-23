@@ -161,7 +161,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
   <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="六个模型按 Choice、Noul、Score 题型及文档、游戏、界面、视觉问答领域划分的准确率。" width="1000"></a>
 </p>
 
-完整设置、各数据来源分数、P50/P95 耗时及概率指标见 [Eval_3](docs/experiments/eval3.md)。
+完整设置、各数据来源分数、P50/P95 耗时及概率指标见[通用实验报告](docs/experiments/general.md)。
 
 ### Sokoban：推箱子游戏
 
@@ -216,7 +216,7 @@ docs/            架构、数据、配置、评估说明
 | [代码目录](valen/README.md) | 数据、模型、训练和评估模块 |
 | [数据格式](docs/data-format.md) | 完整样例、标签、本地媒体和数据划分 |
 | [推理与评估](docs/evaluation.md) | 响应字段、confidence 公式、指标和计时口径 |
-| [实验结果](docs/experiments/eval3.md) | 100k 训练对照、完整分数和统一测速条件 |
+| [实验结果](docs/experiments/general.md) | 100k 训练对照、完整分数和统一测速条件 |
 | [任务评测](evaluation/README.md) | Sokoban 数据生成、完整游戏评测、策略比较和轨迹回放 |
 
 

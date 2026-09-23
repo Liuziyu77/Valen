@@ -1,4 +1,4 @@
-# Eval_3：Qwen3.5-0.8B / 2B 的 100k 训练对照
+# 通用图像问答：Qwen3.5-0.8B / 2B 的 100k 训练对照
 
 ## 数据与实验设置
 
@@ -159,10 +159,10 @@ baseline 未计算候选概率分布，因此不计算 NLL/Brier。DH 概率使�
 
 ## 结果文件
 
-- [结果快照](../../assets/figures/eval3/results.json)：六个模型的准确率、平均耗时、分题型耗时和领域分数。
-- [评测图](../../assets/figures/eval3/README.md)：四张图的 PNG、SVG、PDF 及重绘方法。
-- [绘图脚本](../../scripts/eval/plot_eval3.py)：直接读取随仓库保存的快照，无需模型或原始运行目录。
-- 原始训练配置保留在来源项目的 `configs/train/eval3_100k/` 目录。
+- [结果快照](../../assets/figures/general/results.json)：六个模型的准确率、平均耗时、分题型耗时和领域分数，保留原始实验标识及指标文件路径。
+- [展示图](../../assets/figures/general/README.md)：README 使用的三张汇总图，以及额外详细图的重绘方法。
+- [绘图脚本](../../scripts/eval/plot_general.py)：从快照生成额外详细图，无需模型或原始运行目录。
+- 原始训练配置保留在来源项目；结果快照中的指标文件路径沿用当时的目录名，便于追溯。
 
 
 ## 结果范围

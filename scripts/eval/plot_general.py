@@ -1,4 +1,4 @@
-"""Reproduce the detailed Eval_3 charts from assets/figures/eval3/results.json."""
+"""Draw detail charts from the general experiment's saved results."""
 import argparse
 import json
 from pathlib import Path
@@ -9,9 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
 ROOT = Path(__file__).resolve().parents[2]
-DEST = ROOT / 'assets/figures/eval3'
-SNAPSHOT = DEST / 'results.json'
-RENDER_DEST = DEST
+SNAPSHOT = ROOT / 'assets/figures/general/results.json'
+RENDER_DEST = None
 COLORS = {'baseline': '#A3AAA7', 'sft100k': '#347B78', 'rlcd30k': '#C97558'}
 MARKERS = {'baseline': 'o', 'sft100k': 's', 'rlcd30k': 'D'}
 INK, MUTED, GRID, BG = '#203443', '#58656F', '#E9EEF1', '#FFFFFF'
@@ -176,15 +175,14 @@ def domain_accuracy(models):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output-dir', type=Path, default=DEST, help='Render a preview to a separate directory')
+    parser.add_argument('--output-dir', type=Path, required=True, help='Directory for the generated detail charts')
     args = parser.parse_args()
     global RENDER_DEST
     RENDER_DEST = args.output_dir
     RENDER_DEST.mkdir(parents=True, exist_ok=True)
-    DEST.mkdir(parents=True, exist_ok=True)
     family = 'Lato' if any(f.name == 'Lato' for f in font_manager.fontManager.ttflist) else 'DejaVu Sans'
     plt.rcParams.update({'font.family': family, 'font.size': 11, 'text.color': INK,
-                         'svg.fonttype': 'path', 'svg.hashsalt': 'valen-eval3',
+                         'svg.fonttype': 'path', 'svg.hashsalt': 'valen-general-details',
                          'pdf.fonttype': 42,
                          'axes.unicode_minus': False})
     models = read(SNAPSHOT)['models']
