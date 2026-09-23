@@ -4,8 +4,9 @@
 
 <h1 align="center">Valen · 万澜</h1>
 
+<h2 align="center">System One Model, now with vision.</h2>
+
 <p align="center">
-  <strong>System One Model, now with vision.</strong><br>
   A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
 </p>
 
@@ -26,17 +27,16 @@
   <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#demo-comparison">Demos</a> · <a href="#documentation">Documentation</a>
 </p>
 
-Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
+Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 
 <a id="demo-comparison"></a>
 
 <p align="center">
   <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Sokoban-SFT-RLCD-2B with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"></a><br>
-  <sub><strong>On this level, Valen-Sokoban-SFT-RLCD-2B solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
-  <sub>Click the animation to open the MP4. Times sum the recorded end-to-end decision latencies. Thinking plays at 20×; the other tracks play at 1×. All modes use a 10-step limit.</sub>
+  <sub><strong>Valen-Preview-0923 solves the puzzle with 1.13 s of cumulative decision latency; Qwen3.8-27B-FP8 takes 198.05 s with thinking and fails to solve it without thinking.</strong></sub><br>
 </p>
 
-## What it returns
+## Output types
 
 | Output | Use it for | Response |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Choice and Noul score all candidates in one branch per question. Score runs a se
 
 ## Requirements
 
-- Linux, Python 3.10+, and an NVIDIA GPU supporting BF16 with a CUDA 12.4-compatible driver.
+- Linux, Python 3.10+, and an NVIDIA GPU.
 - PyTorch 2.6.0, torchvision 0.21.0, Transformers 5.4.0, and PEFT 0.18.1.
 - All dependencies are declared in [pyproject.toml](pyproject.toml) and installed by the setup script.
 
@@ -69,10 +69,7 @@ For an existing Conda or virtualenv environment, see [manual installation](scrip
 
 ## Quick start
 
-Install the [requirements](#requirements), then download both models below. They are loaded together at runtime:
-
-- [Valen-Preview-0923](https://huggingface.co/Valen-Team/Valen-Preview-0923): the Valen checkpoint.
-- [Qwen3.5-2B](https://huggingface.co/Qwen/Qwen3.5-2B): the required base model.
+Install the dependencies listed in [requirements](#requirements), then download the model weights.
 
 ```bash
 # Download the Qwen3.5-2B base model.
@@ -95,9 +92,7 @@ python -m valen.evaluate \
   --output output/sft_warmup/smoke_eval
 ```
 
-The synthetic dataset contains six records and fifteen questions, thirteen with labels. Inference writes six response lines; evaluation writes thirteen predictions and `metrics.json`. These examples check the pipeline.
-
-Run the commands from the repository root. Config paths are relative to the working directory; media paths in JSONL records are relative to the JSONL file.
+`data/smoke` contains a small set of simple questions for checking that the pipeline runs correctly.
 
 <details>
 <summary>A labeled record with an image input</summary>
@@ -138,7 +133,7 @@ Each JSONL line contains one record. The example below uses the [general experim
 
 ## Training
 
-`method` selects the training objective; `stage` selects which parameters to update. Four stages are available.
+Valen supports two training methods, `SFT` and `RLCD`, selected by `method`. The `stage` setting controls which parameters are updated, with four stages available.
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="Train with SFT, optionally initialize RLCD from its checkpoint, and evaluate on held-out data." width="1000">
@@ -159,7 +154,7 @@ For a full run, copy a config and set `model_path`, `data`, `output`, `epochs` a
 # Eight GPUs on one machine. Use a fresh output directory for each run.
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/sft_warmup.json
 
-# RLCD starts from an existing decision-head checkpoint.
+# RLCD starts from an SFT-trained decision-head checkpoint.
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
@@ -172,7 +167,7 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ### Model Card
 
-Training methods and data for each model:
+We ran ablation experiments on training methods and training data:
 
 | Model | Training method | Data | Datasets |
 | --- | --- | --- | --- |
@@ -180,8 +175,8 @@ Training methods and data for each model:
 | Valen-Base-SFT-2B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
 | Valen-Base-RLCD-0.8B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
 | Valen-Base-RLCD-2B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
-| Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
-| Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+| Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) [![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+| Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) [![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
 
 #### Training Loss
 
@@ -195,7 +190,7 @@ Training methods and data for each model:
   <sub>Sokoban RLCD: training loss and reward for the 0.8B and 2B models.</sub>
 </p>
 
-### General image questions
+### General: visual question answering
 
 The experiments train on [100k records](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) and test on [5k questions](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k), using Qwen3.5-0.8B and 2B backbones. Each run used eight H200 GPUs and updated only the decision head: SFT used all 100k records, while the two-stage run used 70k for SFT and the remaining 30k for RLCD. The figures label the trained models `Valen-Base-*`; `Qwen3.5-*` are the original generation baselines.
 
@@ -209,16 +204,17 @@ The experiments train on [100k records](https://huggingface.co/datasets/Valen-Te
   <a href="assets/figures/general/task-latency.png"><img src="assets/figures/general/task-latency.png" alt="Mean latency of the four trained models on Choice, Noul and Score questions." width="1000"></a>
 </p>
 
-Choice and Noul score candidates in one branch; Score runs a separate forward pass per level. The next chart breaks accuracy down by question type and application domain.
+Choice and Noul score candidates in one branch; Score runs a separate forward pass per level. The next chart breaks accuracy down by question type and application domain. Score has only 18 questions.
+
 <p align="center">
   <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="Accuracy of six models by Choice, Noul and Score task and by documents, games, interfaces and visual QA." width="1000"></a>
 </p>
 
 See the [general experiment report](docs/experiments/general.md) for the full setup, per-source scores, P50/P95 latency and probability metrics.
 
-### Sokoban: single-step decisions and full games
+### Sokoban: box-pushing puzzles
 
-The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT decision head and continue training on [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) data for three epochs at the `vision_top` stage. All six models were tested on the same 500 single-step questions drawn from 100 levels. Any optimal action counts as correct.
+The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT decision head and continue training on [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) data for three epochs at the `vision_top` stage. All six models were tested on the same 500 single-step questions drawn from 100 levels. **Any optimal action counts as correct.**
 
 <p align="center">
   <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="Accuracy and mean end-to-end latency for six models on 500 Sokoban single-step questions." width="1000"></a>
@@ -282,12 +278,6 @@ The top-level `valen/train.py`, `inference.py` and `evaluate.py` forward to the 
 | [Inference and evaluation](docs/evaluation.md) | Response fields, confidence formulas, metrics and timing |
 | [Experiment report](docs/experiments/general.md) | 100k training comparison, full scores and latency protocol |
 | [Task evaluation](evaluation/README.md) | Sokoban generation, full-game evaluation, policy comparison and replay |
-
-The detailed guides are currently in Chinese; both READMEs cover setup and training. To run the CPU suite (processor tests skip until the base-model processor is available):
-
-```bash
-python -m pytest -q
-```
 
 ## License and acknowledgments
 
