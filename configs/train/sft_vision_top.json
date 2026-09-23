@@ -1,0 +1,23 @@
+{
+  "model_path": "models/Qwen3.5-0.8B",
+  "data": "data/smoke/train.jsonl",
+  "output": "output/sft_vision_top",
+  "stage": "vision_top",
+  "device": "cuda",
+  "dtype": "bf16",
+  "seed": 42,
+  "epochs": 3,
+  "max_steps": 100,
+  "max_length": 8192,
+  "tokens_per_step": 16384,
+  "gradient_checkpointing": true,
+  "projection_dim": 256,
+  "lora_rank": 32,
+  "lora_alpha": 64,
+  "lora_lr": 5e-05,
+  "merger_lr": 1e-05,
+  "head_lr": 0.0002,
+  "vision_lr": 2e-06,
+  "rps_weight": 0.0,
+  "save_every": 10
+}

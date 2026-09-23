@@ -1,0 +1,33 @@
+{
+  "model_path": "models/Qwen3.5-0.8B",
+  "data": "data/smoke/train.jsonl",
+  "output": "output/rlcd_joint",
+  "stage": "joint",
+  "device": "cuda",
+  "dtype": "bf16",
+  "seed": 42,
+  "epochs": 3,
+  "max_steps": 100,
+  "max_length": 8192,
+  "tokens_per_step": 16384,
+  "gradient_checkpointing": true,
+  "projection_dim": 256,
+  "lora_rank": 32,
+  "lora_alpha": 64,
+  "lora_lr": 5e-05,
+  "merger_lr": 1e-05,
+  "head_lr": 1e-05,
+  "rps_weight": 0.0,
+  "save_every": 10,
+  "method": "rlcd",
+  "rlcd": {
+    "group_size": 16,
+    "num_iterations": 2,
+    "correctness_weight": 1.0,
+    "confidence_weight": 1.0,
+    "brier_weight": 1.0,
+    "beta": 0.02,
+    "clip_epsilon": 0.2,
+    "advantage_epsilon": 1e-06
+  }
+}

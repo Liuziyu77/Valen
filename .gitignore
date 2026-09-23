@@ -1,0 +1,31 @@
+# Local environments and Python build/cache files
+.venv/
+.gpu-venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+/build/
+/dist/
+.coverage
+htmlcov/
+
+# Local credentials and editor settings
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.DS_Store
+
+# Downloaded weights, generated data and run outputs
+/models/
+/artifacts/
+/output/
+/wandb/
+/data/*
+!/data/smoke/
+*.pt
+*.pth
+*.safetensors
