@@ -1,31 +1,31 @@
 # 训练配置参考
 
-`python -m visualjev.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准，不以配置文件目录为基准；以下命令均从仓库根目录执行。
+`python -m visualjev.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准；以下命令均从仓库根目录执行。
 
-现有八份配置使用 Qwen3.5-0.8B 和合成数据，运行上限为 3 个 epoch、100 个 step，先达到的上限结束训练。它们用于跑通各 stage，不代表在正式数据上选出的超参数。
+现有八份配置使用 Qwen3.5-0.8B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。
 
-## 数据、模型和运行上限
+## 数据、模型和训练budget
 
 下表的默认值是源码在字段缺省时使用的值，示例 JSON 可以覆盖它们。
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
-| `model_path` | 必填 | 本地 Qwen3.5 模型及处理器目录；训练不会自动下载 |
+| `model_path` | 必填 | 本地 Qwen3.5 模型及处理器目录 |
 | `data` | 必填 | JSONL 文件路径；每卡读取完整文件后按记录分片 |
 | `output` | 必填 | 日志及 `latest/` checkpoint 的输出目录 |
 | `method` | `"sft"` | `sft` 或 `rlcd` |
 | `stage` | `"joint"` | `warmup`、`text`、`joint`、`vision_top` |
 | `device` | `"cuda"` | 设备；多卡 CUDA 训练按 `LOCAL_RANK` 绑定 |
-| `dtype` | `"bf16"` | 骨干精度，可选 `bf16`、`fp32`；决策头保持 FP32 |
+| `dtype` | `"bf16"` | backbone精度，可选 `bf16`、`fp32`；决策头保持 FP32 |
 | `seed` | `42` | 初始化、记录排序及采样使用的种子 |
 | `epochs` | `1` | 最大数据遍历轮数 |
-| `max_steps` | `2**63-1` | 最大批次数；不是每个 epoch 的步数 |
+| `max_steps` | `2**63-1` | 最大批次数 |
 | `max_length` | `8192` | 单个完整分支的 token 上限，超限报错 |
 | `tokens_per_step` | `16384` | 每 rank 每批的 `compute_tokens` 上限，必须为正 |
 | `media_kwargs` | `{}` | 传给官方处理器的参数；随 checkpoint 保存 |
 | `save_every` | `100` | 每隔多少批覆盖保存 `latest/`；应设为正整数，正常结束也会保存 |
 
-`tokens_per_step` 控制每次更新累积多少个完整 state，不会把它们拼成一个 padded tensor batch。state 内所有有标签题目的全部分支要一起放入预算；单个 state 超限时直接报错，不会拆分或截断。降低这个值不能解决单条记录过长的问题。
+`tokens_per_step` 控制每次更新累积多少个完整 state。state 内所有有标签题目的全部分支要一起放入预算；单个 state 超限时直接报错，不会拆分或截断。
 
 `max_length` 与 `tokens_per_step` 是两层限制。例如，一条记录有五个长度 2000 的分支：每个分支满足 `max_length=8192`，但总量为 10000，无法放入 `tokens_per_step=8000`。
 
@@ -34,21 +34,21 @@
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
 | `projection_dim` | `256` | 决策头两组投影的维度 |
-| `lora_rank` | `32` | 语言 LoRA rank；`warmup` 不创建 LoRA |
+| `lora_rank` | `32` | LLM LoRA rank；`warmup` 不创建 LoRA |
 | `lora_alpha` | `64` | LoRA alpha；dropout 固定为 0 |
 | `gradient_checkpointing` | `true` | 非 `warmup` stage 启用非重入梯度检查点 |
 | `head_lr` | `2e-4` | 决策头学习率 |
-| `lora_lr` | `5e-5` | 语言 LoRA 学习率 |
-| `merger_lr` | `1e-5` | 视觉 merger 学习率 |
+| `lora_lr` | `5e-5` | LLM LoRA 学习率 |
+| `merger_lr` | `1e-5` | VIT merger 学习率 |
 | `vision_lr` | `2e-6` | 最后四个视觉 block 的学习率 |
 | `weight_decay` | `0.01` | AdamW 的权重衰减，作用于有梯度的参数 |
 | `max_grad_norm` | `1.0` | 同步后全部可训练参数的梯度裁剪阈值 |
 | `rps_weight` | `0.0` | SFT 中 Score 的 RPS 权重；RLCD 必须为 0 |
-| `cache_frozen_features` | `false` | 仅 RLCD 使用，要求骨干完全冻结 |
+| `cache_frozen_features` | `false` | 仅 RLCD 使用，要求backbone完全冻结 |
 
-只为当前 stage 的可训练部分建立优化器组，学习率在运行中保持常数。仓库的 RLCD 示例把 `head_lr` 设为 `1e-5`，SFT 示例为 `2e-4`。LoRA 目标模块和每组参数量会写入 `run_manifest.json`。
+只为当前 stage 的可训练部分建立优化器组，学习率在运行中保持常数。当前示例把 `head_lr` 设为 `1e-5`，SFT 示例为 `2e-4`。LoRA 目标模块和每组参数量会写入 `run_manifest.json`。
 
-`warmup` 指只训练决策头的 stage，不是学习率 warmup。当前没有 scheduler、混合 stage 自动切换或验证集早停；需要通过多次命令和 `--initialize` 衔接实验。
+`warmup` 指只训练决策头的 stage，不是学习率 warmup。
 
 ## RLCD 参数
 
@@ -89,7 +89,7 @@ PY
 python -m visualjev.train --config output/experiment-configs/traffic-joint.json
 ```
 
-每次独立实验使用新输出目录。普通新训练会覆盖该目录的日志和 `latest/`，不会自动分配实验编号或保存历史 checkpoint。
+每次独立实验使用新输出目录。普通新训练会覆盖该目录的日志和 `latest/`。
 
 ## 配置校验与恢复
 
