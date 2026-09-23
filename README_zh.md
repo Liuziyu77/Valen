@@ -141,11 +141,14 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ## 实验结果
 
-**100k 训练记录 · 5,000 道视觉测试题 · 0.8B 与 2B 底座。** 每个模型使用八张 H200 训练，仅更新决策头。SFT 使用全部 100k 数据；RLCD 指先用 70k 数据做 SFT，再用剩余 30k 数据做 RLCD。
+### 通用训练
 
-**Visual-Jev-2B-SFT 的准确率达到 79.02%**，比原始生成基线提高 **3.52 个百分点**；**0.8B 决策头的端到端推理速度约为基线的 1.51 倍**。
+一共**100k 训练集（vqa） · 5,000 道验证集 · 基于 Qwen3.5-0.8B 与 2B model。** 
+每次训练使用八张 H200，仅更新决策头。SFT 使用全部 100k 数据；RLCD 先用 70k 数据做 SFT，再用剩余 30k 数据做 RLCD。
 
-### 准确率
+**Visual-Jev-2B-SFT 的准确率达到 79.02%**，比原始baseline提高 **3.52 个百分点**；**0.8B 的端到端推理速度约为baseline的 1.51 倍**。
+
+#### 准确率
 
 六个模型使用相同的 5,000 道测试题。`Qwen3.5-*` 为生成基线，`Visual-Jev-{size}-SFT/RLCD` 为训练后的决策模型。准确率条形图的刻度为 **60–85%**。
 
@@ -153,23 +156,23 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
   <a href="assets/figures/eval3/accuracy.svg"><img src="assets/figures/eval3/accuracy.png" alt="六模型准确率：0.8B 基线 72.66%、SFT 74.82%、RLCD 75.02%；2B 基线 75.50%、SFT 79.02%、RLCD 78.44%。" width="1000"></a>
 </p>
 
-### 推理时间
+#### 推理时间
 
-图中仅展示 SFT 和 RLCD 决策头，统计单题端到端平均耗时，包含预处理、模型计算和输出处理。测量使用同一台八卡 H200 机器，每卡 batch size=1，每个进程预热三次；不计模型加载和预热时间。计算加速比使用的基线耗时见 [Eval_3](docs/experiments/eval3.md)。
+图中仅展示 SFT 和 RLCD 决策头，统计单题端到端平均耗时，包含预处理、模型计算和输出处理。计算加速比使用的baseline耗时见 [Eval_3](docs/experiments/eval3.md)。
 
 <p align="center">
   <a href="assets/figures/eval3/latency.svg"><img src="assets/figures/eval3/latency.png" alt="四个决策头的端到端平均耗时：0.8B SFT 156.65 ms、RLCD 155.82 ms；2B SFT 176.80 ms、RLCD 177.55 ms。图中不绘制基线。" width="1000"></a>
 </p>
 
-### 三种题型的推理时间
+#### 三种题型的推理时间
 
-两种规格的 SFT 和 RLCD 决策头分别按 Choice、Noul、Score 统计。Choice 与 Noul 在同一分支中计算候选；Score 为每个等级运行独立前向。
+两种规格的 SFT 和 RLCD 决策头分别按 Choice、Noul、Score 统计。Choice 与 Noul 在同一分支中计算候选；Score 为每个等级运行独立forward。
 
 <p align="center">
   <a href="assets/figures/eval3/latency-by-task.svg"><img src="assets/figures/eval3/latency-by-task.png" alt="四个决策头在 Choice、Noul、Score 三种题型上的推理时间，仅包含 SFT 和 RLCD，不包含生成基线。" width="1000"></a>
 </p>
 
-### 按应用领域划分的准确率
+#### 按应用领域划分的准确率
 
 六个模型在视觉问答、界面理解、游戏、文档与图表四个领域的准确率。高亮标出同一模型规格内各领域的最高分。
 
@@ -177,7 +180,7 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
   <a href="assets/figures/eval3/accuracy-by-domain.svg"><img src="assets/figures/eval3/accuracy-by-domain.png" alt="六个模型在全部四个应用领域的准确率，包含具体数值和题数。" width="1000"></a>
 </p>
 
-完整实验设置、各数据来源分数、P50/P95 耗时及概率指标见 [Eval_3](docs/experiments/eval3.md)。本次使用一个随机种子和提供的测试划分。点击图片可查看 SVG 矢量版本；[绘图脚本](scripts/eval/plot_eval3.py)可根据随仓库提供的[结果快照](assets/figures/eval3/results.json)重绘四张评测图，无需下载模型或运行产物。完整数据集和训练权重未随 Git 分发。
+完整实验设置、各数据来源分数、P50/P95 耗时及概率指标见 [Eval_3](docs/experiments/eval3.md)。
 
 ## 仓库结构
 
