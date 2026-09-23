@@ -4,7 +4,7 @@
 
 这里的 RLCD 是 Visual-Jev 的实验实现，奖励公式以本仓库的 [rlcd.py](rlcd.py) 为准。
 
-## SFT 损失
+## SFT loss
 
 [sft.py](sft.py) 对候选 logits 使用分布交叉熵。设预测概率为 p、标签分布为 y，候选数为 K：
 
@@ -25,9 +25,9 @@ $$
 
 每个 state 内先对有标签的问题平均，再对当前批次的全局有效 state 平均。一条有三道题的记录与一条有一道题的记录权重相同。Score 的多个分支先拼成同一道题的 logits，不各自增加损失权重。
 
-## RLCD 奖励与损失
+## RLCD reward与loss
 
-每道题从旧策略的候选分布中有放回采样 `group_size` 个决策，不生成文本。对采样答案 $a_i$，记其旧策略概率为 $p_i$，标签为 $y_i=y_{a_i}$：
+每道题从旧policy的候选分布中有放回采样 `group_size` 个action，不生成文本。对采样答案 $a_i$，记其旧策略概率为 $p_i$，标签为 $y_i=y_{a_i}$：
 
 $$
 r_i = w_{\mathrm{correct}}y_i
@@ -36,7 +36,7 @@ $$
 
 硬标签下，选中答案的标签 $y_i$ 表示答对与否，第二项就是 $(p_i-y_i)^2$。默认权重均为 1：以 0.9 的概率答对，奖励 0.99；以 0.9 的概率答错，奖励 −0.81。软标签保留原分布，使用期望正确性与期望二元平方误差，不先取 argmax。
 
-这里的“置信度”是所选候选的概率，不是 API 的 `confidence` 字段。后者对 Choice 做了均匀基线缩放，对 Score 衡量等级分布的集中程度，不能直接当作正确概率。Score 的 RL 动作是一个离散等级，推理仍输出等级期望值。
+这里的“置信度”是所选候选的概率。Score 的 RL 动作是一个离散action，推理仍输出期望值。
 
 组内优势为：
 
@@ -61,13 +61,13 @@ L=L_{\mathrm{policy}}+\beta D_{\mathrm{KL}}(\pi_\theta\Vert\pi_{\mathrm{ref}})
 +w_{\mathrm{Brier}}\sum_k(\pi_\theta(k)-y_k)^2.
 $$
 
-参考策略固定为 RL 开始时的模型，KL 用完整候选分布精确计算，约束策略更新幅度。无需 critic。rollout 和策略更新时关闭 dropout；训练前向仍支持 gradient checkpointing。
+参考策略固定为 RL 开始时的模型，KL 用full-distribution精确计算，约束策略更新幅度。rollout 和策略更新时关闭 dropout；训练前向仍支持 gradient checkpointing。
 
-Brier 辅助项默认开启。二分类的组内标准化可能抵消奖励幅度变化，同答案组也没有策略梯度，因此仅加置信度奖励不等于实现概率校准。Brier 提供直接的概率监督，但整个混合目标仍不保证严格校准；应在独立验证集上比较正确率、NLL 和 Brier。设 `brier_weight=0` 可关闭该辅助项。
+Brier 辅助项默认开启，设 `brier_weight=0` 可关闭该辅助项。
 
 ## 运行
 
-先按[安装说明](../../scripts/README.md#installation)准备并激活 Python 环境，下载基础模型。以下命令均在仓库根目录执行，`python` 使用当前激活的环境。RLCD 必须指定初始化 checkpoint 或恢复 checkpoint，独立实验输出到新目录。
+先按[安装说明](../../scripts/README.md#installation)准备并激活 Python 环境，下载base model。以下命令均在仓库根目录执行，`python` 使用当前激活的环境。RLCD 必须指定初始化 checkpoint 或恢复 checkpoint，独立实验输出到新目录。
 
 ```bash
 # 先训练 SFT 决策头，产生后续命令需要的 checkpoint。
@@ -111,9 +111,9 @@ VJ_GPUS=4 bash scripts/train/launch_sft.sh \
 
 `step`、`max_steps`、`save_every` 按 rollout 批次计；`optimizer_steps` 记录实际优化次数，默认每批更新两次。SFT 每批更新一次。`tokens_per_step` 仍是每卡输入预算，不包含重复策略前向的成本。题目在 state 内平均，再按全局 state 数平均，空闲 rank 参加相同次数的梯度同步。
 
-只在完整 rollout 批次结束后保存，恢复时不需要重建半批动作。checkpoint 保存各卡随机状态，以及 RL 开始时的参考增量权重；不会把恢复时的当前策略误当成新参考策略。`beta>0` 时，每张卡会额外驻留一份冻结参考模型。
+`beta>0` 时，每张卡会额外驻留一份冻结参考模型。
 
-RLCD 仅训练决策头时，可设置 `cache_frozen_features=true`：每批只提取一次骨干特征，旧策略、参考头和多次策略更新复用这些特征；每张卡首次使用时额外执行完整前向，核对 logits 完全一致。此时参考策略只需保存冻结决策头，无需额外加载一份骨干。骨干有可训练参数时拒绝启用。此开关不影响 SFT；SFT 的 `warmup` 支持 `--initialize`，可与 RLCD 共享同一初始决策头。
+RLCD 仅训练决策头时，可设置 `cache_frozen_features=true`：每批只提取一次backbone特征，旧策略、参考头和多次策略更新复用这些特征；每张卡首次使用时额外执行完整前向，核对 logits 完全一致。此时参考策略只需保存冻结决策头，无需额外加载一份backbone。backbone有可训练参数时拒绝启用。此开关不影响 SFT；SFT 的 `warmup` 支持 `--initialize`，可与 RLCD 共享同一初始决策头。
 
 `metrics.jsonl` 记录奖励、采样正确性、采样概率、置信度误差、Brier、KL、裁剪比例和零优势组比例，数值在本批的策略更新间取平均；梯度范数记录最后一次更新。正式评估使用 `python -m visualjev.evaluate`。
 
@@ -139,7 +139,7 @@ latest/
   config.json           重建模型所需的配置
 ```
 
-`latest/` 在每次保存时覆盖，当前没有按 step 保留历史版本或选取 best checkpoint 的逻辑。`checkpoint.pt` 先写临时文件再替换；随后单独写 `config.json`。需要保留某次结果时，在训练保存完成后复制整个 `latest/` 目录。
+`latest/` 在每次保存时覆盖。`checkpoint.pt` 先写临时文件再替换；随后单独写 `config.json`。需要保留某次结果时，在训练保存完成后复制整个 `latest/` 目录。
 
 这里的“增量权重”指可训练参数的完整值，包括决策头、LoRA 和当前开放的视觉参数，并非每个参数相对基础模型的数值差。冻结参数没有写入 checkpoint。RLCD 在 `beta>0` 时另存最初的参考参数，恢复时继续使用它们。
 
@@ -154,9 +154,9 @@ latest/
 
 例如 `warmup → joint` 可以初始化；`joint → warmup` 会因旧参数被重新冻结而拒绝。初始化要求 `model_path` 字符串和 `projection_dim` 与原配置一致，已有参数的形状也必须兼容。
 
-恢复只允许修改 `output`、`epochs`、`max_steps`、`device`、`save_every`，其他配置及训练 JSONL 摘要需要一致。提高 `max_steps` 不会越过已用尽的 `epochs` 上限。checkpoint 保存了各 rank 的顺序、游标和 Python/PyTorch 随机状态，但不会重新核算数据划分或适配新的进程数。
+恢复只允许修改 `output`、`epochs`、`max_steps`、`device`、`save_every`，其他配置及训练 JSONL 摘要需要一致。提高 `max_steps` 不会越过已用尽的 `epochs` 上限。checkpoint 保存了各 rank 的顺序、游标和 Python/PyTorch 随机状态。
 
-基础模型目录若有 `visualjev_manifest.json`，checkpoint 会保存它，并在加载时比较 revision 和权重摘要字段；没有清单的基础模型不具备这项校验。加载时不会重新读取全部基础权重计算摘要。只加载来源可信的本项目 checkpoint，加载器使用 `torch.load(..., weights_only=False)`。
+基础模型目录若有 `visualjev_manifest.json`，checkpoint 会保存它，并在加载时比较 revision 和权重字段。加载时不会重新读取全部基础权重计算摘要。加载器使用 `torch.load(..., weights_only=False)`。
 
 保存和恢复实现见 [checkpoint.py](checkpoint.py)，配置比较见 [runner.py](runner.py)。推理与评估共用同一加载器，详见[推理与评估](../../docs/evaluation.md)。
 
@@ -165,11 +165,10 @@ latest/
 ```bash
 python -m pytest -q
 
-# 需要本机有两张可见 GPU，并已下载 0.8B 基础模型。
+# 需要本机有两张可见 GPU，并已下载 0.8B 模型。
 python -m torch.distributed.run --standalone --nnodes=1 \
   --nproc_per_node=2 --max_restarts=0 scripts/smoke/rlcd_gpu_smoke.py
 ```
 
-CPU 测试检查奖励方向、裁剪梯度、软标签、三类输出、零优势组、参考策略与两进程恢复。GPU 短测使用 smoke 数据，覆盖文本、图片和视频，以及 LoRA、视觉 merger、决策头的更新；结果写入 `output/rlcd_gpu_smoke/result.json`。这些检查验证实现，不衡量模型质量。
-
-运行日志和 checkpoint 由上述命令在本地生成，不随仓库分发。本地运行方式见[脚本说明](../../scripts/README.md)。
+CPU 测试检查奖励方向、裁剪梯度、软标签、三类输出、零优势组、参考策略与两进程恢复。GPU 短测使用 smoke 数据，覆盖文本、图片和视频，以及 LoRA、视觉 merger、决策头的更新；结果写入 `output/rlcd_gpu_smoke/result.json`。
+运行日志和 checkpoint 由上述命令在本地生成。本地运行方式见[脚本说明](../../scripts/README.md)。
