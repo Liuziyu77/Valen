@@ -41,7 +41,7 @@ $$
 组内优势为：
 
 $$
-A_i=\frac{r_i-\operatorname{mean}(r)}{\operatorname{std}(r)+\epsilon}.
+A_i=\frac{r_i-\mathrm{mean}(r)}{\mathrm{std}(r)+\epsilon}.
 $$
 
 标准差使用总体定义；奖励完全相同的组，优势明确置零。采样动作、奖励、优势、旧策略 log-prob 在一次 rollout 的所有更新中固定。
@@ -51,8 +51,8 @@ $$
 $$
 
 $$
-L_{\mathrm{policy}}=-\operatorname{mean}_i\min\left(
-\rho_i A_i,\operatorname{clip}(\rho_i,1-\delta,1+\delta)A_i
+L_{\mathrm{policy}}=-\mathrm{mean}_i\min\left(
+\rho_i A_i,\mathrm{clip}(\rho_i,1-\delta,1+\delta)A_i
 \right).
 $$
 
