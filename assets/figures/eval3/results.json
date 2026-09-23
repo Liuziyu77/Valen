@@ -1,0 +1,203 @@
+{
+  "experiment": "Eval_3",
+  "eval_questions": 5000,
+  "train_records": 100000,
+  "data_sha256": "8505dc5a4cb4db9bdc193eface2abb005b7c963d264f83d7994ed0bb57565a15",
+  "hardware": "NVIDIA H200",
+  "latency_definition": "Mean end-to-end request latency; same 8-GPU host, batch size 1 per GPU, 3 warmups per rank.",
+  "methods": {
+    "baseline": "Original Qwen3.5, greedy generation, no thinking, max_new_tokens=16",
+    "sft100k": "100k SFT, decision head only",
+    "rlcd30k": "70k SFT followed by 30k RLCD, decision head only"
+  },
+  "source_metrics_sha256": {
+    "output/eval3_100k/08b/baseline/metrics.json": "4ceed38af03a5605b25d5a99d237347309566ba3d1a3e60e03c38a849547faf2",
+    "output/eval3_100k/latency/08b/baseline/metrics.json": "2e3536831aeadc7f6c5e82b2d9ba9a3df0cb263609704ff68200c58f9921a656",
+    "output/eval3_100k/08b/sft100k/eval/metrics.json": "ca9aa36ea2e4a46a543441584c7ac7e03d274c3f2295ba2378676fd3bb62de0e",
+    "output/eval3_100k/latency/08b/sft100k/metrics.json": "0c0fc8d66cd4050c520eb2069d2922f0bcfeeb78d13245f3d3b668ac0d0b1b8a",
+    "output/eval3_100k/08b/rlcd30k/eval/metrics.json": "d33633791dd7cfff3b2e68e656023efbaf82e4bd2ffd3422e811cf2269c580a6",
+    "output/eval3_100k/latency/08b/rlcd30k/metrics.json": "a21b640a7ff5f5e51fffe5286475a4229308f94a8526408bc5ab54763f0fc70d",
+    "output/eval3_100k/2b/baseline/metrics.json": "5722dc618138d3a0ae011febc00f277edf5c2eea1750f4b86ba3bb9d9041fd25",
+    "output/eval3_100k/latency/2b/baseline/metrics.json": "76152b69611ded659061be82fcf6e8c709d67caa30efb3e6ca30eb45068291a9",
+    "output/eval3_100k/2b/sft100k/eval/metrics.json": "83e7de339720bba0786d2b6ae67fd6e6d3852435becbe0dad2cb6288753e86e9",
+    "output/eval3_100k/latency/2b/sft100k/metrics.json": "3fbc81e1e1dd20b4e3af62c4476958529778be53a1d14ebb6ee5388f48354759",
+    "output/eval3_100k/2b/rlcd30k/eval/metrics.json": "812ccc33320785f2adfa65e1a43040a6dd5d957f0f461670dd9ecf42be2b8058",
+    "output/eval3_100k/latency/2b/rlcd30k/metrics.json": "368f331a78ee2718f3c89249be56c558ff7dc9ce3a0344d4a9aba4271bc57b8e"
+  },
+  "models": [
+    {
+      "size": "0.8B",
+      "method": "baseline",
+      "accuracy_pct": 72.66,
+      "mean_latency_ms": 235.9807609776035,
+      "task_latency_ms": {
+        "choice": 241.4061533013931,
+        "noul": 177.76683531701565,
+        "score": 152.09531401180558
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 82.6530612244898,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 83.54341736694678,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 24.34417628541448,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 87.19832109129067,
+          "questions": 953
+        }
+      }
+    },
+    {
+      "size": "0.8B",
+      "method": "sft100k",
+      "accuracy_pct": 74.82,
+      "mean_latency_ms": 156.6465152343735,
+      "task_latency_ms": {
+        "choice": 158.92802986819146,
+        "noul": 115.01881557556236,
+        "score": 503.37368332677414
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 81.63265306122449,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 85.92436974789915,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 31.689401888772302,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 89.40188877229801,
+          "questions": 953
+        }
+      }
+    },
+    {
+      "size": "0.8B",
+      "method": "rlcd30k",
+      "accuracy_pct": 75.02,
+      "mean_latency_ms": 155.8159384606406,
+      "task_latency_ms": {
+        "choice": 158.34022557460094,
+        "noul": 112.68203947321508,
+        "score": 474.31228428872095
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 82.77310924369748,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 84.52380952380952,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 32.00419727177335,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 90.24134312696746,
+          "questions": 953
+        }
+      }
+    },
+    {
+      "size": "2B",
+      "method": "baseline",
+      "accuracy_pct": 75.5,
+      "mean_latency_ms": 229.22863550260664,
+      "task_latency_ms": {
+        "choice": 234.7347113000718,
+        "noul": 169.13999379740244,
+        "score": 166.5737519247664
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 85.1140456182473,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 87.88515406162465,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 27.70199370409234,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 87.93284365162644,
+          "questions": 953
+        }
+      }
+    },
+    {
+      "size": "2B",
+      "method": "sft100k",
+      "accuracy_pct": 79.02,
+      "mean_latency_ms": 176.80015741270037,
+      "task_latency_ms": {
+        "choice": 180.572680718717,
+        "noul": 118.35955945250028,
+        "score": 518.6196305892535
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 86.79471788715486,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 86.62464985994399,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 41.86778593913956,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 91.18572927597062,
+          "questions": 953
+        }
+      }
+    },
+    {
+      "size": "2B",
+      "method": "rlcd30k",
+      "accuracy_pct": 78.44,
+      "mean_latency_ms": 177.55067411717027,
+      "task_latency_ms": {
+        "choice": 181.37386711011402,
+        "noul": 118.38844575758958,
+        "score": 522.5510336458683
+      },
+      "domains": {
+        "vqa": {
+          "accuracy_pct": 85.47418967587035,
+          "questions": 1666
+        },
+        "ui": {
+          "accuracy_pct": 86.27450980392157,
+          "questions": 1428
+        },
+        "game": {
+          "accuracy_pct": 41.55299055613851,
+          "questions": 953
+        },
+        "document": {
+          "accuracy_pct": 91.2906610703043,
+          "questions": 953
+        }
+      }
+    }
+  ]
+}

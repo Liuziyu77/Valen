@@ -7,6 +7,7 @@
 | `setup/` | 安装依赖，下载并核验 Qwen3.5-0.8B |
 | `train/` | 单机多卡 SFT/RLCD 启动器 |
 | `data/` | 生成随仓库提供的合成样例 |
+| `eval/` | 从 Eval_3 结果快照重绘 README 中的实验图 |
 | `smoke/` | 单卡、双卡训练与恢复集成检查 |
 
 <a id="installation"></a>
@@ -93,6 +94,17 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 ```
 
 输出包括逐题预测 `predictions.jsonl`、每卡分片及汇总 `metrics.json`。指标包含硬标签准确率、NLL、Brier，以及适用的二分类 F1、Score 误差和 RPS；按任务、模态、语言及领域汇总。命令始终使用显式 `--data` 参数指定的数据。评估固定使用温度 1，没有 `--calibration` 参数；指标公式和时间统计的范围见[推理与评估](../docs/evaluation.md)。
+
+## 实验图
+
+`scripts/eval/plot_eval3.py` 读取 `assets/figures/eval3/results.json`，输出四张图的 PNG、SVG 和 PDF。需要另行安装 Matplotlib，不需要模型、GPU 或原始评测目录。
+
+```bash
+python -m pip install matplotlib
+python scripts/eval/plot_eval3.py --output-dir /tmp/visual-jev-eval3-preview
+```
+
+省略 `--output-dir` 时覆盖 `assets/figures/eval3/` 中的配图。实验设置和结果见[Eval_3 报告](../docs/experiments/eval3.md)。
 
 ## 验证
 
