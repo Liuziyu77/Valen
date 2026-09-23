@@ -100,31 +100,40 @@ The synthetic dataset contains six records and fifteen questions, thirteen with 
 Run the commands from the repository root. Config paths are relative to the working directory; media paths in JSONL records are relative to the JSONL file.
 
 <details>
-<summary>A minimal labeled record</summary>
+<summary>A labeled record with an image input</summary>
 
-Each JSONL line contains one record. This expanded example defines a binary question with a hard label; soft probability labels are also supported.
+Each JSONL line contains one record. The example below uses the [general experiment overview figure](assets/figures/general/overview.png) from the repository, assuming the file is saved as `example.jsonl` in the repository root.
 
 ```json
 {
-  "group_id": "traffic-light-001",
+  "group_id": "general-overview-2b",
   "request": {
-    "state": "The traffic light is green.",
+    "state": {
+      "messages": [{
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Compare the accuracy and the average latency per question of the 2B models in the figure."},
+          {"type": "image_url", "image_url": {"url": "assets/figures/general/overview.png"}}
+        ]
+      }]
+    },
     "questions": {
-      "go": {
-        "type": "noul",
-        "instructions": "Only a green light permits crossing. Is crossing permitted?"
+      "best_2b": {
+        "type": "choice",
+        "instructions": "Among the 2B models with average latency below 200 ms per question, which has the highest accuracy?",
+        "criteria": {
+          "qwen": "Qwen3.5-2B",
+          "sft": "Valen-Base-SFT-2B",
+          "rlcd": "Valen-Base-RLCD-2B"
+        }
       }
     }
   },
   "targets": {
-    "go": {"probabilities": {"true": 1.0, "false": 0.0}}
-  },
-  "assets": []
+    "best_2b": {"probabilities": {"qwen": 0.0, "sft": 1.0, "rlcd": 0.0}}
+  }
 }
 ```
-
-`targets` are training/evaluation labels and are excluded from model input. They can be omitted for inference, which still requires `group_id`. A Noul answer has the form `{"type": "noul", "noul": 0.8}`, where the number is `P(true)`. See the [synthetic examples](data/smoke/) and [data format](docs/data-format.md) for Choice, Score and media records.
-
 </details>
 
 ## Training
