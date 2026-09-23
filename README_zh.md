@@ -38,7 +38,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ### 与 27B 生成模型对比
 
-在相同推箱子关卡、相同 10 步上限下，**Valen-Preview-0923** 用 9 次决策通关，累计决策耗时为 1.13 秒。Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。thinking 轨迹以 20× 加速回放，其余两条保持 1×。
+**Valen-Preview-0923** 读取棋盘图像，在每一步选择移动方向。在相同关卡，Valen-Preview-0923 用 9 次决策通关，累计决策耗时为 1.13 秒。Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。
 
 <p align="center">
   <img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"><br>
@@ -46,11 +46,10 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ### 图像模糊与动作置信度
 
-九档高斯模糊展示了视觉信息逐渐变得不清晰时，**Valen-Preview-0923** 的动作概率与决策置信度如何变化。清晰图像上，最优动作 `DOWN` 的概率为 93.7%，决策置信度为 91.6%；模糊半径达到 72 px 时，两者分别为 39.4% 和 19.2%。
+高斯模糊展示 **Valen-Preview-0923** 如何应对视觉细节的减少，决策与置信度动态变化的情况。清晰图像上的决策置信度为 91.6%，最强模糊下为 19.2%。
 
 <p align="center">
   <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"><br>
-  <sub>曲线上的每个点对应一次模型推理，采样点之间的数值为播放插值。</sub>
 </p>
 
 ### 四局并行能力展示

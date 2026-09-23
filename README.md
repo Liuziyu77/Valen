@@ -28,9 +28,7 @@
 
 ## ✨ Introduction
 
-The Red Queen hypothesis (proposed by *Leigh Maiorana Van Valen*) in the age of AI: ***The world does not wait for reasoning. Intelligence must keep up.***
-
-Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
+Valen (万澜) brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 
 <a id="demos"></a>
 
@@ -40,7 +38,7 @@ Valen brings visual perception to System One decision-making. Inspired by [Jev](
 
 ### Against a 27B generation model
 
-On the same Sokoban level with a 10-step cap, **Valen-Preview-0923** solves the puzzle in 9 decisions with 1.13 seconds of cumulative decision latency. Qwen3.8-27B-FP8 takes 198.05 seconds in thinking mode and fails to solve it in no-thinking mode. The thinking replay runs at 20× speed; the other two run at 1×.
+**Valen-Preview-0923** reads the board image and selects a movement direction at each step. On the same level, Valen-Preview-0923 solves the puzzle in 9 decisions with 1.13 seconds of cumulative decision latency. Qwen3.8-27B-FP8 takes 198.05 seconds in thinking mode and fails to solve it in no-thinking mode.
 
 <p align="center">
   <img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-Preview-0923 with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"><br>
@@ -48,11 +46,10 @@ On the same Sokoban level with a 10-step cap, **Valen-Preview-0923** solves the 
 
 ### Image blur and action confidence
 
-Nine Gaussian blur levels show how **Valen-Preview-0923** changes its action probabilities and decision confidence as visual information becomes less clear. On the clear image, the optimal action `DOWN` has 93.7% probability and decision confidence is 91.6%; at 72 px blur, these values are 39.4% and 19.2%.
+Gaussian blur reveals how **Valen-Preview-0923** adapts its decisions and confidence as visual detail decreases. Decision confidence is 91.6% on the clear image and 19.2% at the strongest blur.
 
 <p align="center">
   <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 action probabilities and decision confidence across nine measured levels of Gaussian image blur." width="1000"><br>
-  <sub>Each plot dot is one model inference; values between samples are interpolated for playback.</sub>
 </p>
 
 ### Four games in parallel
