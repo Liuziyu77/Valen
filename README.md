@@ -2,7 +2,7 @@
   <img src="assets/branding/valen-logo-v2.png" alt="Valen — a slate-blue V with flowing motion trails and a muted rose crown" width="720">
 </p>
 
-<h2 align="center">System One Model, now with vision.</h2>
+<h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
   A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
@@ -25,8 +25,7 @@
   <a href="#requirements">🛠️ Requirements</a> · <a href="#quick-start">🚀 Quick start</a> · <a href="#training">🧠 Training</a> · <a href="#results">📊 Results</a> · <a href="#demo-comparison">🎬 Demos</a> · <a href="#documentation">📚 Documentation</a>
 </p>
 
-The Red Queen hypothesis (proposed by Leigh Maiorana Van Valen) in the age of AI: intelligence must keep pace with new tasks and environments. 
-Valen — Run to stay in place. Evolve to move forward.
+The Red Queen hypothesis (proposed by *Leigh Maiorana Van Valen*) in the age of AI: **The world does not wait for reasoning. Intelligence must keep up.**
 
 Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 

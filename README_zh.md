@@ -2,7 +2,7 @@
   <img src="assets/branding/valen-logo-v2.png" alt="Valen — 灰蓝色 V 形速度流线与灰玫瑰色王冠标志" width="720">
 </p>
 
-<h2 align="center">System One Model, now with vision.</h2>
+<h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
   A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
