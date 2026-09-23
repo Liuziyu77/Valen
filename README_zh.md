@@ -4,7 +4,7 @@
 
 <h1 align="center">Visual-Jev</h1>
 
-<p align="center">根据text，image或video，对给定的candidates评分。</p>
+<p align="center">输入text，image或video，对给定的candidates评分。</p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-0F766E?style=flat-square" alt="许可证：Apache 2.0"></a>
