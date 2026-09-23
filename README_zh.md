@@ -24,7 +24,7 @@
 
 <p align="center">
   <a href="README.md">English</a> · <b>简体中文</b><br>
-  <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#实验结果">实验结果</a> · <a href="#demo-comparison">演示</a> · <a href="#文档">文档</a>
+  <a href="#环境要求">🛠️ 环境要求</a> · <a href="#快速开始">🚀 快速开始</a> · <a href="#训练">🧠 训练</a> · <a href="#实验结果">📊 实验结果</a> · <a href="#demo-comparison">🎬 演示</a> · <a href="#文档">📚 文档</a>
 </p>
 
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
@@ -36,7 +36,9 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
   <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
 </p>
 
-## 输出类型
+<a id="输出类型"></a>
+
+## 🎯 输出类型
 
 | 类型 | 用途 | 返回内容 |
 | --- | --- | --- |
@@ -52,7 +54,9 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级单独执行backbone forward pass，再将 logits 一起归一化。公共 state 只编码一次，但在backbone的每个分支中重复计算。详见[架构说明](docs/architecture.md)和[响应字段与公式](docs/evaluation.md)。
 
-## 环境要求
+<a id="环境要求"></a>
+
+## 🛠️ 环境要求
 
 - Linux、Python 3.10+，NVIDIA GPU。
 - PyTorch 2.6.0、torchvision 0.21.0、Transformers 5.4.0、PEFT 0.18.1。
@@ -67,7 +71,9 @@ source .venv/bin/activate
 
 已有 Conda 或 virtualenv 环境时，参见[手动安装说明](scripts/README.md#installation)。安装脚本创建 `.venv`，模型权重需要另行下载。
 
-## 快速开始
+<a id="快速开始"></a>
+
+## 🚀 快速开始
 
 先按[环境要求](#环境要求)安装依赖。依赖安装完成后，需下载模型权重。
 
@@ -131,7 +137,9 @@ JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](as
 ```
 </details>
 
-## 训练
+<a id="训练"></a>
+
+## 🧠 训练
 
 当前 Valen 支持 `SFT` 和 `RLCD` 两种训练 `method`，`stage` 决定更新哪些参数，当前支持四种 stage 配置。
 
@@ -163,7 +171,9 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
 
 checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
 
-## 实验结果
+<a id="实验结果"></a>
+
+## 📊 实验结果
 
 ### Model Card
 
@@ -177,6 +187,8 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 | Valen-Base-RLCD-2B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
 | Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) [![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
 | Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) [![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+
+Sokoban 的训练集和评测集均包含在 [Valen-Eval-Game](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 中，训练与评测分别使用对应划分。
 
 #### Training Loss
 
@@ -235,19 +247,22 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="100 局 Sokoban 完整游戏的通关数量，以及各模型成功局的实测通关时间分布。" width="1000"></a>
 </p>
 
-## 演示
+<a id="演示"></a>
+
+## 🎬 演示
 
 ### 四局并行能力展示
 
-四条成功的 **Valen-Sokoban-SFT-RLCD-2B** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒；在并行回放时间轴上，四局均于 1.24 秒内完成。
+四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
 
 <p align="center">
-  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Sokoban-SFT-RLCD-2B 成功轨迹以记录速度并行播放。" width="1000"></a><br>
-  <sub>点击动画打开 MP4。每次模型决策完成时，画面按记录的真实延迟推进。</sub>
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。" width="1000"></a><br>
 </p>
 
 
-## 仓库结构
+<a id="仓库结构"></a>
+
+## 📁 仓库结构
 
 ```text
 valen/
@@ -263,9 +278,9 @@ tests/           CPU 测试，包含双进程训练与恢复检查
 docs/            架构、数据、配置、评估说明
 ```
 
-顶层 `valen/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](valen/README.md)列出了实现入口和对应测试。
+<a id="文档"></a>
 
-## 文档
+## 📚 文档
 
 | 文档 | 内容 |
 | --- | --- |
@@ -280,8 +295,12 @@ docs/            架构、数据、配置、评估说明
 | [任务评测](evaluation/README.md) | Sokoban 数据生成、完整游戏评测、策略比较和轨迹回放 |
 
 
-## 许可与致谢
+<a id="许可与致谢"></a>
+
+## 🤝 许可与致谢
 
 代码使用 [Apache 2.0](LICENSE) 许可。基础模型和来源数据集遵循各自的许可。
 
 模型基于 [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B)，决策接口受 [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发。
+
+欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。

@@ -8,11 +8,11 @@ from huggingface_hub import HfApi, snapshot_download
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default="models/Qwen3.5-0.8B")
-    parser.add_argument("--revision", default="2fc06364715b967f1860aea9cf38778875588b17")
+    parser.add_argument("--output", default="models/Qwen3.5-2B")
+    parser.add_argument("--revision", default="15852e8c16360a2fea060d615a32b45270f8a8fc")
     parser.add_argument("--verify-local", action="store_true", help="Validate already downloaded files against Hub SHA256")
     args = parser.parse_args()
-    repo = "Qwen/Qwen3.5-0.8B"
+    repo = "Qwen/Qwen3.5-2B"
     revision = HfApi().model_info(repo, revision=args.revision).sha
     path = Path(args.output) if args.verify_local else Path(snapshot_download(repo, revision=revision, local_dir=args.output))
     import hashlib

@@ -4,7 +4,7 @@
 
 | 目录 | 工具 |
 | --- | --- |
-| `setup/` | 安装依赖，下载并核验 Qwen3.5-0.8B |
+| `setup/` | 安装依赖，下载并核验 Qwen3.5-2B |
 | `train/` | 单机多卡 SFT/RLCD 启动器 |
 | `data/` | 生成随仓库提供的合成样例 |
 | `eval/` | 从通用实验快照绘制额外的详细图 |
@@ -36,15 +36,15 @@ python -m pip install -e '.[test]'
 python scripts/setup/prepare_model.py
 ```
 
-下载脚本固定使用 `Qwen/Qwen3.5-0.8B`，默认 revision 为 `2fc06364715b967f1860aea9cf38778875588b17`。它下载快照，逐个检查 `.safetensors` 权重与 Hub 上的大小、摘要，加载本地 config/processor，然后生成 `valen_manifest.json`，记录 revision、依赖版本、权重摘要和媒体默认配置。
+下载脚本固定使用 `Qwen/Qwen3.5-2B`，默认 revision 为 `15852e8c16360a2fea060d615a32b45270f8a8fc`。它下载快照，逐个检查 `.safetensors` 权重与 Hub 上的大小、摘要，加载本地 config/processor，然后生成 `valen_manifest.json`，记录 revision、依赖版本、权重摘要和媒体默认配置。
 
 | 参数 | 默认值 / 用途 |
 | --- | --- |
-| `--output` | 默认 `models/Qwen3.5-0.8B`；自定义后需同步修改训练配置 |
+| `--output` | 默认 `models/Qwen3.5-2B`；自定义后需同步修改训练配置 |
 | `--revision` | 指定要解析并下载的 revision |
 | `--verify-local` | 核验输出目录内已有文件并重写清单，不下载权重；仍需访问 Hub 获取元数据 |
 
-脚本没有 `--repo` 参数，不能通过修改输出目录下载 2B。2B 需另行准备包含权重、config、tokenizer 和媒体处理器配置的完整快照，再设置训练配置中的 `model_path`。下载完成后，训练使用本地文件加载，不会补齐缺失权重。
+脚本固定下载 2B，与主 README 和八份训练示例配置一致。使用其他规格时，需另行下载完整快照，并修改训练配置中的 `model_path`。下载完成后，训练使用本地文件加载，不会补齐缺失权重。
 
 `data/smoke/` 已包含合成样例；重新生成可运行 `python scripts/data/make_smoke_data.py`，它会覆盖这些样例。自有数据格式见[数据说明](../docs/data-format.md)。
 
@@ -111,7 +111,7 @@ python scripts/eval/plot_general.py --output-dir /tmp/valen-general-details
 ```bash
 python -m pytest -q
 
-# 以下检查需要已下载 0.8B 模型和相应数量的 GPU。
+# 以下检查需要已下载 2B 模型和相应数量的 GPU。
 python scripts/smoke/gpu_smoke.py
 python -m torch.distributed.run --standalone --nnodes=1 \
   --nproc_per_node=2 --max_restarts=0 scripts/smoke/multi_gpu_smoke.py

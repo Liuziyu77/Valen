@@ -2,7 +2,7 @@
 
 `python -m valen.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准；以下命令均从仓库根目录执行。
 
-现有八份配置使用 Qwen3.5-0.8B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。
+现有八份配置使用 Qwen3.5-2B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。
 
 ## 数据、模型和训练budget
 
