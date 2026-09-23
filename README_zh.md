@@ -33,9 +33,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 <a id="demo-comparison"></a>
 
 <p align="center">
-  <video src="assets/demos/sokoban-model-comparison.mp4" controls muted playsinline width="1000" aria-label="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。">
-    <a href="assets/demos/sokoban-model-comparison.mp4">观看视频（MP4）</a>
-  </video><br>
+  <a href="assets/demos/sokoban-model-comparison.mp4"><img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-Preview-0923 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"></a><br>
   <sub><strong> Valen-Preview-0923 以 1.13 秒累计决策耗时通关；Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。</strong></sub><br>
   <a href="#演示">更多 demo 参见下方 ↓</a>
 </p>
@@ -262,9 +260,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 视频完整保留模型的实测选择：12 和 20 px 时为 `RIGHT`，48 px 时为 `UP`，其余六档为 `DOWN`。在 72 px 时，`DOWN` 的概率为 39.4%，决策置信度为 19.2%。
 
 <p align="center">
-  <video src="assets/demos/valen-preview-0923-blur-confidence.mp4" controls muted playsinline width="1000" aria-label="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。">
-    <a href="assets/demos/valen-preview-0923-blur-confidence.mp4">观看视频（MP4）</a>
-  </video><br>
+  <a href="assets/demos/valen-preview-0923-blur-confidence.mp4"><img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"></a><br>
   <sub>曲线上的每个点对应一次模型推理，采样点之间的数值为播放插值。</sub>
 </p>
 
@@ -273,9 +269,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 四条成功的 **Valen-Preview-0923** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
 
 <p align="center">
-  <video src="assets/demos/sokoban-four-game-showcase.mp4" controls muted playsinline width="1000" aria-label="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。">
-    <a href="assets/demos/sokoban-four-game-showcase.mp4">观看视频（MP4）</a>
-  </video><br>
+  <a href="assets/demos/sokoban-four-game-showcase.mp4"><img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-Preview-0923 成功轨迹以记录速度并行播放。" width="1000"></a><br>
 </p>
 
 
