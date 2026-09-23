@@ -1,6 +1,6 @@
 # 数据格式
 
-训练、推理和评估读取 UTF-8 JSONL，每行一条记录。完整可运行样例在 [data/smoke](../data/smoke/)。
+训练、推理和评估共用 UTF-8 JSONL：每行一条 JSON 记录，空行忽略。读取器一次将文件读入内存，空文件会报错。以下示例为方便阅读展开显示，写入 `.jsonl` 时需压成一行。可直接使用的文件见 [data/smoke](../data/smoke/)。
 
 ```json
 {
@@ -8,37 +8,68 @@
   "request": {
     "state": "The traffic light is green.",
     "questions": {
+      "color": {
+        "type": "choice",
+        "instructions": "Choose the observed traffic light color.",
+        "criteria": {"red": "Red light", "green": "Green light", "unknown": "Not visible"}
+      },
       "go": {
         "type": "noul",
         "instructions": "Only a green light permits crossing. Is crossing permitted?"
+      },
+      "risk": {
+        "type": "score",
+        "instructions": "Rate the risk of crossing under this light.",
+        "criteria": ["Low: green light", "Medium: light not visible", "High: red light"]
       }
     }
   },
   "targets": {
-    "go": {"probabilities": {"true": 1.0, "false": 0.0}}
+    "color": {"probabilities": {"red": 0.0, "green": 1.0, "unknown": 0.0}},
+    "go": {"probabilities": {"true": 1.0, "false": 0.0}},
+    "risk": {"probabilities": {"0": 1.0, "1": 0.0, "2": 0.0}}
   },
-  "assets": []
+  "assets": [],
+  "meta": {"domain": "traffic", "modality": "text", "language_bucket": "en"}
 }
 ```
 
-## 字段
+## 记录与问题
 
-| 字段 | 约定 |
-| --- | --- |
-| `group_id` | 必填，标识同一素材或相关样本组；构建训练/验证/测试划分时按组隔离，并检查重复媒体。读取器不会自动替你划分。 |
-| `request.state` | 纯文本字符串，或 `{"messages": [...]}` 对象。 |
-| `request.questions` | 非空映射，键是问题 ID，值包含 `type`、非空 `instructions` 和适用的 `criteria`。 |
-| `targets` | 可选的问题 ID 到标签的映射；推理可省略。标签和问题 ID 不进入提示词。 |
-| `assets` | 可选媒体清单，每项至少包含 `path`、`sha256`；提供哈希时会核验对应输入媒体。 |
-| `meta` | 可选审计信息，不进入提示词；评估可按 `domain`、`modality`、`language_bucket` 汇总。 |
+| 字段 | 约定 | 是否进入提示词 |
+| --- | --- | --- |
+| `group_id` | 必填非空组标识，建议使用字符串；同一素材及其变体使用相同组标识 | 否 |
+| `request.state` | 文本字符串，或 `{"messages": [...]}` 对象 | 是 |
+| `request.questions` | 非空映射；键是返回答案时使用的问题 ID | ID 不进入，问题内容进入 |
+| `targets` | 可选的问题 ID → 标签映射；不能包含未知问题 ID | 否 |
+| `assets` | 可选媒体清单，每项包含 `path`、`sha256` | 否 |
+| `meta` | 可选审计信息；评估读取 `record_id`、`domain`、`modality`、`language_bucket` | 否 |
 
-Choice 的 `criteria` 是 1–255 个候选名到非空描述的映射。Noul 不需要 `criteria`，标签键固定为 `true` 和 `false`。Score 的 `criteria` 是 2–10 个有序描述组成的列表，标签键为字符串 `"0"`、`"1"` 等。
+每道题都需要小写的 `type` 和非空字符串 `instructions`。`criteria` 的格式由任务决定：
 
-`probabilities` 必须完整覆盖候选键，所有值有限且非负，总和为 1。支持硬标签和软概率标签。缺标签的问题在训练和评估时跳过，推理时仍返回答案；软标签计入概率指标，但不计入硬标签准确率。
+| `type` | `criteria` | 标签键 | 顺序 |
+| --- | --- | --- | --- |
+| `choice` | 1–255 个候选名 → 非空描述的映射 | 候选名，必须完整覆盖 | 训练打乱候选及对应标签；推理保留输入顺序 |
+| `noul` | 不需要，提供时也不参与候选构造 | `"true"`、`"false"` | 固定 true 在前 |
+| `score` | 2–10 个非空等级描述的列表 | `"0"` 到 `"K-1"` | 保留列表顺序，从 0 开始 |
+
+Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分支只看到自己的等级描述，输出的数值按列表索引计算，范围为 `[0, K-1]`。如果业务需要 1–5 分或 0–100 分，在调用端转换。
+
+## 标签与缺失值
+
+`probabilities` 必须恰好覆盖当前题的全部候选键。每个值是有限、非负的数字，不能是布尔值；总和按 `abs_tol=1e-6` 校验为 1。单个候选为 1、其余为 0 是硬标签；标注者分歧等场景可以保留软标签。
+
+以下写法都表示该题无标签：省略对应的 target、target 为 `null`、省略 `probabilities`、`probabilities` 为 `null`。若完全没有标签，省略 `targets` 或使用 `{}`，不要把整个 `targets` 写成 `null`。
+
+- 训练、评估：跳过无标签问题；整条记录无标签时不读取其媒体。
+- 推理：返回所有问题的答案，即使没有标签。若提供了标签，读取器仍会校验它们。
+- 软标签：参与交叉熵、Brier、RPS 等分布指标，不计入硬标签准确率和 Noul 混淆矩阵。
+
+`label_source`、`votes` 等附加标签字段可以用于记录来源，训练不读取这些字段，也不会按投票数额外加权。训练先在每个 state 内平均题目损失，再按 state 平均；评估按题汇总，两者分母不同。
 
 ## 图片和视频
 
-将 `state` 替换为消息对象，例如：
+将 `state` 换成消息对象即可：
 
 ```json
 {
@@ -52,10 +83,28 @@ Choice 的 `criteria` 是 1–255 个候选名到非空描述的映射。Noul �
 }
 ```
 
-视频使用 `{"type": "video_url", "video_url": {"url": "assets/clip.mp4"}}`。媒体路径相对于 JSONL 文件所在目录，也支持本地绝对路径；远程 URL 必须先下载到本地。消息角色支持 `user`、`assistant`、`system`。
+视频条目使用 `{"type": "video_url", "video_url": {"url": "assets/clip.mp4"}}`。可以在消息中放多个媒体条目。角色支持 `user`、`assistant`、`system`；`content` 也可以直接是文本字符串。
 
-媒体处理参数在训练配置的 `media_kwargs` 中设置，随 checkpoint 保存。编译器记录媒体哈希、视觉 token 数及视频处理器提供的采样信息。
+媒体路径相对于 **JSONL 文件所在目录**，也可使用本地绝对路径。例如 `data/train.jsonl` 中的 `assets/light.png` 对应 `data/assets/light.png`。包含 `://` 的路径会被拒绝，包括 HTTP URL 和 `file://`；需要先将远程素材保存到本地。文本、指令和候选中不能包含 tokenizer 保留的控制 token。
 
-## 样例与正式数据
+编译时会为实际使用的媒体计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的媒体仍会被读取并记录摘要。当前代码不强制清单覆盖全部媒体，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../visionjev/data/compiler.py)。
 
-随仓库提供的六条合成记录覆盖文本、图片、视频及三类输出，仅用于检查流程。`text.jsonl` 是 `train.jsonl` 的子集，不能把两者作为独立训练/测试划分。生成方式见[合成数据说明](../data/smoke/README.md)。正式评估应使用独立的有标签数据，并报告数据来源与划分方法。
+`media_kwargs` 从训练配置传给处理器，随后保存在 checkpoint 中供推理和评估使用。默认读取基础模型的处理器设置；项目没有独立实现图片缩放或视频采样。媒体日志记录路径、摘要、视觉网格、视觉 token 数，以及处理器返回的帧索引、时间戳等信息。视频题目涉及“最后状态”时，应检查实际采到的帧是否覆盖目标时刻。
+
+## 划分与检查
+
+`group_id` 用来支持按素材分组划分，但读取器只检查它存在，不会自动生成训练/验证/测试集，也不会检查跨文件重复。准备正式数据时，按组隔离同一素材、连续片段和改写样本，并检查跨划分的媒体重叠。
+
+只检查 JSONL 结构和标签、不加载模型或解码媒体，可在仓库根目录运行：
+
+```bash
+python - <<'CHECK'
+from visionjev.data.schema import read_jsonl
+records = read_jsonl("data/smoke/train.jsonl")
+print(f"{len(records)} records")
+CHECK
+```
+
+读取错误会带文件名和行号。媒体存在性、消息角色、控制 token 和长度限制在之后的 `Compiler.compile` 中检查，因此通过上述校验不代表媒体已可用。
+
+合成集包含 6 条记录、15 道题，其中 13 道有标签。`text.jsonl` 是 `train.jsonl` 的纯文本子集，两者不能作为独立训练/测试划分。生成方法及素材说明见[合成数据说明](../data/smoke/README.md)。
