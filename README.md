@@ -164,7 +164,7 @@ See [Eval_3](docs/experiments/eval3.md) for the full setup, per-source scores, P
 
 ### Sokoban: single-step decisions and full games
 
-The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT decision head and continue training on Sokoban data for three epochs at the `vision_top` stage. All six models were tested on the same 500 single-step questions drawn from 100 levels. Any optimal action counts as correct.
+The four `Valen-Sokoban-*` models start from the general experiment's 100k SFT decision head and continue training on [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) data for three epochs at the `vision_top` stage. All six models were tested on the same 500 single-step questions drawn from 100 levels. Any optimal action counts as correct.
 
 <p align="center">
   <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="Accuracy and mean end-to-end latency for six models on 500 Sokoban single-step questions." width="1000"></a>
