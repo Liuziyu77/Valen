@@ -141,9 +141,9 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ## Results
 
-### Training setup
+### Training setup (general)
 
-**100k VQA training records · 5,000 evaluation questions · Qwen3.5-0.8B and 2B backbones.** Each training run used eight H200 GPUs and updated only the decision head. SFT used all 100k records; the two-stage run used 70k for SFT and the remaining 30k for RLCD.
+[**100k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) VQA training records · [**5k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k) evaluation questions · Qwen3.5-0.8B and 2B backbones. Each training run used eight H200 GPUs and updated only the decision head. SFT used all 100k records; the two-stage run used 70k for SFT and the remaining 30k for RLCD.
 
 **Visual-Jev-2B-SFT reached 79.02% accuracy**, 3.52 percentage points above the original Qwen baseline. The **0.8B decision models ran about 1.51× faster end to end** than the baseline.
 
