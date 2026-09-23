@@ -132,7 +132,7 @@ JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](as
 
 ## 训练
 
-`method` 决定训练目标，`stage` 决定更新哪些参数。可选四种 stage 配置。
+当前 Valen 支持 `SFT` 和 `RLCD` 两种训练 `method`，`stage` 决定更新哪些参数，当前支持四种 stage 配置。
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="先用 SFT 训练，可选择从其 checkpoint 初始化 RLCD，再用独立测试集评估。" width="1000">
@@ -153,7 +153,7 @@ SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都�
 # 单机八卡；每次独立实验使用新的输出目录。
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/sft_warmup.json
 
-# RLCD 从已有决策头 checkpoint 初始化。
+# RLCD 从已的 SFT 的决策头的 checkpoint 上初始化。
 VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
@@ -164,16 +164,30 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ## 实验结果
 
-### Model Card：初步消融对比
+### Model Card
 
-| 模型 | 每步均值 ms | P50 ms | P95 ms | 平均每局 s | 无效动作率 | 实际模型调用 |
-|---|---:|---:|---:|---:|---:|---:|
-| Valen-Base-SFT-0.8B | 123.77 | 121.85 | 128.96 | 22.43 | 77.05% | 36195 |
-| Valen-Base-SFT-2B | 126.80 | 125.13 | 131.00 | 22.61 | 78.62% | 35614 |
-| Valen-Base-RLCD-0.8B | 122.02 | 120.81 | 127.18 | 21.18 | 75.79% | 34669 |
-| Valen-Base-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
-| Valen-Sokoban-SFT-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
-| Valen-Sokoban-RLCD-2B | 126.44 | 124.83 | 131.37 | 20.73 | 72.88% | 32758 |
+我们对模型的训练方法，训练数据进行了消融实验：
+
+| 模型 | 训练方法 | 数据 | 数据集 |
+| --- | --- | --- | --- |
+| Valen-Base-SFT-0.8B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-SFT-2B | SFT | General SFT 100k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-0.8B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Base-RLCD-2B | SFT + RLCD | General SFT 70k + General RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
+| Valen-Sokoban-SFT-2B | SFT + SFT | General SFT 100k + Sokoban SFT 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+| Valen-Sokoban-RLCD-2B | SFT + RLCD | General SFT 100k + Sokoban RLCD 30k | [![General 100k](https://img.shields.io/badge/General-100k-2185B5?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=555555)](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)<br>[![Sokoban](https://img.shields.io/badge/Sokoban-8A63B8?style=flat&logo=huggingface&logoColor=FFD21E)](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+
+#### Training Loss
+
+<p align="center">
+  <a href="assets/figures/training/sft100k_loss.png"><img src="assets/figures/training/sft100k_loss.png" alt="Valen-Base-SFT-0.8B 和 2B 在 General 100k 数据上的训练损失曲线。" width="1000"></a><br>
+  <sub>General SFT：0.8B 与 2B 的训练 loss。</sub>
+</p>
+
+<p align="center">
+  <a href="assets/figures/training/sokoban_rlcd_loss_reward.png"><img src="assets/figures/training/sokoban_rlcd_loss_reward.png" alt="Valen-Sokoban-RLCD 的 0.8B 和 2B 模型在训练过程中的 loss 与平均 reward。" width="1000"></a><br>
+  <sub>Sokoban RLCD：0.8B 与 2B 的训练 loss 和 reward。</sub>
+</p>
 
 ### General：通用VQA
 
