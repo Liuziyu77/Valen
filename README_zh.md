@@ -141,46 +141,52 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ## 实验结果
 
-### 通用训练
+### General：通用图文题
 
-一共[**100k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) 训练集 · [**5k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)道验证集 · 基于 Qwen3.5-0.8B 与 2B model。 
-每次训练使用八张 H200，仅更新decision head。SFT 使用全部 100k 数据；RLCD 先用 70k 数据做 SFT，再用剩余 30k 数据做 RLCD。
-
-**Visual-Jev-2B-SFT 的准确率达到 79.02%**，比原始baseline提高 **3.52 个百分点**；**0.8B 的端到端推理速度约为baseline的 1.51 倍**。
-
-#### 准确率
-
-六个模型使用相同的 5,000 道测试题。`Qwen3.5-*` 为生成基线，`Visual-Jev-{size}-SFT/RLCD` 为训练后的决策模型。准确率条形图的刻度为 **60–85%**。
+[100k 训练集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k)、[5k 测试集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)，底座为 Qwen3.5-0.8B 和 2B。每次训练使用八张 H200，仅更新决策头：SFT 使用全部 100k 数据；两阶段方案先用 70k 做 SFT，再用剩余 30k 做 RLCD。图中的 `Valen-Base-*` 是训练后的决策模型，`Qwen3.5-*` 是原始生成基线。
 
 <p align="center">
-  <a href="assets/figures/eval3/accuracy.svg"><img src="assets/figures/eval3/accuracy.png" alt="六模型准确率：0.8B 基线 72.66%、SFT 74.82%、RLCD 75.02%；2B 基线 75.50%、SFT 79.02%、RLCD 78.44%。" width="1000"></a>
+  <a href="assets/figures/general/overview.png"><img src="assets/figures/general/overview.png" alt="六个模型在 5,000 道通用题上的准确率与单题平均端到端耗时。" width="1000"></a>
 </p>
 
-#### 推理时间
-
-图中仅展示 SFT 和 RLCD 决策头，统计单题端到端平均耗时，包含预处理、模型计算和输出处理。计算加速比使用的baseline耗时见 [Eval_3](docs/experiments/eval3.md)。
+**Valen-Base-SFT-2B 的准确率为 79.02%**，比同规格基线高 **3.52 个百分点**。0.8B 的 SFT 和 RLCD 模型单题平均耗时分别为 156.65 和 155.82 毫秒，相对 235.98 毫秒的基线约快 1.51 倍。端到端耗时包含预处理、模型计算和输出处理。
 
 <p align="center">
-  <a href="assets/figures/eval3/latency.svg"><img src="assets/figures/eval3/latency.png" alt="四个决策头的端到端平均耗时：0.8B SFT 156.65 ms、RLCD 155.82 ms；2B SFT 176.80 ms、RLCD 177.55 ms。图中不绘制基线。" width="1000"></a>
+  <a href="assets/figures/general/task-latency.png"><img src="assets/figures/general/task-latency.png" alt="四个训练后模型在 Choice、Noul、Score 三种题型上的平均单题耗时。" width="1000"></a>
 </p>
 
-#### 三种题型的推理时间
-
-两种规格的 SFT 和 RLCD 决策头分别按 Choice、Noul、Score 统计。Choice 与 Noul 在同一分支中计算候选；Score 为每个等级运行独立forward。
+Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运行前向。下图列出各题型及应用领域的准确率。Score 只有 18 题，不宜据此判断模型在该题型上的稳定表现。
 
 <p align="center">
-  <a href="assets/figures/eval3/latency-by-task.svg"><img src="assets/figures/eval3/latency-by-task.png" alt="四个决策头在 Choice、Noul、Score 三种题型上的推理时间，仅包含 SFT 和 RLCD，不包含生成基线。" width="1000"></a>
+  <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="六个模型按 Choice、Noul、Score 题型及文档、游戏、界面、视觉问答领域划分的准确率。" width="1000"></a>
 </p>
 
-#### 按应用领域划分的准确率
+完整设置、各数据来源分数、P50/P95 耗时及概率指标见 [Eval_3](docs/experiments/eval3.md)。
 
-六个模型在视觉问答、界面理解、游戏、文档与图表四个领域的准确率。高亮标出同一模型规格内各领域的最高分。
+### Sokoban：单步决策与完整游戏
+
+四个 `Valen-Sokoban-*` 模型从通用实验的 100k SFT 决策头出发，在 Sokoban 数据上以 `vision_top` 模式续训 3 个 epoch。六个模型使用同一批来自 100 关的 500 道单步题；预测属于任一最优动作即算正确。
 
 <p align="center">
-  <a href="assets/figures/eval3/accuracy-by-domain.svg"><img src="assets/figures/eval3/accuracy-by-domain.png" alt="六个模型在全部四个应用领域的准确率，包含具体数值和题数。" width="1000"></a>
+  <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="六个模型在 500 道 Sokoban 单步题上的准确率与平均端到端耗时。" width="1000"></a>
 </p>
 
-完整实验设置、各数据来源分数、P50/P95 耗时及概率指标见 [Eval_3](docs/experiments/eval3.md)。
+| 模型 | 单步正确 / 500 | 单步端到端均值 | 完整游戏通关 / 100 |
+| --- | ---: | ---: | ---: |
+| Qwen3.5-0.8B | 158（31.60%） | 152.54 ms | 未评测 |
+| Valen-Sokoban-SFT-0.8B | 403（80.60%） | 114.06 ms | 18 |
+| Valen-Sokoban-RLCD-0.8B | 415（83.00%） | 113.95 ms | 24 |
+| Qwen3.5-2B | 136（27.20%） | 155.73 ms | 0 |
+| Valen-Sokoban-SFT-2B | 418（83.60%） | 126.82 ms | 20 |
+| Valen-Sokoban-RLCD-2B | 438（87.60%） | 127.31 ms | 38 |
+
+单步准确率不等于完整游戏通关率。单步耗时在单张 H200 上以 batch size 1 测得，预热三题，不计模型加载。完整游戏每关从初态开始，只尝试一次，最多 200 步，不使用动作缓存、回退或求解器；下图右侧的耗时仅统计成功通关的局。
+
+<p align="center">
+  <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="100 局 Sokoban 完整游戏的通关数量，以及各模型成功局的实测通关时间分布。" width="1000"></a>
+</p>
+
+这 100 关来自此前按 `Valen-Sokoban-RLCD-2B` 通关结果筛选的 simple 子集，不能当作无偏的全量泛化测试。各模型成功的关卡也不同，右图的通关时间不适合直接比较同题推理速度。0.8B 原始基线尚未评测完整游戏。评测流程见 [Sokoban 说明](evaluation/sokoban/README.md)。
 
 ## 仓库结构
 
