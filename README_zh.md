@@ -148,6 +148,7 @@ checkpoint 保存可训练参数增量和训练状态，加载时仍需原始基
 | [脚本说明](scripts/README.md) | 环境、训练、评估和数据工具 |
 | [代码目录](visionjev/README.md) | 数据、模型、训练和评估模块 |
 | [数据文档](docs/data-format.md) | JSONL 格式、媒体路径和划分约定 |
+| [任务评测](evaluation/README.md) | Sokoban 数据生成、完整游戏评测、策略比较和轨迹回放 |
 
 详细文档目前以中文为主；中英文 README 均包含安装和训练流程。CPU 测试命令（未准备基础模型处理器时，相关测试会跳过）：
 

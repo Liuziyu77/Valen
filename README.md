@@ -148,6 +148,7 @@ Checkpoints store trainable parameter deltas and training state; loading them al
 | [Script guide](scripts/README.md) | Setup, training, evaluation and smoke checks |
 | [Code map](visionjev/README.md) | Data, modeling, training and evaluation modules |
 | [Data notes](docs/data-format.md) | JSONL schema, media paths and split conventions |
+| [Task evaluation](evaluation/README.md) | Sokoban generation, full-game evaluation, policy comparison and replay |
 
 The detailed guides are currently in Chinese; both READMEs cover setup and training. To run the CPU suite (processor tests skip until the base-model processor is available):
 

@@ -19,7 +19,7 @@ Repository = "https://github.com/Liuziyu77/Visual-Jev"
 Issues = "https://github.com/Liuziyu77/Visual-Jev/issues"
 
 [tool.setuptools.packages.find]
-include = ["visionjev*"]
+include = ["visionjev*", "evaluation*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -23,6 +23,7 @@ htmlcov/
 /models/
 /artifacts/
 /output/
+/evaluation/**/results/
 /wandb/
 /data/*
 !/data/smoke/
