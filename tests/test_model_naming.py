@@ -4,10 +4,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visualjev import MODEL_NAME
-from visualjev.evaluation.inference import answer, predict
-from visualjev.modeling.model import VisualJev
-from visualjev.training.checkpoint import load_checkpoint
+from valen import MODEL_NAME
+from valen.evaluation.inference import answer, predict
+from valen.modeling.model import Valen
+from valen.training.checkpoint import load_checkpoint
 
 
 class Backbone(torch.nn.Module):
@@ -22,8 +22,8 @@ class Backbone(torch.nn.Module):
 
 
 @pytest.mark.parametrize("kind", ["choice", "noul", "score"])
-def test_response_uses_visualjev_without_changing_decisions_or_usage(kind):
-    model = VisualJev(Backbone(), projection_dim=4)
+def test_response_uses_valen_without_changing_decisions_or_usage(kind):
+    model = Valen(Backbone(), projection_dim=4)
     keys = ["false", "true"] if kind == "noul" else ["0", "1"]
     question = SimpleNamespace(
         qid="decision", kind=kind, keys=keys, descriptions=["low", "high"],
@@ -32,14 +32,14 @@ def test_response_uses_visualjev_without_changing_decisions_or_usage(kind):
     compiled = SimpleNamespace(questions=[question], logical_tokens=3, compute_tokens=3)
     expected_answer = answer(question, model(question), temperature=1.3)
     response = predict(model, compiled, temperature=1.3)
-    assert response == {"model": "VisualJev", "answers": {"decision": expected_answer},
+    assert response == {"model": "Valen", "answers": {"decision": expected_answer},
                         "usage": {"input_tokens": 3, "output_tokens": 0},
                         "internal_usage": {"compute_tokens": 3}}
-    assert model.model_name == MODEL_NAME == "VisualJev"
+    assert model.model_name == MODEL_NAME == "Valen"
 
 
 def test_checkpoint_parameter_keys_remain_compatible(tmp_path):
-    model = VisualJev(Backbone(), projection_dim=4)
+    model = Valen(Backbone(), projection_dim=4)
     frozen = model.backbone.embedding.weight.detach().clone()
     # The pre-rename checkpoint stores named tensors, not the model class.
     weights = {"head.decision.weight": torch.arange(32, dtype=torch.float32).reshape(4, 8),
@@ -47,7 +47,7 @@ def test_checkpoint_parameter_keys_remain_compatible(tmp_path):
     torch.save({"weights": weights, "progress": {"epoch": 1, "step": 147},
                 "base_manifest": None}, tmp_path / "checkpoint.pt")
     payload = load_checkpoint(tmp_path, model)
-    assert type(model).__name__ == "VisualJev"
+    assert type(model).__name__ == "Valen"
     assert payload["progress"] == {"epoch": 1, "step": 147}
     for key, value in weights.items():
         torch.testing.assert_close(model.state_dict()[key], value, rtol=0, atol=0)

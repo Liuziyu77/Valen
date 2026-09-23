@@ -1,12 +1,12 @@
 # 代码目录
 
-命令入口位于包顶层，实际逻辑分为数据、模型、训练、评估四部分。下面的路径可直接用于定位实现；端到端流程见[架构说明](../docs/architecture.md)。此处的 `visualjev/evaluation/` 负责通用逐题评估；仓库根目录另有[任务评测包](../evaluation/README.md)，实现 Sokoban 环境和完整游戏评测。
+命令入口位于包顶层，实际逻辑分为数据、模型、训练、评估四部分。下面的路径可直接用于定位实现；端到端流程见[架构说明](../docs/architecture.md)。此处的 `valen/evaluation/` 负责通用逐题评估；仓库根目录另有[任务评测包](../evaluation/README.md)，实现 Sokoban 环境和完整游戏评测。
 
 | 文件 | 主要对象或函数 | 职责 |
 | --- | --- | --- |
 | [data/schema.py](data/schema.py) | `candidates`、`target_distribution`、`read_jsonl` | 构造三类候选，校验标签，读取记录 |
 | [data/compiler.py](data/compiler.py) | `Compiler`、`CompiledState`、`Question`、`Branch` | 解析媒体，编码上下文，展开问题分支，记录读取位置与 token 数 |
-| [modeling/model.py](modeling/model.py) | `VisualJev`、`DecisionHead`、`build_model`、`optimizer_groups` | 加载骨干，配置 LoRA/视觉参数，计算候选 logits，建立参数组 |
+| [modeling/model.py](modeling/model.py) | `Valen`、`DecisionHead`、`build_model`、`optimizer_groups` | 加载骨干，配置 LoRA/视觉参数，计算候选 logits，建立参数组 |
 | [training/runner.py](training/runner.py) | `normalize_config`、`run` | 共用训练循环、打包预算、初始化与恢复、日志和保存 |
 | [training/sft.py](training/sft.py) | `SFTObjective`、`question_loss` | 分布交叉熵与可选 Score RPS |
 | [training/rlcd.py](training/rlcd.py) | `RLCDObjective`、`Rollout` | 候选采样、奖励与优势、裁剪损失、固定参考策略和特征复用 |
@@ -18,7 +18,7 @@
 
 ## 调用关系
 
-`train.py`、`inference.py`、`evaluate.py` 只调用对应子模块的 `main()`。Python 导入使用实现所在的子包，例如 `visualjev.data.compiler.Compiler`。
+`train.py`、`inference.py`、`evaluate.py` 只调用对应子模块的 `main()`。Python 导入使用实现所在的子包，例如 `valen.data.compiler.Compiler`。
 
 训练中，`runner.run` 先构建模型、优化器和编译器，再把有标签记录编译成一个 pack。训练目标共用以下接口：
 
@@ -28,7 +28,7 @@
 
 `num_iterations` 决定一个 pack 更新几次，`metric_names` 决定 runner 汇总哪些目标专用指标。新增训练目标时，除实现这些方法，还需在 `normalize_config` 和目标选择处注册。
 
-推理调用 `predict → VisualJev.forward → answer`。评估直接逐题前向，再分别调用 `question_metrics` 和 `answer`；它不调用 `predict`，所以逐题输出与推理响应的结构不同。
+推理调用 `predict → Valen.forward → answer`。评估直接逐题前向，再分别调用 `question_metrics` 和 `answer`；它不调用 `predict`，所以逐题输出与推理响应的结构不同。
 
 ## 测试对应关系
 
@@ -48,4 +48,4 @@
 
 CPU 测试主要使用小模型替身。真实处理器测试需要本地 `models/Qwen3.5-0.8B/tokenizer.json` 等处理器文件；没有时跳过。真实权重加载、视觉梯度和 NCCL 恢复由 `scripts/smoke/` 中的 GPU 检查覆盖，命令见[脚本说明](../scripts/README.md)。
 
-模型类使用 `VisualJev`；响应的 `model` 字段来自包顶层的 `MODEL_NAME`。Python 包、命令入口和下载模型清单使用 `visualjev` 命名。checkpoint 的参数键不变；加载器也能读取模型目录中仅有一份、字段完整的旧清单文件。
+模型类使用 `Valen`；响应的 `model` 字段来自包顶层的 `MODEL_NAME`。Python 包、命令入口和下载模型清单使用 `valen` 命名。checkpoint 的参数键不变；加载器也能读取模型目录中仅有一份、字段完整的旧清单文件。

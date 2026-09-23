@@ -20,7 +20,7 @@ python -m pip install matplotlib
 python scripts/eval/plot_eval3.py
 
 # Render to a separate directory.
-python scripts/eval/plot_eval3.py --output-dir /tmp/visual-jev-eval3-preview
+python scripts/eval/plot_eval3.py --output-dir /tmp/valen-eval3-preview
 ```
 
 The renderer writes PNG, SVG and PDF, using Lato when available and DejaVu Sans otherwise. It reads the bundled snapshot without accessing the original experiment outputs.

@@ -11,9 +11,9 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from visualjev.training import runner
-from visualjev.training.checkpoint import save_checkpoint
-from visualjev.training.distributed import close
+from valen.training import runner
+from valen.training.checkpoint import save_checkpoint
+from valen.training.distributed import close
 
 
 class TinyModel(torch.nn.Module):

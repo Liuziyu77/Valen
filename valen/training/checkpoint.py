@@ -3,7 +3,7 @@ import json
 import random
 from pathlib import Path
 import torch
-from visualjev.modeling.manifest import read_base_manifest
+from valen.modeling.manifest import read_base_manifest
 
 
 def capture_rank_state(progress, rng):

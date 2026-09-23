@@ -11,4 +11,4 @@ VJ_CONFIG="${1:-configs/train/sft_joint.json}"
 if (( $# > 0 )); then shift; fi
 exec "$VJ_PYTHON" -m torch.distributed.run --standalone --nnodes=1 \
     --nproc_per_node="$VJ_GPUS" --max_restarts=0 \
-    -m visualjev.train --config "$VJ_CONFIG" "$@"
+    -m valen.train --config "$VJ_CONFIG" "$@"

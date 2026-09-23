@@ -1,4 +1,4 @@
-"""Visual-Jev request construction. Hidden state stays outside requests."""
+"""Valen request construction. Hidden state stays outside requests."""
 import hashlib
 from . import VERSION
 from .env import ACTIONS, canonical_hash, state_hash

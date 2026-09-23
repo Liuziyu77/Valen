@@ -71,14 +71,14 @@ class MemoizedPolicy:
         return dict(result, cache_hit=False, model_calls=1)
 
 
-class VisualJevPolicy:
+class ValenPolicy:
     def __init__(self, checkpoint, device="cuda"):
         import torch
         from transformers import AutoProcessor
-        from visualjev.data.compiler import Compiler
-        from visualjev.modeling.model import build_model
-        from visualjev.training.checkpoint import load_checkpoint
-        from visualjev.evaluation.inference import predict
+        from valen.data.compiler import Compiler
+        from valen.modeling.model import build_model
+        from valen.training.checkpoint import load_checkpoint
+        from valen.evaluation.inference import predict
         checkpoint = Path(checkpoint).resolve()
         config = json.loads((checkpoint / "config.json").read_text())
         config.update(device=device, gradient_checkpointing=False)
@@ -274,16 +274,16 @@ def evaluate(eval_dir, output, policy_name="random", checkpoint=None, model_path
         levels = levels[:limit]
     require(num_shards >= 1 and 0 <= shard_index < num_shards <= len(levels), "Invalid shard configuration")
     levels = levels[shard_index::num_shards]
-    require(policy_name in ("random", "oracle", "visualjev", "qwen"), "Unknown policy")
+    require(policy_name in ("random", "oracle", "valen", "qwen"), "Unknown policy")
     require(wall_timeout > 0, "Wall timeout must be positive")
     if output.exists() and any(output.iterdir()):
         raise FileExistsError("Refusing to overwrite run: " + str(output))
     output.mkdir(parents=True, exist_ok=True)
     policy = None
     identity = {"policy": policy_name}
-    if policy_name == "visualjev":
+    if policy_name == "valen":
         require(checkpoint is not None, "--checkpoint is required")
-        policy = VisualJevPolicy(checkpoint, device)
+        policy = ValenPolicy(checkpoint, device)
         identity.update(checkpoint=str(Path(checkpoint).resolve()), checkpoint_sha256=sha256_file(Path(checkpoint)/"checkpoint.pt"))
         identity["media_kwargs"] = policy.media_kwargs
     elif policy_name == "qwen":
@@ -296,7 +296,7 @@ def evaluate(eval_dir, output, policy_name="random", checkpoint=None, model_path
     elif policy_name == "random":
         policy = RandomPolicy(seed)
     if memoize:
-        require(policy_name in ("visualjev", "qwen"), "Memoization is only for stateless deterministic model policies")
+        require(policy_name in ("valen", "qwen"), "Memoization is only for stateless deterministic model policies")
         policy = MemoizedPolicy(policy)
     config = {"version": VERSION, **identity, "eval_dir": str(eval_dir), "seed": seed,
               "temperature": 1.0, "wall_timeout": wall_timeout, "save_frames": save_frames,
@@ -328,7 +328,7 @@ def main():
     root = Path.cwd()
     parser.add_argument("--eval-dir", type=Path, default=root / "data/eval_sokoban")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--policy", choices=("random", "oracle", "visualjev", "qwen"), default="random")
+    parser.add_argument("--policy", choices=("random", "oracle", "valen", "qwen"), default="random")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--model-path", type=Path)
     parser.add_argument("--device", default="cuda")

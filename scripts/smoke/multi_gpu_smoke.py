@@ -3,8 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 import torch
-from visualjev.training.distributed import initialize, close
-from visualjev.training.runner import run
+from valen.training.distributed import initialize, close
+from valen.training.runner import run
 
 
 def weight_digest(model):
@@ -64,7 +64,7 @@ def main():
                   "checks": ["all_ranks_identical_weights", "unequal_state_counts", "idle_rank_tail",
                              "no_duplicate_or_dropped_states", "per_rank_checkpoint", "resume_matches_uninterrupted_exactly"]}
         (root / "result.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-        print("VISUALJEV_MULTI_GPU_SMOKE_PASS", flush=True)
+        print("VALEN_MULTI_GPU_SMOKE_PASS", flush=True)
 
 
 if __name__ == "__main__":

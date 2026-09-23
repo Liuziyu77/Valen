@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import random
 import torch
-from visualjev.training.checkpoint import load_checkpoint
-from visualjev.evaluation.inference import predict
-from visualjev.modeling.model import build_model
-from visualjev.data.schema import read_jsonl
-from visualjev.training.runner import run
+from valen.training.checkpoint import load_checkpoint
+from valen.evaluation.inference import predict
+from valen.modeling.model import build_model
+from valen.data.schema import read_jsonl
+from valen.training.runner import run
 
 
 def main():
@@ -74,7 +74,7 @@ def main():
               "tasks": ["choice", "noul", "score"], "modalities": ["text", "image", "video"],
               "checks": ["pretrained_embedding_exact", "joint_forward_backward", "finite_gradients", "all_trainable_groups_receive_gradients", "lora_updated", "save_reload_exact", "optimizer_resume", "head_warmup", "text_sft", "joint_sft_initialization"]}
     result_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print("VISUALJEV_GPU_SMOKE_PASS", flush=True)
+    print("VALEN_GPU_SMOKE_PASS", flush=True)
 
 
 if __name__ == "__main__":

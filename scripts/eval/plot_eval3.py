@@ -1,4 +1,4 @@
-"""Reproduce the four README charts from assets/figures/eval3/results.json."""
+"""Reproduce the detailed Eval_3 charts from assets/figures/eval3/results.json."""
 import argparse
 import json
 from pathlib import Path
@@ -28,7 +28,7 @@ def model_name(row):
     if row['method'] == 'baseline':
         return f"Qwen3.5-{row['size']}"
     suffix = 'SFT' if row['method'] == 'sft100k' else 'RLCD'
-    return f"Visual-Jev-{row['size']}-{suffix}"
+    return f"Valen-Base-{suffix}-{row['size']}"
 
 
 PAPER, RULE, TEXT, SUBTLE = '#FFFFFF', '#DDDCD5', '#252B2B', '#727976'
@@ -184,7 +184,7 @@ def main():
     DEST.mkdir(parents=True, exist_ok=True)
     family = 'Lato' if any(f.name == 'Lato' for f in font_manager.fontManager.ttflist) else 'DejaVu Sans'
     plt.rcParams.update({'font.family': family, 'font.size': 11, 'text.color': INK,
-                         'svg.fonttype': 'path', 'svg.hashsalt': 'visualjev-eval3',
+                         'svg.fonttype': 'path', 'svg.hashsalt': 'valen-eval3',
                          'pdf.fonttype': 42,
                          'axes.unicode_minus': False})
     models = read(SNAPSHOT)['models']

@@ -1,4 +1,4 @@
-"""Visual-Jev RLCD experiment: GRPO over categorical decisions, with calibration.
+"""Valen RLCD experiment: GRPO over categorical decisions, with calibration.
 
 This is an explicit local design, not TypeSafe's unpublished RLCD implementation.
 Rollouts and rewards are frozen for all policy updates in one group batch.
@@ -98,7 +98,7 @@ class RLCDObjective:
         self.cache_verified = False
         if self.cache_features and (not hasattr(model, "extract_features") or
                                     any(p.requires_grad for p in model.backbone.parameters())):
-            raise ValueError("Feature reuse requires a fully frozen Visual-Jev backbone")
+            raise ValueError("Feature reuse requires a fully frozen Valen backbone")
         if self.options["beta"]:
             names = {name for name, parameter in model.named_parameters() if parameter.requires_grad}
             if resuming:

@@ -1,4 +1,4 @@
-# Visual-Jev 脚本
+# Valen 脚本
 
 所有命令在仓库根目录执行，`python` 指已安装项目依赖的 Python 3.10+ 环境。
 
@@ -36,7 +36,7 @@ python -m pip install -e '.[test]'
 python scripts/setup/prepare_model.py
 ```
 
-下载脚本固定使用 `Qwen/Qwen3.5-0.8B`，默认 revision 为 `2fc06364715b967f1860aea9cf38778875588b17`。它下载快照，逐个检查 `.safetensors` 权重与 Hub 上的大小、摘要，加载本地 config/processor，然后生成 `visualjev_manifest.json`，记录 revision、依赖版本、权重摘要和媒体默认配置。
+下载脚本固定使用 `Qwen/Qwen3.5-0.8B`，默认 revision 为 `2fc06364715b967f1860aea9cf38778875588b17`。它下载快照，逐个检查 `.safetensors` 权重与 Hub 上的大小、摘要，加载本地 config/processor，然后生成 `valen_manifest.json`，记录 revision、依赖版本、权重摘要和媒体默认配置。
 
 | 参数 | 默认值 / 用途 |
 | --- | --- |
@@ -51,12 +51,12 @@ python scripts/setup/prepare_model.py
 ## 训练与推理
 
 ```bash
-python -m visualjev.train --config configs/train/sft_warmup.json
+python -m valen.train --config configs/train/sft_warmup.json
 
 VJ_GPUS=4 bash scripts/train/launch_sft.sh configs/train/rlcd_joint.json \
   --initialize output/sft_warmup/latest
 
-python -m visualjev.inference \
+python -m valen.inference \
   --checkpoint output/rlcd_joint/latest \
   --data data/smoke/train.jsonl \
   --output output/rlcd_joint/predictions.jsonl
@@ -64,15 +64,15 @@ python -m visualjev.inference \
 
 `launch_sft.sh` 支持两种训练目标；`VJ_GPUS` 指定本机进程数（默认 2），`VJ_PYTHON` 指定解释器（默认 `python`），`CUDA_VISIBLE_DEVICES` 选择 GPU。不传配置时使用 `sft_joint.json`；首个配置参数之后的参数原样传给训练 CLI。`tokens_per_step` 是每卡预算。推理输出文件的父目录需已存在。
 
-八份基础配置覆盖 SFT/RLCD × 四种 stage，均使用合成数据和短程设置。正式训练需调整 `data`、`model_path`、`epochs`、`max_steps` 和 `output`。每次独立训练使用新的输出目录；初始化与恢复见[训练指南](../visualjev/training/README.md)。
+八份基础配置覆盖 SFT/RLCD × 四种 stage，均使用合成数据和短程设置。正式训练需调整 `data`、`model_path`、`epochs`、`max_steps` 和 `output`。每次独立训练使用新的输出目录；初始化与恢复见[训练指南](../valen/training/README.md)。
 
 ## 命令参数
 
 | 命令 | 必填 | 可选 |
 | --- | --- | --- |
-| `python -m visualjev.train` | `--config` | `--method {sft,rlcd}`、`--output`、互斥的 `--initialize` / `--resume` |
-| `python -m visualjev.inference` | `--checkpoint`、`--data`、`--output`（文件） | `--device`（默认 `cuda`）、`--calibration` |
-| `python -m visualjev.evaluate` | `--checkpoint`、`--data`、`--output`（目录） | `--device`（默认 `cuda`） |
+| `python -m valen.train` | `--config` | `--method {sft,rlcd}`、`--output`、互斥的 `--initialize` / `--resume` |
+| `python -m valen.inference` | `--checkpoint`、`--data`、`--output`（文件） | `--device`（默认 `cuda`）、`--calibration` |
+| `python -m valen.evaluate` | `--checkpoint`、`--data`、`--output`（目录） | `--device`（默认 `cuda`） |
 
 训练设备、学习率、数据路径等在 JSON 中设置，不能直接使用 `train --device` 或 `train --data`。详细字段见[配置参考](../docs/configuration.md)。各入口可通过 `--help` 查看参数，需要先安装 Python 依赖。
 
@@ -80,14 +80,14 @@ python -m visualjev.inference \
 
 ```bash
 # 合成样例只检查流程；正式评估替换为独立测试集。
-python -m visualjev.evaluate \
+python -m valen.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
 
 # 本机四卡评估，同一有标签问题只处理一次。
 python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
-  -m visualjev.evaluate \
+  -m valen.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval_4gpu
@@ -101,7 +101,7 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 
 ```bash
 python -m pip install matplotlib
-python scripts/eval/plot_eval3.py --output-dir /tmp/visual-jev-eval3-preview
+python scripts/eval/plot_eval3.py --output-dir /tmp/valen-eval3-preview
 ```
 
 省略 `--output-dir` 时覆盖 `assets/figures/eval3/` 中的配图。实验设置和结果见[Eval_3 报告](../docs/experiments/eval3.md)。
@@ -127,7 +127,7 @@ CPU 测试不需要模型权重；与真实处理器相关的测试在没有本�
 | `multi_gpu_smoke.py` | 必须为 2 | SFT 梯度同步、不等分片、空闲 rank、恢复与连续训练一致 | `artifacts/multi_gpu_smoke/result.json` |
 | `rlcd_gpu_smoke.py` | 必须为 2 | RLCD 更新、固定参考策略、三类决策、恢复与连续训练一致 | `output/rlcd_gpu_smoke/result.json` |
 
-这些脚本使用固定的模型路径和输出目录，重新运行会覆盖对应产物，不接受训练 CLI 的参数。CPU 测试的文件与覆盖范围见[代码目录](../visualjev/README.md#测试对应关系)。
+这些脚本使用固定的模型路径和输出目录，重新运行会覆盖对应产物，不接受训练 CLI 的参数。CPU 测试的文件与覆盖范围见[代码目录](../valen/README.md#测试对应关系)。
 
 ## 常见问题
 

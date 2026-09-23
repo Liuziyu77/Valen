@@ -1,1 +1,0 @@
-"""Visual-Jev modeling components."""

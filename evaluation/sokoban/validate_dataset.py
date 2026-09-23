@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import time
 from PIL import Image
-from visualjev.data.schema import validate_record
+from valen.data.schema import validate_record
 from .dataset import sha256_file
 from .env import ACTIONS, Board, State, canonical_hash, state_hash, transition
 from .generator import SOURCES, difficulty
