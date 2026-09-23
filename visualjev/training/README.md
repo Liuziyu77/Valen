@@ -8,13 +8,20 @@
 
 [sft.py](sft.py) 对候选 logits 使用分布交叉熵。设预测概率为 p、标签分布为 y，候选数为 K：
 
-```text
-CE = -sum(y[k] * log(p[k]))
-RPS = mean((cumsum(p)[:-1] - cumsum(y)[:-1])²)
-L_sft = CE + rps_weight * RPS    # 仅 Score 计算 RPS
-```
+$$
+\mathrm{CE}=-\sum_{k=1}^{K}y_k\log p_k.
+$$
 
-硬标签和软标签使用同一公式。`rps_weight` 默认 0，此时三种任务都只优化交叉熵。Score 的 RPS 区分等级间的远近，使用前 K−1 个累积分布差；Choice 和 Noul 的 RPS 项为 0。
+$$
+\mathrm{RPS}=\frac{1}{K-1}\sum_{j=1}^{K-1}
+\left(\sum_{k=1}^{j}(p_k-y_k)\right)^2.
+$$
+
+$$
+L_{\mathrm{SFT}}=\mathrm{CE}+w_{\mathrm{RPS}}\mathrm{RPS}.
+$$
+
+硬标签和软标签使用同一公式。`rps_weight` 对应公式中的 RPS 权重，默认 0，此时三种任务都只优化交叉熵。Score 的 RPS 区分等级间的远近，使用前 K−1 个累积分布差；Choice 和 Noul 的 RPS 项为 0。
 
 每个 state 内先对有标签的问题平均，再对当前批次的全局有效 state 平均。一条有三道题的记录与一条有一道题的记录权重相同。Score 的多个分支先拼成同一道题的 logits，不各自增加损失权重。
 
@@ -27,7 +34,7 @@ r_i = w_{\mathrm{correct}}y_i
 -w_{\mathrm{confidence}}\left[y_i(1-p_i)^2+(1-y_i)p_i^2\right].
 $$
 
-硬标签下，$y_i$ 是答对与否，第二项就是 $(p_i-y_i)^2$。默认权重均为 1：以 0.9 的概率答对，奖励 0.99；以 0.9 的概率答错，奖励 −0.81。软标签保留原分布，使用期望正确性与期望二元平方误差，不先取 argmax。
+硬标签下，选中答案的标签 $y_i$ 表示答对与否，第二项就是 $(p_i-y_i)^2$。默认权重均为 1：以 0.9 的概率答对，奖励 0.99；以 0.9 的概率答错，奖励 −0.81。软标签保留原分布，使用期望正确性与期望二元平方误差，不先取 argmax。
 
 这里的“置信度”是所选候选的概率，不是 API 的 `confidence` 字段。后者对 Choice 做了均匀基线缩放，对 Score 衡量等级分布的集中程度，不能直接当作正确概率。Score 的 RL 动作是一个离散等级，推理仍输出等级期望值。
 
@@ -40,13 +47,18 @@ $$
 标准差使用总体定义；奖励完全相同的组，优势明确置零。采样动作、奖励、优势、旧策略 log-prob 在一次 rollout 的所有更新中固定。
 
 $$
-\begin{aligned}
-\rho_i &= \pi_\theta(a_i\mid x)/\pi_{\mathrm{old}}(a_i\mid x),\\
-L &= -\operatorname{mean}_i\min\left(\rho_i A_i,
-\operatorname{clip}(\rho_i,1-\delta,1+\delta)A_i\right)\\
-&\quad+\beta D_{\mathrm{KL}}(\pi_\theta\Vert\pi_{\mathrm{ref}})
+\rho_i=\frac{\pi_\theta(a_i\mid x)}{\pi_{\mathrm{old}}(a_i\mid x)}.
+$$
+
+$$
+L_{\mathrm{policy}}=-\operatorname{mean}_i\min\left(
+\rho_i A_i,\operatorname{clip}(\rho_i,1-\delta,1+\delta)A_i
+\right).
+$$
+
+$$
+L=L_{\mathrm{policy}}+\beta D_{\mathrm{KL}}(\pi_\theta\Vert\pi_{\mathrm{ref}})
 +w_{\mathrm{Brier}}\sum_k(\pi_\theta(k)-y_k)^2.
-\end{aligned}
 $$
 
 参考策略固定为 RL 开始时的模型，KL 用完整候选分布精确计算，约束策略更新幅度。无需 critic。rollout 和策略更新时关闭 dropout；训练前向仍支持 gradient checkpointing。
