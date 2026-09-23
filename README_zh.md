@@ -4,7 +4,7 @@
 
 <h1 align="center"><img src="assets/branding/valen-motto.svg" alt="Valen：奔跑才能留在原地，进化才能向前。" width="700"></h1>
 
-<h2 align="center">System One Model, now with vision.</h2>
+<h2 align="center"><img src="assets/branding/valen-slogan.svg" alt="System One Model, now with vision." width="700"></h2>
 
 <p align="center">
   A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
