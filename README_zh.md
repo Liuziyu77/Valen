@@ -117,16 +117,16 @@ JSONL 每行是一条记录。下例为展开显示的二分类问题，使用�
   <img src="assets/figures/readme-training-workflow.png" alt="先用 SFT 训练，可选择从其 checkpoint 初始化 RLCD，再用独立测试集评估。" width="1000">
 </p>
 
-SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都可在独立测试集上评估，加载时还需对应的base model。
+SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都可在独立测试集上评估，加载时还需对应的base model（目前实现的是LoRA，后续可考虑全量微调）。
 
 | Stage | 更新参数 | SFT | RLCD |
 | --- | --- | --- | --- |
 | `warmup` | 决策头 | [配置](configs/train/sft_warmup.json) | [配置](configs/train/rlcd_warmup.json) |
-| `text` | 语言 LoRA、决策头；使用纯文本数据 | [配置](configs/train/sft_text.json) | [配置](configs/train/rlcd_text.json) |
-| `joint` | 语言 LoRA、视觉 merger、决策头 | [配置](configs/train/sft_joint.json) | [配置](configs/train/rlcd_joint.json) |
+| `text` | LLM LoRA、决策头；使用纯文本数据 | [配置](configs/train/sft_text.json) | [配置](configs/train/rlcd_text.json) |
+| `joint` | LLM LoRA、VIT merger、决策头 | [配置](configs/train/sft_joint.json) | [配置](configs/train/rlcd_joint.json) |
 | `vision_top` | `joint` 加视觉编码器最后 4 层 | [配置](configs/train/sft_vision_top.json) | [配置](configs/train/rlcd_vision_top.json) |
 
-正式训练前复制一份配置，设置 `model_path`、`data`、`output`、`epochs` 和 `max_steps`。`tokens_per_step` 是**每张 GPU** 的预算，按 state 内全部问题分支的 token 总量计算。每卡持有完整模型，采用数据并行。默认值与修改示例见[配置参考](docs/configuration.md)。
+正式训练前复制一份配置，设置 `model_path`、`data`、`output`、`epochs` 和 `max_steps`。`tokens_per_step` 是**每张 GPU** 的预算，按 state 内全部问题分支的 token 总量计算。每卡持有完整模型，采用**数据并行**。默认值与修改示例见[配置参考](docs/configuration.md)。
 
 ```bash
 # 单机八卡；每次独立实验使用新的输出目录。
@@ -137,16 +137,16 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-SFT 使用标签监督；RLCD 使用 GRPO 形式的裁剪目标，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。本项目的奖励公式属于实验方案，不保证概率校准。公式、初始化和断点恢复命令见[训练说明](visionjev/training/README.md)。
+目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](visionjev/training/README.md)。
 
-checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的基础模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 随机状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
+checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
 
 ## 仓库结构
 
 ```text
 visionjev/
   data/          记录校验、媒体读取、候选编译
-  modeling/      Qwen3.5 骨干、决策头、可训练参数组
+  modeling/      Qwen3.5 backbone、decision head、可训练参数组
   training/      SFT/RLCD 目标、共用循环、梯度同步、checkpoint
   evaluation/    推理响应、指标、多卡评估
 evaluation/      任务环境、Sokoban 数据生成与完整游戏评测
@@ -178,14 +178,8 @@ docs/            架构、数据、配置、评估说明
 python -m pytest -q
 ```
 
-## 开发与验证
-
-当前工具通过文件和命令行运行，尚未提供 HTTP 服务、按验证集选取 checkpoint 或温度拟合命令。通用 JSONL 读取器不自动划分数据；Sokoban 生成器单独构建隔离的训练集和测试集。推理支持读取温度文件，评估 CLI 固定使用温度 1。GPU 集成检查和常见错误处理见[脚本说明](scripts/README.md)。
-
-涉及训练或评估的改动，请提供配置、基础模型 revision、数据划分及相关测试结果。修改置信度行为时，同时报告正确率、NLL 和 Brier。比较 SFT 与 RLCD 时还需对齐实际优化次数：默认 RLCD 每批更新两次，SFT 每批一次。
-
 ## 许可与致谢
 
 代码使用 [Apache 2.0](LICENSE) 许可。基础模型和来源数据集遵循各自的许可。
 
-模型基于 [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B)，决策接口受 [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发。实验性策略目标参考 [DeepSeekMath](https://arxiv.org/abs/2402.03300) 提出的 GRPO。
+模型基于 [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B)，决策接口受 [TypeSafe Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发。
