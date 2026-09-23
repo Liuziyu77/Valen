@@ -17,27 +17,25 @@
   <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#documentation">Documentation</a>
 </p>
 
-Visual-Jev scores user-defined candidates against text, images and video. It pairs a Qwen3.5 backbone with a shared decision head and returns a probability distribution without generating answer tokens. The repository contains the model, JSONL data pipeline, SFT and experimental RLCD training, and inference/evaluation commands.
+Visual-Jev scores candidates based on text, images or video. It combines a Qwen3.5-0.8B or 2B backbone with a shared decision head to return probabilities without generating answer tokens. The repository includes the model, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands.
 
-The supplied configs and GPU smoke scripts target Qwen3.5-0.8B. A local Qwen3.5-2B snapshot can be selected through `model_path`; the download helper is specific to 0.8B. Trained decision-head weights and benchmark results are not included, so start by training a head for your task.
-
-This is an independent research implementation inspired by [Jev and System One models](https://typesafe.ai/blog/introducing-system-one-models-and-jev). It is not an official TypeSafe implementation. The model class and response `model` field use `VisualJev`; the Python package and CLI remain `visionjev` for compatibility.
+The project is inspired by [Jev and System One models](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
 
 ## What it returns
 
 | Output | Use it for | Response |
 | --- | --- | --- |
-| **Choice** | Select among 1–255 named candidates | Selected candidate, full probability distribution, confidence |
+| **Choice** | Select among 1–255 candidates | Selected candidate, full probability distribution, confidence |
 | **Noul** | Check whether a condition holds | Probability of `true` |
 | **Score** | Rate against 2–10 ordered descriptions | Expected level index, level probabilities, legend, confidence |
 
-Candidates are supplied with each question. The head is shared across tasks and candidate counts. `confidence` describes distribution concentration; it is not a measured probability that an answer is correct.
+Candidates are supplied with each question. Tasks with different candidate counts share the same decision head. `confidence` measures how concentrated the distribution is.
 
 <p align="center">
   <img src="assets/figures/readme-architecture.png" alt="Visual-Jev architecture: multimodal input and candidates pass through Qwen3.5, an added shared decision head and softmax to produce Choice, Noul or Score outputs." width="1000">
 </p>
 
-Choice and Noul score all candidates in one branch per question. Score runs a separate backbone forward for each level, then normalizes the logits together. The state is processed once by the input compiler but recomputed by the backbone in each branch. See the [architecture](docs/architecture.md) and [response fields and formulas](docs/evaluation.md).
+Choice and Noul score all candidates in one branch per question. Score runs a separate backbone forward pass for each level, then normalizes the logits together. The shared state is encoded once by the input compiler and processed by the backbone in each branch. See the [architecture](docs/architecture.md) and [response fields and formulas](docs/evaluation.md).
 
 ## Requirements
 
@@ -79,9 +77,9 @@ python -m visionjev.evaluate \
   --output output/sft_warmup/smoke_eval
 ```
 
-The bundled data has six records and fifteen questions, thirteen with labels. Inference writes six response lines; evaluation writes thirteen labeled-question predictions plus `metrics.json`. These examples check the pipeline, not model quality. Training stops after three epochs or 100 batches, whichever comes first; a small dataset can finish well before 100 steps.
+The synthetic dataset contains six records and fifteen questions, thirteen with labels. Inference writes six response lines; evaluation writes thirteen predictions and `metrics.json`. These examples check the pipeline.
 
-Run the commands from the repository root. Paths in configs are relative to the working directory; media paths inside JSONL records are relative to that JSONL file. To use 2B, prepare a complete local snapshot with its processor files and change `model_path` in a config copy.
+Run the commands from the repository root. Config paths are relative to the working directory; media paths in JSONL records are relative to the JSONL file.
 
 <details>
 <summary>A minimal labeled record</summary>
@@ -113,22 +111,22 @@ Each JSONL line contains one record. This expanded example defines a binary ques
 
 ## Training
 
-`method` selects the objective; `stage` selects the parameters to update. The stages are available configurations, not a requirement to run all four in order.
+`method` selects the training objective; `stage` selects which parameters to update. Four stages are available.
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="Train with SFT, optionally initialize RLCD from its checkpoint, and evaluate on held-out data." width="1000">
 </p>
 
-SFT and RLCD both use labeled training data. Evaluate either checkpoint on held-out data; loading a checkpoint also requires its base model.
+SFT and RLCD both use labeled training data. Checkpoints from either method can be evaluated on held-out data and require the corresponding base model. Language-model fine-tuning currently uses LoRA; full fine-tuning is a future option.
 
 | Stage | Trainable parameters | SFT | RLCD |
 | --- | --- | --- | --- |
 | `warmup` | Decision head | [Config](configs/train/sft_warmup.json) | [Config](configs/train/rlcd_warmup.json) |
-| `text` | Language LoRA + decision head; text-only data | [Config](configs/train/sft_text.json) | [Config](configs/train/rlcd_text.json) |
-| `joint` | Language LoRA + vision merger + decision head | [Config](configs/train/sft_joint.json) | [Config](configs/train/rlcd_joint.json) |
+| `text` | LLM LoRA + decision head; text-only data | [Config](configs/train/sft_text.json) | [Config](configs/train/rlcd_text.json) |
+| `joint` | LLM LoRA + ViT merger + decision head | [Config](configs/train/sft_joint.json) | [Config](configs/train/rlcd_joint.json) |
 | `vision_top` | `joint` + last four vision encoder layers | [Config](configs/train/sft_vision_top.json) | [Config](configs/train/rlcd_vision_top.json) |
 
-For a full run, copy a config and set `model_path`, `data`, `output`, `epochs` and `max_steps`. `tokens_per_step` is a **per-GPU** budget summed over all question branches in each state. Each GPU holds a complete model; this is data parallel training. Defaults and configuration examples are in the [configuration reference](docs/configuration.md).
+For a full run, copy a config and set `model_path`, `data`, `output`, `epochs` and `max_steps`. `tokens_per_step` is a **per-GPU** budget summed over all question branches in each state. Training uses **data parallelism**, with a complete model on each GPU. Defaults and examples are in the [configuration reference](docs/configuration.md).
 
 ```bash
 # Eight GPUs on one machine. Use a fresh output directory for each run.
@@ -139,9 +137,9 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-SFT optimizes supervised labels. RLCD uses a GRPO-style clipped objective with correctness and confidence-error rewards, a fixed-reference KL penalty, and an optional Brier loss. This project's reward formula is experimental and does not guarantee calibration. Equations, initialization and resume commands are in the [training guide](visionjev/training/README.md).
+SFT trains on supervised labels. RLCD uses a GRPO-style objective with rewards based on correctness and confidence error, a KL penalty against a fixed reference policy, and an optional Brier loss. Equations, initialization and resume commands are in the [training guide](visionjev/training/README.md).
 
-Checkpoints store trainable parameter values and training state under `<output>/latest/`; the frozen base model is loaded separately. Saving replaces `latest/` rather than keeping a history. `--initialize` starts a new experiment from those weights; `--resume` restores the optimizer, data cursor and per-rank random state and requires the same process count. `launch_sft.sh` supports both objectives and accepts `VJ_PYTHON` to select an interpreter.
+Checkpoints store trainable parameter values and training state under `<output>/latest/`; the frozen base model is loaded separately. Each save overwrites `latest/`. `--initialize` starts a new experiment from existing weights; `--resume` restores the optimizer, data cursor and per-rank state and requires the same process count. `launch_sft.sh` supports both SFT and RLCD; use `VJ_PYTHON` to select an interpreter.
 
 ## Repository layout
 
@@ -180,14 +178,8 @@ The detailed guides are currently in Chinese; both READMEs cover setup and train
 python -m pytest -q
 ```
 
-## Development
-
-The current tools are file-based CLIs. There is no HTTP serving layer, validation-driven checkpoint selection or temperature-fitting command. The generic JSONL reader does not split datasets; the Sokoban generator creates its own separate training and test sets. Inference accepts a temperature file; the evaluation CLI always uses temperature 1. See the [script guide](scripts/README.md) for GPU integration checks and common errors.
-
-For training or evaluation changes, include the config, base-model revision, dataset split and relevant test results. Report accuracy alongside NLL and Brier when changing confidence-related behavior. Comparisons between SFT and RLCD should account for actual optimizer updates: by default, RLCD performs two updates per batch and SFT performs one.
-
 ## License and acknowledgments
 
 The code is released under [Apache 2.0](LICENSE). Base models and source datasets retain their respective licenses.
 
-Built on [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B), with the decision interface inspired by [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev). The experimental policy objective follows the GRPO approach introduced in [DeepSeekMath](https://arxiv.org/abs/2402.03300).
+Built on [Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-2B), with the decision interface inspired by [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
