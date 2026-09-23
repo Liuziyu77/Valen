@@ -1,6 +1,6 @@
 # 训练配置参考
 
-`python -m visionjev.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准，不以配置文件目录为基准；以下命令均从仓库根目录执行。
+`python -m visualjev.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准，不以配置文件目录为基准；以下命令均从仓库根目录执行。
 
 现有八份配置使用 Qwen3.5-0.8B 和合成数据，运行上限为 3 个 epoch、100 个 step，先达到的上限结束训练。它们用于跑通各 stage，不代表在正式数据上选出的超参数。
 
@@ -65,7 +65,7 @@
 | `clip_epsilon` | `0.2` | 策略概率比的裁剪半径，严格在 `(0, 1)` 内 |
 | `advantage_epsilon` | `1e-6` | 组内优势标准化的分母稳定项，必须为正 |
 
-所有浮点参数必须有限且非负，两个奖励权重不能同时为 0。奖励、KL 方向及损失公式见[训练说明](../visionjev/training/README.md)。
+所有浮点参数必须有限且非负，两个奖励权重不能同时为 0。奖励、KL 方向及损失公式见[训练说明](../visualjev/training/README.md)。
 
 `step`、`max_steps` 和 `save_every` 均按 rollout 批次计；`optimizer_steps` 按实际更新计。默认 RLCD 每批更新两次，SFT 每批一次。对比实验除了 step，还需比较 `optimizer_steps` 和实际耗时。
 
@@ -86,7 +86,7 @@ Path("output/experiment-configs/traffic-joint.json").write_text(
 )
 PY
 
-python -m visionjev.train --config output/experiment-configs/traffic-joint.json
+python -m visualjev.train --config output/experiment-configs/traffic-joint.json
 ```
 
 每次独立实验使用新输出目录。普通新训练会覆盖该目录的日志和 `latest/`，不会自动分配实验编号或保存历史 checkpoint。
@@ -95,4 +95,4 @@ python -m visionjev.train --config output/experiment-configs/traffic-joint.json
 
 恢复时会比较 checkpoint 内的配置与当前配置，包括数据文件摘要。只允许调整 `output`、`epochs`、`max_steps`、`device`、`save_every`；更换数据、stage、学习率或 RLCD 参数，应使用 `--initialize` 开始新实验。
 
-普通配置并没有统一的字段 schema，拼错的顶层字段不一定报错。`normalize_config` 会检查训练目标和已移除的蒸馏选项：非零 `kd_weight` 或有效 `teacher_checkpoint` 会被拒绝；旧 checkpoint 中关闭的蒸馏字段会被清理。`rlcd` 子对象的字段则严格校验。实现分别见 [runner.py](../visionjev/training/runner.py)、[model.py](../visionjev/modeling/model.py) 和 [rlcd.py](../visionjev/training/rlcd.py)。
+普通配置并没有统一的字段 schema，拼错的顶层字段不一定报错。`normalize_config` 会检查训练目标和已移除的蒸馏选项：非零 `kd_weight` 或有效 `teacher_checkpoint` 会被拒绝；旧 checkpoint 中关闭的蒸馏字段会被清理。`rlcd` 子对象的字段则严格校验。实现分别见 [runner.py](../visualjev/training/runner.py)、[model.py](../visualjev/modeling/model.py) 和 [rlcd.py](../visualjev/training/rlcd.py)。

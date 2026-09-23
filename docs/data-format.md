@@ -87,7 +87,7 @@ Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分
 
 媒体路径相对于 **JSONL 文件所在目录**，也可使用本地绝对路径。例如 `data/train.jsonl` 中的 `assets/light.png` 对应 `data/assets/light.png`。包含 `://` 的路径会被拒绝，包括 HTTP URL 和 `file://`；需要先将远程素材保存到本地。文本、指令和候选中不能包含 tokenizer 保留的控制 token。
 
-编译时会为实际使用的媒体计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的媒体仍会被读取并记录摘要。当前代码不强制清单覆盖全部媒体，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../visionjev/data/compiler.py)。
+编译时会为实际使用的媒体计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的媒体仍会被读取并记录摘要。当前代码不强制清单覆盖全部媒体，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../visualjev/data/compiler.py)。
 
 `media_kwargs` 从训练配置传给处理器，随后保存在 checkpoint 中供推理和评估使用。默认读取基础模型的处理器设置；项目没有独立实现图片缩放或视频采样。媒体日志记录路径、摘要、视觉网格、视觉 token 数，以及处理器返回的帧索引、时间戳等信息。视频题目涉及“最后状态”时，应检查实际采到的帧是否覆盖目标时刻。
 
@@ -99,7 +99,7 @@ Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分
 
 ```bash
 python - <<'CHECK'
-from visionjev.data.schema import read_jsonl
+from visualjev.data.schema import read_jsonl
 records = read_jsonl("data/smoke/train.jsonl")
 print(f"{len(records)} records")
 CHECK

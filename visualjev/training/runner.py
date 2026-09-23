@@ -8,13 +8,13 @@ import random
 import time
 from pathlib import Path
 import torch
-from visionjev.training.checkpoint import capture_rank_state, load_checkpoint, save_checkpoint
-from visionjev.training.distributed import initialize as initialize_distributed, close, epoch_shard, broadcast_trainable, synchronize_gradients
-from visionjev.data.compiler import Compiler
+from visualjev.training.checkpoint import capture_rank_state, load_checkpoint, save_checkpoint
+from visualjev.training.distributed import initialize as initialize_distributed, close, epoch_shard, broadcast_trainable, synchronize_gradients
+from visualjev.data.compiler import Compiler
 from .sft import SFTObjective
 from .rlcd import RLCDObjective, validate_options
-from visionjev.modeling.model import build_model, optimizer_groups
-from visionjev.data.schema import read_jsonl
+from visualjev.modeling.model import build_model, optimizer_groups
+from visualjev.data.schema import read_jsonl
 
 
 def normalize_config(config):

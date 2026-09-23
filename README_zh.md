@@ -59,17 +59,17 @@ source .venv/bin/activate
 python scripts/setup/prepare_model.py
 
 # 用随仓库提供的合成样本训练决策头。
-python -m visionjev.train \
+python -m visualjev.train \
   --config configs/train/sft_warmup.json
 
 # 加载训练得到的 checkpoint 进行推理。
-python -m visionjev.inference \
+python -m visualjev.inference \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # 用同一组合成样本检查评估流程。
-python -m visionjev.evaluate \
+python -m visualjev.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
@@ -135,7 +135,7 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](visionjev/training/README.md)。
+目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](visualjev/training/README.md)。
 
 checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
 
@@ -185,7 +185,7 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 ## 仓库结构
 
 ```text
-visionjev/
+visualjev/
   data/          记录校验、媒体读取、候选编译
   modeling/      Qwen3.5 backbone、decision head、可训练参数组
   training/      SFT/RLCD 目标、共用循环、梯度同步、checkpoint
@@ -198,7 +198,7 @@ tests/           CPU 测试，包含双进程训练与恢复检查
 docs/            架构、数据、配置、评估说明
 ```
 
-顶层 `visionjev/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](visionjev/README.md)列出了实现入口和对应测试。
+顶层 `visualjev/train.py`、`inference.py`、`evaluate.py` 将命令转发到相应子包。[代码目录](visualjev/README.md)列出了实现入口和对应测试。
 
 ## 文档
 
@@ -206,9 +206,9 @@ docs/            架构、数据、配置、评估说明
 | --- | --- |
 | [架构说明](docs/architecture.md) | 编译流程、候选评分、分支开销、梯度同步 |
 | [配置参考](docs/configuration.md) | 默认值、token 预算、优化器和 RLCD 参数 |
-| [训练说明](visionjev/training/README.md) | SFT/RLCD 目标、多卡训练、断点恢复 |
+| [训练说明](visualjev/training/README.md) | SFT/RLCD 目标、多卡训练、断点恢复 |
 | [脚本说明](scripts/README.md) | 环境、训练、评估和数据工具 |
-| [代码目录](visionjev/README.md) | 数据、模型、训练和评估模块 |
+| [代码目录](visualjev/README.md) | 数据、模型、训练和评估模块 |
 | [数据格式](docs/data-format.md) | 完整样例、标签、本地媒体和数据划分 |
 | [推理与评估](docs/evaluation.md) | 响应字段、confidence 公式、指标和计时口径 |
 | [实验结果](docs/experiments/eval3.md) | 100k 训练对照、完整分数和统一测速条件 |

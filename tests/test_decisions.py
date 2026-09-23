@@ -2,10 +2,10 @@ import math
 from types import SimpleNamespace
 import pytest
 import torch
-from visionjev.evaluation.inference import answer
-from visionjev.training.sft import question_loss
-from visionjev.modeling.model import DecisionHead
-from visionjev.data.schema import target_distribution, candidates
+from visualjev.evaluation.inference import answer
+from visualjev.training.sft import question_loss
+from visualjev.modeling.model import DecisionHead
+from visualjev.data.schema import target_distribution, candidates
 
 
 def test_soft_cross_entropy_and_rps():

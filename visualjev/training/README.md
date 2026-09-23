@@ -59,10 +59,10 @@ Brier 辅助项默认开启。二分类的组内标准化可能抵消奖励幅�
 
 ```bash
 # 先训练 SFT 决策头，产生后续命令需要的 checkpoint。
-python -m visionjev.train --config configs/train/sft_warmup.json
+python -m visualjev.train --config configs/train/sft_warmup.json
 
 # 单卡 RLCD；warmup 表示只更新决策头。
-python -m visionjev.train \
+python -m visualjev.train \
   --config configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 
@@ -103,7 +103,7 @@ VJ_GPUS=4 bash scripts/train/launch_sft.sh \
 
 RLCD 仅训练决策头时，可设置 `cache_frozen_features=true`：每批只提取一次骨干特征，旧策略、参考头和多次策略更新复用这些特征；每张卡首次使用时额外执行完整前向，核对 logits 完全一致。此时参考策略只需保存冻结决策头，无需额外加载一份骨干。骨干有可训练参数时拒绝启用。此开关不影响 SFT；SFT 的 `warmup` 支持 `--initialize`，可与 RLCD 共享同一初始决策头。
 
-`metrics.jsonl` 记录奖励、采样正确性、采样概率、置信度误差、Brier、KL、裁剪比例和零优势组比例，数值在本批的策略更新间取平均；梯度范数记录最后一次更新。正式评估使用 `python -m visionjev.evaluate`。
+`metrics.jsonl` 记录奖励、采样正确性、采样概率、置信度误差、Brier、KL、裁剪比例和零优势组比例，数值在本批的策略更新间取平均；梯度范数记录最后一次更新。正式评估使用 `python -m visualjev.evaluate`。
 
 ## 多卡与批次
 
@@ -144,7 +144,7 @@ latest/
 
 恢复只允许修改 `output`、`epochs`、`max_steps`、`device`、`save_every`，其他配置及训练 JSONL 摘要需要一致。提高 `max_steps` 不会越过已用尽的 `epochs` 上限。checkpoint 保存了各 rank 的顺序、游标和 Python/PyTorch 随机状态，但不会重新核算数据划分或适配新的进程数。
 
-基础模型目录若有 `visionjev_manifest.json`，checkpoint 会保存它，并在加载时比较 revision 和权重摘要字段；没有清单的基础模型不具备这项校验。加载时不会重新读取全部基础权重计算摘要。只加载来源可信的本项目 checkpoint，加载器使用 `torch.load(..., weights_only=False)`。
+基础模型目录若有 `visualjev_manifest.json`，checkpoint 会保存它，并在加载时比较 revision 和权重摘要字段；没有清单的基础模型不具备这项校验。加载时不会重新读取全部基础权重计算摘要。只加载来源可信的本项目 checkpoint，加载器使用 `torch.load(..., weights_only=False)`。
 
 保存和恢复实现见 [checkpoint.py](checkpoint.py)，配置比较见 [runner.py](runner.py)。推理与评估共用同一加载器，详见[推理与评估](../../docs/evaluation.md)。
 

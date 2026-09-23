@@ -1,7 +1,9 @@
+import json
 import random
 import torch
 import pytest
-from visionjev.training.checkpoint import save_checkpoint, load_checkpoint
+from visualjev.training.checkpoint import save_checkpoint, load_checkpoint
+from visualjev.modeling.manifest import read_base_manifest
 
 
 def test_checkpoint_restores_optimizer_rng_and_frozen_parameters_stay_untouched(tmp_path):
@@ -30,3 +32,19 @@ def test_checkpoint_restores_optimizer_rng_and_frozen_parameters_stay_untouched(
     model[0].requires_grad_(True)
     with pytest.raises(ValueError, match="mismatch"):
         load_checkpoint(tmp_path, model)
+
+
+def test_checkpoint_keeps_base_revision_check_with_existing_manifest_name(tmp_path):
+    base = tmp_path / "base"
+    base.mkdir()
+    manifest = {"revision": "published-revision", "weight_sha256": {"model.safetensors": "digest"}}
+    (base / "previous_manifest.json").write_text(json.dumps(manifest))
+    model = torch.nn.Linear(2, 2)
+    model.base_manifest = read_base_manifest(base)
+    optimizer = torch.optim.AdamW(model.parameters())
+    save_checkpoint(tmp_path / "run", model, optimizer, {"model_path": str(base)}, {"step": 1}, random.Random(1))
+    payload = load_checkpoint(tmp_path / "run", model)
+    assert payload["base_manifest"] == manifest
+    model.base_manifest = dict(manifest, revision="different-revision")
+    with pytest.raises(ValueError, match="Base model revision differs"):
+        load_checkpoint(tmp_path / "run", model)

@@ -59,17 +59,17 @@ Install the [requirements](#requirements) and keep that environment activated. M
 python scripts/setup/prepare_model.py
 
 # Train a decision head on the bundled synthetic examples.
-python -m visionjev.train \
+python -m visualjev.train \
   --config configs/train/sft_warmup.json
 
 # Run inference with the resulting checkpoint.
-python -m visionjev.inference \
+python -m visualjev.inference \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/predictions.jsonl
 
 # Check the evaluation pipeline on the same synthetic examples.
-python -m visionjev.evaluate \
+python -m visualjev.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
@@ -135,7 +135,7 @@ VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
-SFT trains on supervised labels. RLCD uses a GRPO-style objective with rewards based on correctness and confidence error, a KL penalty against a fixed reference policy, and an optional Brier loss. Equations, initialization and resume commands are in the [training guide](visionjev/training/README.md).
+SFT trains on supervised labels. RLCD uses a GRPO-style objective with rewards based on correctness and confidence error, a KL penalty against a fixed reference policy, and an optional Brier loss. Equations, initialization and resume commands are in the [training guide](visualjev/training/README.md).
 
 Checkpoints store trainable parameter values and training state under `<output>/latest/`; the frozen base model is loaded separately. Each save overwrites `latest/`. `--initialize` starts a new experiment from existing weights; `--resume` restores the optimizer, data cursor and per-rank state and requires the same process count. `launch_sft.sh` supports both SFT and RLCD; use `VJ_PYTHON` to select an interpreter.
 
@@ -182,7 +182,7 @@ See [Eval_3](docs/experiments/eval3.md) for the full protocol, per-source scores
 ## Repository layout
 
 ```text
-visionjev/
+visualjev/
   data/          Record validation, media loading and candidate compilation
   modeling/      Qwen3.5 backbone, decision head and trainable parameter groups
   training/      SFT/RLCD objectives, shared loop, gradient sync and checkpoints
@@ -195,7 +195,7 @@ tests/           CPU tests, including two-process training and resume checks
 docs/            Architecture, data, configuration and evaluation references
 ```
 
-The top-level `visionjev/train.py`, `inference.py` and `evaluate.py` forward to the corresponding subpackages. The [code map](visionjev/README.md) lists implementation entry points and their tests.
+The top-level `visualjev/train.py`, `inference.py` and `evaluate.py` forward to the corresponding subpackages. The [code map](visualjev/README.md) lists implementation entry points and their tests.
 
 ## Documentation
 
@@ -203,9 +203,9 @@ The top-level `visionjev/train.py`, `inference.py` and `evaluate.py` forward to 
 | --- | --- |
 | [Architecture](docs/architecture.md) | Compilation, candidate scoring, branch cost and gradient synchronization |
 | [Configuration reference](docs/configuration.md) | Defaults, token budgets, optimizer settings and RLCD options |
-| [Training guide](visionjev/training/README.md) | SFT/RLCD objectives, distributed training and checkpoint recovery |
+| [Training guide](visualjev/training/README.md) | SFT/RLCD objectives, distributed training and checkpoint recovery |
 | [Script guide](scripts/README.md) | Setup, training, evaluation and smoke checks |
-| [Code map](visionjev/README.md) | Data, modeling, training and evaluation modules |
+| [Code map](visualjev/README.md) | Data, modeling, training and evaluation modules |
 | [Data format](docs/data-format.md) | Complete examples, labels, local media and split conventions |
 | [Inference and evaluation](docs/evaluation.md) | Response fields, confidence formulas, metrics and timing |
 | [Experiment report](docs/experiments/eval3.md) | 100k training comparison, full scores and latency protocol |

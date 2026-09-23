@@ -21,15 +21,15 @@ flowchart LR
 
 | 入口 | 执行路径 | 处理范围 |
 | --- | --- | --- |
-| `python -m visionjev.train` | `training.runner.main → run` | 只编译有标签的问题，执行 SFT 或 RLCD |
-| `python -m visionjev.inference` | `evaluation.inference.main → predict → answer` | 编译所有问题，每条输入返回一条响应 |
-| `python -m visionjev.evaluate` | `evaluation.evaluate.main → run → question_metrics / summarize` | 只评估有标签的问题，逐题输出并汇总指标 |
+| `python -m visualjev.train` | `training.runner.main → run` | 只编译有标签的问题，执行 SFT 或 RLCD |
+| `python -m visualjev.inference` | `evaluation.inference.main → predict → answer` | 编译所有问题，每条输入返回一条响应 |
+| `python -m visualjev.evaluate` | `evaluation.evaluate.main → run → question_metrics / summarize` | 只评估有标签的问题，逐题输出并汇总指标 |
 
-完整目录和测试对应关系见[代码目录](../visionjev/README.md)。仓库根目录的 `evaluation/` 是独立的任务环境包；其中 Sokoban 的 `VisualJevPolicy` 复用这里的编译器、模型和 `predict`，将每步截图与规则转换成下一动作。完整游戏流程见[任务评测](../evaluation/README.md)。
+完整目录和测试对应关系见[代码目录](../visualjev/README.md)。仓库根目录的 `evaluation/` 是独立的任务环境包；其中 Sokoban 的 `VisualJevPolicy` 复用这里的编译器、模型和 `predict`，将每步截图与规则转换成下一动作。完整游戏流程见[任务评测](../evaluation/README.md)。
 
 ## 编译器做了什么
 
-实现位于 [data/compiler.py](../visionjev/data/compiler.py)，记录级校验位于 [data/schema.py](../visionjev/data/schema.py)。
+实现位于 [data/compiler.py](../visualjev/data/compiler.py)，记录级校验位于 [data/schema.py](../visualjev/data/schema.py)。
 
 1. 选择要处理的问题。训练和评估使用 `labeled_only=True`；整条记录没有标签时，在读取媒体之前返回空结果。
 2. 将文本 state 转成 user 消息，或读取已有的消息列表。解析本地媒体路径，记录媒体摘要；`assets` 中有对应条目时核对摘要。
@@ -62,7 +62,7 @@ compute_tokens = sum(B + Sᵢ)
 
 ## 骨干与决策头
 
-[build_model](../visionjev/modeling/model.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，检查缺失、多余和形状不符的键，再取出 `.model`。词表输出层随外层容器释放。注意力实现固定为 `eager`；配置支持 `bf16` 和 `fp32`。
+[build_model](../visualjev/modeling/model.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，检查缺失、多余和形状不符的键，再取出 `.model`。词表输出层随外层容器释放。注意力实现固定为 `eager`；配置支持 `bf16` 和 `fp32`。
 
 `VisualJev.forward(question)` 按顺序执行各分支。`DecisionHead` 读取候选描述最后一个 token 的隐状态 `h_candidate[k]`，以及 `Decision:` 最后一个 token 的隐状态 `h_decision`。两组无偏置线性投影默认输出 256 维向量：
 
@@ -86,11 +86,11 @@ p = softmax(logits / temperature)
 
 LoRA 目标从 `backbone.language_model.named_modules()` 中逐个枚举，不匹配视觉塔或决策头。默认 rank 为 32、alpha 为 64、dropout 为 0。四组参数有独立学习率，优化器统一为 AdamW，当前没有学习率调度器。配置和默认值见[配置参考](configuration.md)。
 
-`method` 与 `stage` 独立。SFT 使用候选分布交叉熵，可为 Score 加 RPS；RLCD 从候选分布采样离散动作，使用裁剪策略目标、固定参考 KL 和 Brier 辅助项。两者都需要标签，详见[训练说明](../visionjev/training/README.md)。
+`method` 与 `stage` 独立。SFT 使用候选分布交叉熵，可为 Score 加 RPS；RLCD 从候选分布采样离散动作，使用裁剪策略目标、固定参考 KL 和 Brier 辅助项。两者都需要标签，详见[训练说明](../visualjev/training/README.md)。
 
 ### 分布式训练
 
-[training/distributed.py](../visionjev/training/distributed.py) 实现显式同步的数据并行，每卡持有完整模型，不做模型或优化器分片。每轮打乱记录后按 rank 取切片，不填充尾部，也不丢弃记录。
+[training/distributed.py](../visualjev/training/distributed.py) 实现显式同步的数据并行，每卡持有完整模型，不做模型或优化器分片。每轮打乱记录后按 rank 取切片，不填充尾部，也不丢弃记录。
 
 各卡先逐题反向并累积梯度，再对梯度做求和。每个问题的损失已经除以「全局有效 state 数 × 本 state 的有标签问题数」，同步后不再除 world size。空闲 rank 也参加同步；全局未使用的参数保持 `grad=None`，避免 AdamW 对其执行权重衰减。
 
@@ -104,8 +104,8 @@ LoRA 目标从 `backbone.language_model.named_modules()` 中逐个枚举，不�
 
 ## 保存、加载和输出
 
-checkpoint 只保存当前可训练参数的值及优化器、进度、随机状态；它不能脱离基础模型使用。RLCD 还保存初始参考参数。`--initialize` 用已有参数开始新实验，允许扩大可训练参数集合；`--resume` 恢复原优化过程，要求进程数和训练配置兼容。具体文件和约束见[训练说明](../visionjev/training/README.md#checkpoint-与恢复)。
+checkpoint 只保存当前可训练参数的值及优化器、进度、随机状态；它不能脱离基础模型使用。RLCD 还保存初始参考参数。`--initialize` 用已有参数开始新实验，允许扩大可训练参数集合；`--resume` 恢复原优化过程，要求进程数和训练配置兼容。具体文件和约束见[训练说明](../visualjev/training/README.md#checkpoint-与恢复)。
 
 Choice 返回最大概率候选，Noul 返回 `P(true)`，Score 返回等级索引的期望值。Choice/Score 的 `confidence` 是分布集中度指标，不是预测正确率。完整字段、公式与评估口径见[推理与评估](evaluation.md)。
 
-模型类和响应标识为 `VisualJev`，`VisionJev` 保留为同一类的导入别名。Python 包、命令入口和基础模型清单名仍使用 `visionjev`。
+模型类和响应标识为 `VisualJev`。Python 包、命令入口和新生成的基础模型清单均使用 `visualjev`；checkpoint 的参数键没有变化。模型目录中仅有一份旧清单时，加载器仍能按其中的 revision 和权重摘要核对基础模型。

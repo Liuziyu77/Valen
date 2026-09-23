@@ -3,6 +3,7 @@ import json
 import random
 from pathlib import Path
 import torch
+from visualjev.modeling.manifest import read_base_manifest
 
 
 def capture_rank_state(progress, rng):
@@ -16,8 +17,7 @@ def save_checkpoint(path, model, optimizer, config, progress, rng, rank_states=N
     path.mkdir(parents=True, exist_ok=True)
     trainable = {name for name, p in model.named_parameters() if p.requires_grad}
     delta = {k: v.detach().cpu() for k, v in model.state_dict().items() if k in trainable}
-    manifest_path = Path(config["model_path"]) / "visionjev_manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
+    manifest = read_base_manifest(config["model_path"])
     payload = {"weights": delta, "optimizer": optimizer.state_dict(), "config": config,
                **capture_rank_state(progress, rng),
                "base_manifest": manifest}

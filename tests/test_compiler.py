@@ -3,8 +3,8 @@ from pathlib import Path
 import random
 import pytest
 import torch
-from visionjev.data.compiler import Compiler
-from visionjev.data.schema import read_jsonl
+from visualjev.data.compiler import Compiler
+from visualjev.data.schema import read_jsonl
 
 
 def test_chinese_jsonl_in_ascii_locale():
@@ -18,7 +18,7 @@ def test_chinese_jsonl_in_ascii_locale():
 
 
 def test_pre_audited_media_skips_hash_io_but_keeps_same_inputs(compiler, monkeypatch):
-    from visionjev.data.schema import read_jsonl
+    from visualjev.data.schema import read_jsonl
     record = next(r for r in read_jsonl("data/smoke/train.jsonl") if r.get("assets") and r["assets"][0]["path"].endswith(".png"))
     messages, media = compiler._messages(record["request"]["state"])
     cached = Compiler(compiler.processor, compiler.media_root, verified_media_hashes={m["path"]: m["sha256"] for m in media})

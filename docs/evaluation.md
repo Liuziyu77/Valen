@@ -1,6 +1,6 @@
 # 推理与评估
 
-本文介绍 `visionjev` 包内的逐题推理与评估。Sokoban 的完整游戏评测使用独立的 `evaluation.sokoban` 命令，数据生成、策略比较和轨迹回放见[任务评测说明](../evaluation/sokoban/README.md)。
+本文介绍 `visualjev` 包内的逐题推理与评估。Sokoban 的完整游戏评测使用独立的 `evaluation.sokoban` 命令，数据生成、策略比较和轨迹回放见[任务评测说明](../evaluation/sokoban/README.md)。
 
 推理和评估都从 checkpoint 的 `config.json` 重建模型，再加载 `checkpoint.pt` 中的参数。基础模型仍需保存在配置的 `model_path` 下。两种命令的输出格式不同：推理每条记录返回一个响应，评估每道有标签题目输出一行。
 
@@ -10,7 +10,7 @@
 
 ```bash
 mkdir -p output/predictions
-python -m visionjev.inference \
+python -m visualjev.inference \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/predictions/smoke.jsonl
@@ -37,7 +37,7 @@ python -m visionjev.inference \
 
 ## 三种答案的字段
 
-设 `p = softmax(logits / temperature)`，候选数为 K，等级索引从 0 开始。实现见 [answer](../visionjev/evaluation/inference.py)。
+设 `p = softmax(logits / temperature)`，候选数为 K，等级索引从 0 开始。实现见 [answer](../visualjev/evaluation/inference.py)。
 
 | 类型 | 字段 |
 | --- | --- |
@@ -73,14 +73,14 @@ confidence = max(0, 1 - distance / uniform_mad)
 
 ```bash
 # 合成集只检查流程；正式评估替换为独立测试集。
-python -m visionjev.evaluate \
+python -m visualjev.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval
 
 # 同一数据按记录分到四个进程，不填充重复样本。
 python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
-  -m visionjev.evaluate \
+  -m visualjev.evaluate \
   --checkpoint output/sft_warmup/latest \
   --data data/smoke/train.jsonl \
   --output output/sft_warmup/smoke_eval_4gpu
@@ -100,7 +100,7 @@ python -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=4 \
 
 ## 指标口径
 
-记标签分布为 y，预测分布为 p。实现见 [question_metrics / summarize](../visionjev/evaluation/metrics.py)。
+记标签分布为 y，预测分布为 p。实现见 [question_metrics / summarize](../visualjev/evaluation/metrics.py)。
 
 | 指标 | 适用范围 | 定义 |
 | --- | --- | --- |

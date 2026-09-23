@@ -3,11 +3,11 @@ import json
 import math
 from pathlib import Path
 import torch
-from visionjev import MODEL_NAME
-from visionjev.training.checkpoint import load_checkpoint
-from visionjev.data.compiler import Compiler
-from visionjev.modeling.model import build_model
-from visionjev.data.schema import read_jsonl
+from visualjev import MODEL_NAME
+from visualjev.training.checkpoint import load_checkpoint
+from visualjev.data.compiler import Compiler
+from visualjev.modeling.model import build_model
+from visualjev.data.schema import read_jsonl
 
 
 def answer(question, logits, temperature=1.0):

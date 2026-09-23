@@ -75,10 +75,10 @@ class VisualJevPolicy:
     def __init__(self, checkpoint, device="cuda"):
         import torch
         from transformers import AutoProcessor
-        from visionjev.data.compiler import Compiler
-        from visionjev.modeling.model import build_model
-        from visionjev.training.checkpoint import load_checkpoint
-        from visionjev.evaluation.inference import predict
+        from visualjev.data.compiler import Compiler
+        from visualjev.modeling.model import build_model
+        from visualjev.training.checkpoint import load_checkpoint
+        from visualjev.evaluation.inference import predict
         checkpoint = Path(checkpoint).resolve()
         config = json.loads((checkpoint / "config.json").read_text())
         config.update(device=device, gradient_checkpointing=False)
