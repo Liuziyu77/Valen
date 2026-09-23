@@ -17,27 +17,25 @@
   <a href="#环境要求">环境要求</a> · <a href="#快速开始">快速开始</a> · <a href="#训练">训练</a> · <a href="#文档">文档</a>
 </p>
 
-Visual-Jev 根据文本、图片和视频，对你提供的候选评分。模型由 Qwen3.5 骨干和共享决策头组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。
+Visual-Jev 可以根据文本、图片或视频，对提供的候选评分。模型由 Qwen3.5 backbone和共享decision head组成，直接返回概率分布，无需生成答案 token。仓库包含模型实现、JSONL 数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令。现有配置使用 Qwen3.5-0.8B/2B 进行训练。
 
-现有配置和 GPU 检查脚本使用 Qwen3.5-0.8B；可通过 `model_path` 换成本地 Qwen3.5-2B 快照，下载工具目前只处理 0.8B。仓库不附带已训练的决策头或基准结果，使用前需要先针对自己的任务训练。
-
-这是受 [Jev 和 System One 模型](https://typesafe.ai/blog/introducing-system-one-models-and-jev)启发的独立研究实现，与 TypeSafe 无隶属关系。模型类和响应中的 `model` 字段统一使用 `VisualJev`；Python 包名和命令入口保留 `visionjev`，兼容现有使用方式。
+本项目受 [Jev 和 System One 模型](https://typesafe.ai/blog/introducing-system-one-models-and-jev)启发。
 
 ## 输出类型
 
 | 类型 | 用途 | 返回内容 |
 | --- | --- | --- |
-| **Choice** | 从 1–255 个命名候选中选择 | 所选候选、完整概率分布、confidence |
+| **Choice** | 从 1–255 个候选中选择 | 所选候选、完整概率分布、confidence |
 | **Noul** | 判断条件是否成立 | `true` 的概率 |
 | **Score** | 按 2–10 个有序描述评分 | 等级编号期望值、等级概率、legend、confidence |
 
-候选随问题传入，不同任务和候选数量共用决策头。`confidence` 描述分布集中度，不是经过实测的答案正确概率。
+候选随问题传入，不同任务和候选数量共用决策头。`confidence` 描述分布集中度。
 
 <p align="center">
   <img src="assets/figures/readme-architecture.png" alt="Visual-Jev 架构：多模态输入和候选经过 Qwen3.5 骨干、额外的共享决策头和 softmax，得到 Choice、Noul 或 Score 输出。" width="1000">
 </p>
 
-Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级单独执行骨干前向，再将 logits 一起归一化。公共 state 在编译器中只编码一次，但在骨干的每个分支中重复计算。详见[架构说明](docs/architecture.md)和[响应字段与公式](docs/evaluation.md)。
+Choice 和 Noul 每道题用一个分支计算全部候选；Score 每个等级单独执行backbone forward pass，再将 logits 一起归一化。公共 state 只编码一次，但在backbone的每个分支中重复计算。详见[架构说明](docs/architecture.md)和[响应字段与公式](docs/evaluation.md)。
 
 ## 环境要求
 
@@ -79,9 +77,9 @@ python -m visionjev.evaluate \
   --output output/sft_warmup/smoke_eval
 ```
 
-合成集有 6 条记录、15 道题，其中 13 道有标签。推理生成 6 行响应；评估生成 13 行逐题预测和 `metrics.json`。这些样本用于检查流程，不能衡量模型能力。示例训练在 3 个 epoch 或 100 个批次时结束，先达到哪个上限就停止；小数据集会在不足 100 步时结束。
+合成集有 6 条记录、15 道题，其中 13 道有标签。推理生成 6 行响应；评估生成 13 行逐题预测和 `metrics.json`。这些样本用于检查流程。
 
-命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件。使用 2B 时，准备含处理器文件的完整本地快照，再在配置副本中修改 `model_path`。
+命令均在仓库根目录执行。配置中的路径相对于当前工作目录，JSONL 中的媒体路径相对于该 JSONL 文件
 
 <details>
 <summary>一条最小的带标签记录</summary>
@@ -113,13 +111,13 @@ JSONL 每行是一条记录。下例为展开显示的二分类问题，使用�
 
 ## 训练
 
-`method` 决定训练目标，`stage` 决定更新哪些参数。四种 stage 是可选配置，不要求每次按顺序全部执行。
+`method` 决定训练目标，`stage` 决定更新哪些参数。可选四种 stage 是配置。
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="先用 SFT 训练，可选择从其 checkpoint 初始化 RLCD，再用独立测试集评估。" width="1000">
 </p>
 
-SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都可在独立测试集上评估，加载时还需对应的基础模型。
+SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都可在独立测试集上评估，加载时还需对应的base model。
 
 | Stage | 更新参数 | SFT | RLCD |
 | --- | --- | --- | --- |
