@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visionjev.evaluation.metrics import question_metrics, summarize
+from visualjev.evaluation.metrics import question_metrics, summarize
 
 
 def test_metrics_match_known_probabilities():
@@ -42,7 +42,7 @@ def test_soft_targets_do_not_get_hard_accuracy():
 
 
 def test_cli_uses_explicit_dataset_despite_legacy_request_file(tmp_path, monkeypatch):
-    from visionjev.evaluation import evaluate
+    from visualjev.evaluation import evaluate
     (tmp_path / "evaluation_request.json").write_text(json.dumps({"data": "only_visual_200.jsonl"}))
     monkeypatch.setattr(sys, "argv", ["evaluate", "--checkpoint", "checkpoint", "--data", "old_test.jsonl", "--output", str(tmp_path)])
     calls = []

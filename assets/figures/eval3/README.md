@@ -1,6 +1,6 @@
 # Eval_3 result charts
 
-Figures and `results.json` were copied from [VisionJev at `fc6210f`](https://github.com/Liuziyu77/VisionJev/blob/fc6210fdb500f59e60a2d286d25e8d211bd680c8/assets/figures/eval3/README.md). The experiment protocol, full scores and timing definitions are in the [experiment report](../../../docs/experiments/eval3.md).
+Figures and `results.json` come from the source experiment at revision `fc6210f`. The protocol, full scores and timing definitions are in the [experiment report](../../../docs/experiments/eval3.md).
 
 | Figure | PNG | SVG | PDF |
 | --- | --- | --- | --- |

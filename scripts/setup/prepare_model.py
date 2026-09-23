@@ -40,7 +40,7 @@ def main():
                 "processor": type(processor).__name__, "hidden_size": config.text_config.hidden_size,
                 "media_defaults": {name: json.loads((path / name).read_text(encoding="utf-8")) for name in
                                    ("preprocessor_config.json", "video_preprocessor_config.json")}}
-    (path / "visionjev_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (path / "visualjev_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(manifest, indent=2))
 
 

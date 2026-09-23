@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visionjev.training.runner import normalize_config, run
+from visualjev.training.runner import normalize_config, run
 
 
 @pytest.mark.parametrize("legacy", [{"kd_weight": .2}, {"teacher_checkpoint": "old_teacher"}])
@@ -15,7 +15,7 @@ def test_removed_training_mode_fails_before_model_or_device_loading(legacy):
 
 def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, monkeypatch):
     from transformers import AutoProcessor
-    from visionjev.training import runner as train
+    from visualjev.training import runner as train
 
     class TinyModel(torch.nn.Module):
         def __init__(self):

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visionjev"
+name = "visualjev"
 version = "0.1.0"
 description = "Visual-Jev: multimodal decisions with Qwen3.5, SFT and experimental RLCD"
 readme = "README.md"
@@ -19,7 +19,7 @@ Repository = "https://github.com/Liuziyu77/Visual-Jev"
 Issues = "https://github.com/Liuziyu77/Visual-Jev/issues"
 
 [tool.setuptools.packages.find]
-include = ["visionjev*", "evaluation*"]
+include = ["visualjev*", "evaluation*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

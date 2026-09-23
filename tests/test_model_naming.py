@@ -4,10 +4,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visionjev import MODEL_NAME
-from visionjev.evaluation.inference import answer, predict
-from visionjev.modeling.model import VisualJev, VisionJev
-from visionjev.training.checkpoint import load_checkpoint
+from visualjev import MODEL_NAME
+from visualjev.evaluation.inference import answer, predict
+from visualjev.modeling.model import VisualJev
+from visualjev.training.checkpoint import load_checkpoint
 
 
 class Backbone(torch.nn.Module):
@@ -38,8 +38,7 @@ def test_response_uses_visualjev_without_changing_decisions_or_usage(kind):
     assert model.model_name == MODEL_NAME == "VisualJev"
 
 
-def test_legacy_class_import_and_checkpoint_parameter_keys_remain_compatible(tmp_path):
-    assert VisionJev is VisualJev
+def test_checkpoint_parameter_keys_remain_compatible(tmp_path):
     model = VisualJev(Backbone(), projection_dim=4)
     frozen = model.backbone.embedding.weight.detach().clone()
     # The pre-rename checkpoint stores named tensors, not the model class.

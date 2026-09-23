@@ -7,12 +7,12 @@ import time
 
 import torch
 
-from visionjev.training.checkpoint import load_checkpoint
-from visionjev.data.compiler import Compiler
-from visionjev.training.distributed import initialize, close
-from visionjev.evaluation.inference import answer
-from visionjev.modeling.model import build_model
-from visionjev.data.schema import read_jsonl
+from visualjev.training.checkpoint import load_checkpoint
+from visualjev.data.compiler import Compiler
+from visualjev.training.distributed import initialize, close
+from visualjev.evaluation.inference import answer
+from visualjev.modeling.model import build_model
+from visualjev.data.schema import read_jsonl
 from .metrics import question_metrics, summarize
 
 
@@ -79,7 +79,7 @@ def run(checkpoint, data, output, device="cuda"):
     if context.primary:
         all_rows = [row for rank_rows in gathered for row in rank_rows]
         # Check coverage without recompiling media.
-        from visionjev.data.schema import candidates, target_distribution
+        from visualjev.data.schema import candidates, target_distribution
         expected = {(i, qid) for i, record in enumerate(records)
                     for qid, q in record["request"]["questions"].items()
                     if target_distribution(record.get("targets", {}).get(qid), [k for k, _ in candidates(q)]) is not None}

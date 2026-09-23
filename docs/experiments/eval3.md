@@ -162,7 +162,7 @@ baseline 未计算候选概率分布，因此不计算 NLL/Brier。DH 概率使�
 - [结果快照](../../assets/figures/eval3/results.json)：六个模型的准确率、平均耗时、分题型耗时和领域分数。
 - [评测图](../../assets/figures/eval3/README.md)：四张图的 PNG、SVG、PDF 及重绘方法。
 - [绘图脚本](../../scripts/eval/plot_eval3.py)：直接读取随仓库保存的快照，无需模型或原始运行目录。
-- [原始实验配置](https://github.com/Liuziyu77/VisionJev/tree/fc6210fdb500f59e60a2d286d25e8d211bd680c8/configs/train/eval3_100k)：保留在来源仓库。
+- 原始训练配置保留在来源项目的 `configs/train/eval3_100k/` 目录。
 
 
 ## 结果范围

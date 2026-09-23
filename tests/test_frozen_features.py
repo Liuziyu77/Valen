@@ -4,8 +4,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from visionjev.modeling.model import VisualJev
-from visionjev.training.rlcd import RLCDObjective
+from visualjev.modeling.model import VisualJev
+from visualjev.training.rlcd import RLCDObjective
 
 
 class Backbone(torch.nn.Module):

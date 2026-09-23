@@ -8,8 +8,8 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import pytest
-from visionjev.training.distributed import Distributed, broadcast_trainable, epoch_shard, synchronize_gradients, initialize
-from visionjev.training.checkpoint import capture_rank_state, save_checkpoint, load_checkpoint
+from visualjev.training.distributed import Distributed, broadcast_trainable, epoch_shard, synchronize_gradients, initialize
+from visualjev.training.checkpoint import capture_rank_state, save_checkpoint, load_checkpoint
 
 
 def test_epoch_shards_have_no_padding_or_dropped_states():

@@ -1,9 +1,8 @@
 import math
-import json
-from pathlib import Path
 import torch
 from torch import nn
-from visionjev import MODEL_NAME
+from visualjev import MODEL_NAME
+from visualjev.modeling.manifest import read_base_manifest
 
 
 class DecisionHead(nn.Module):
@@ -53,10 +52,6 @@ class VisualJev(nn.Module):
                           for hidden in features])
 
 
-# Compatibility for existing imports; checkpoint parameter keys are unchanged.
-VisionJev = VisualJev
-
-
 def build_model(config):
     from transformers import Qwen3_5ForConditionalGeneration
     from peft import LoraConfig, get_peft_model
@@ -91,8 +86,7 @@ def build_model(config):
     if config.get("gradient_checkpointing", True) and stage != "warmup":
         backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model = VisualJev(backbone, config.get("projection_dim", 256))
-    manifest_path = Path(config["model_path"]) / "visionjev_manifest.json"
-    model.base_manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
+    model.base_manifest = read_base_manifest(config["model_path"])
     model.to(config.get("device", "cuda"))
     model.lora_targets = targets
     return model

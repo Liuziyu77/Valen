@@ -5,8 +5,8 @@ from pathlib import Path
 import torch
 
 from multi_gpu_smoke import weight_digest
-from visionjev.training.distributed import initialize, close
-from visionjev.training.runner import run
+from visualjev.training.distributed import initialize, close
+from visualjev.training.runner import run
 
 
 def main():
@@ -37,8 +37,8 @@ def main():
     digest = weight_digest(model)
     assert len(set(context.gather(digest))) == 1
     # Reloaded RLCD checkpoints remain compatible with ordinary inference.
-    from visionjev.evaluation.inference import predict
-    from visionjev.data.schema import read_jsonl
+    from visualjev.evaluation.inference import predict
+    from visualjev.data.schema import read_jsonl
     records = read_jsonl(config["data"])
     prediction = predict(model, compiler.compile(records[0]))
     assert {answer["type"] for answer in prediction["answers"].values()} == {"choice", "noul", "score"}
@@ -64,7 +64,7 @@ def main():
                   "checks": ["choice_noul_score", "text_image_video", "head_lora_merger_gradients",
                              "nonzero_group_advantages", "idle_rank", "identical_rank_weights", "exact_resume", "fixed_reference", "inference"]}
         (root / "result.json").write_text(json.dumps(report, indent=2) + "\n")
-        print("VISIONJEV_RLCD_GPU_SMOKE_PASS", flush=True)
+        print("VISUALJEV_RLCD_GPU_SMOKE_PASS", flush=True)
     context.barrier()
 
 
