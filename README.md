@@ -141,11 +141,13 @@ Checkpoints store trainable parameter values and training state under `<output>/
 
 ## Results
 
-**100k training records · 5,000 held-out visual questions · 0.8B and 2B backbones.** Each model was trained on eight H200 GPUs, updating only the decision head. SFT uses all 100k records; RLCD denotes 70k SFT followed by 30k RLCD on the remaining records.
+### Training setup
 
-**Visual-Jev-2B-SFT reaches 79.02% accuracy**, gaining **3.52 percentage points** over its generation baseline. The **0.8B decision heads achieve about 1.51× end-to-end speedup** over their baseline.
+**100k VQA training records · 5,000 evaluation questions · Qwen3.5-0.8B and 2B backbones.** Each training run used eight H200 GPUs and updated only the decision head. SFT used all 100k records; the two-stage run used 70k for SFT and the remaining 30k for RLCD.
 
-### Accuracy
+**Visual-Jev-2B-SFT reached 79.02% accuracy**, 3.52 percentage points above the original Qwen baseline. The **0.8B decision models ran about 1.51× faster end to end** than the baseline.
+
+#### Accuracy
 
 All six models use the same 5,000 test questions. `Qwen3.5-*` denotes the generation baselines; `Visual-Jev-{size}-SFT/RLCD` denotes the trained decision models. The accuracy bars use a **60–85%** scale.
 
@@ -153,15 +155,15 @@ All six models use the same 5,000 test questions. `Qwen3.5-*` denotes the genera
   <a href="assets/figures/eval3/accuracy.svg"><img src="assets/figures/eval3/accuracy.png" alt="Accuracy for all six models: 0.8B baseline 72.66%, SFT 74.82%, RLCD 75.02%; 2B baseline 75.50%, SFT 79.02%, RLCD 78.44%." width="1000"></a>
 </p>
 
-### Inference time
+#### Inference time
 
-The figure shows SFT and RLCD decision heads only. Mean end-to-end latency includes preprocessing, model computation and output handling. All measurements use the same eight-H200 host, with batch size 1 per GPU and three warmup requests per worker. Model loading and warmup are excluded; baseline timing used for the speedup comparison is available in [Eval_3](docs/experiments/eval3.md).
+The figure shows only the SFT and RLCD decision heads. Mean end-to-end latency includes preprocessing, model computation and output handling. Baseline timings used for the speedup comparison are in [Eval_3](docs/experiments/eval3.md).
 
 <p align="center">
   <a href="assets/figures/eval3/latency.svg"><img src="assets/figures/eval3/latency.png" alt="Mean end-to-end latency for the four trained heads: 0.8B SFT 156.65 ms and RLCD 155.82 ms; 2B SFT 176.80 ms and RLCD 177.55 ms. Baselines are not plotted." width="1000"></a>
 </p>
 
-### Inference time by question type
+#### Inference time by question type
 
 SFT and RLCD latency for Choice, Noul and Score at both model sizes. Choice and Noul score candidates in one branch; Score runs a separate forward pass per level.
 
@@ -169,7 +171,7 @@ SFT and RLCD latency for Choice, Noul and Score at both model sizes. Choice and 
   <a href="assets/figures/eval3/latency-by-task.svg"><img src="assets/figures/eval3/latency-by-task.png" alt="SFT and RLCD latency for Choice, Noul and Score, comparing the four trained decision heads. Baselines are not included in this figure." width="1000"></a>
 </p>
 
-### Accuracy by application domain
+#### Accuracy by application domain
 
 Accuracy across visual question answering, user interfaces, games, and documents/charts. Highlighted cells mark the highest score in each domain within the same model size.
 
@@ -177,7 +179,7 @@ Accuracy across visual question answering, user interfaces, games, and documents
   <a href="assets/figures/eval3/accuracy-by-domain.svg"><img src="assets/figures/eval3/accuracy-by-domain.png" alt="Accuracy of all six models in all four application domains, with exact values and sample counts." width="1000"></a>
 </p>
 
-See [Eval_3](docs/experiments/eval3.md) for the full protocol, per-source scores, P50/P95 latency, and probability metrics. These results use one seed and the supplied evaluation split. Click a chart for its SVG version. The [plotting script](scripts/eval/plot_eval3.py) reproduces the four evaluation figures from the bundled [result snapshot](assets/figures/eval3/results.json); full datasets and checkpoints are not bundled in Git.
+See [Eval_3](docs/experiments/eval3.md) for the full experiment setup, per-source scores, P50/P95 latency and probability metrics.
 
 ## Repository layout
 
