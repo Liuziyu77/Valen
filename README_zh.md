@@ -217,6 +217,17 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 ## 演示
 
+### 图像模糊与动作置信度
+
+求解器证明这个三箱关卡的最短解为 22 步，唯一最优首步是 `DOWN`。在清晰图像上，**Valen-Preview-0923** 为 `DOWN` 分配了 93.7% 的概率，决策置信度为 91.6%。视频包含高斯模糊半径从 0 到 72 px 的九次独立推理；采样点之间的图像和数值用于动画过渡。
+
+视频完整保留模型的实测选择：12 和 20 px 时为 `RIGHT`，48 px 时为 `UP`，其余六档为 `DOWN`。在 72 px 时，`DOWN` 的概率为 39.4%，决策置信度为 19.2%。
+
+<p align="center">
+  <a href="assets/demos/valen-preview-0923-blur-confidence.mp4"><img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-Preview-0923 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"></a><br>
+  <sub>点击动画打开 MP4。曲线上的每个点对应一次模型推理，采样点之间的数值为播放插值。</sub>
+</p>
+
 ### Valen 与 27B 生成模型对比
 
 三个模型在相同关卡、相同 10 步上限下运行。**Valen-Sokoban-SFT-RLCD-2B** 用 9 次决策通关，记录的单步延迟之和为 1.13 秒（平均 125 毫秒/步）。Qwen3.8-27B-FP8 在 no-thinking 模式下达到步数上限但未通关；thinking 模式成功通关，耗时 198.05 秒。为了控制演示时长，仅 thinking 轨迹以 20× 加速播放，Valen 和 no-thinking 均保持 1×。
