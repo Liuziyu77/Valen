@@ -82,7 +82,7 @@ python -m valen.evaluate \
 <details>
 <summary>一条带图片输入的标注记录</summary>
 
-JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](assets/figures/general/overview.png)，假设保存为仓库根目录的 `example.jsonl`。这里为便于阅读展开显示，写入文件时需压成一行。
+JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](assets/figures/general/overview.png)，假设保存为仓库根目录的 `example.jsonl`。
 
 ```json
 {
@@ -114,9 +114,6 @@ JSONL 每行是一条记录。下例使用仓库里的[通用实验总览图](as
   }
 }
 ```
-
-图中 2B SFT 模型的准确率为 79.02%，平均耗时为 176.8 ms，因此标签是 `sft`。`targets` 用于训练和评估，不进入模型输入；推理可以省略标签，但仍需 `group_id`。Noul、Score 及其他媒体记录见[合成数据](data/smoke/)和[数据格式](docs/data-format.md)。
-
 </details>
 
 ## 训练
