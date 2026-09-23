@@ -27,7 +27,7 @@
   <a href="#requirements">Requirements</a> · <a href="#quick-start">Quick start</a> · <a href="#training">Training</a> · <a href="#results">Results</a> · <a href="#demo-comparison">Demos</a> · <a href="#documentation">Documentation</a>
 </p>
 
-Valen takes its name from evolutionary biologist Leigh Van Valen and his Red Queen hypothesis: when everything around us changes, even staying in place takes constant adaptation. In AI, the name is a reminder that intelligence must keep pace with new tasks and environments.
+The Red Queen hypothesis (proposed by Leigh Maiorana Van Valen) in the age of AI: intelligence must keep pace with new tasks and environments.
 
 Valen brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 
