@@ -143,8 +143,8 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ### 通用训练
 
-一共**[100k](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) 训练集 · [5k](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)道验证集 · 基于 Qwen3.5-0.8B 与 2B model。** 
-每次训练使用八张 H200，仅更新决策头。SFT 使用全部 100k 数据；RLCD 先用 70k 数据做 SFT，再用剩余 30k 数据做 RLCD。
+一共[**100k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k) 训练集 · [**5k**](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)道验证集 · 基于 Qwen3.5-0.8B 与 2B model。 
+每次训练使用八张 H200，仅更新decision head。SFT 使用全部 100k 数据；RLCD 先用 70k 数据做 SFT，再用剩余 30k 数据做 RLCD。
 
 **Visual-Jev-2B-SFT 的准确率达到 79.02%**，比原始baseline提高 **3.52 个百分点**；**0.8B 的端到端推理速度约为baseline的 1.51 倍**。
 
