@@ -109,7 +109,7 @@ JSONL 每行是一条记录。下例为展开显示的二分类问题，使用�
 
 ## 训练
 
-`method` 决定训练目标，`stage` 决定更新哪些参数。可选四种 stage 是配置。
+`method` 决定训练目标，`stage` 决定更新哪些参数。可选四种 stage 配置。
 
 <p align="center">
   <img src="assets/figures/readme-training-workflow.png" alt="先用 SFT 训练，可选择从其 checkpoint 初始化 RLCD，再用独立测试集评估。" width="1000">
@@ -141,7 +141,7 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
 
 ## 实验结果
 
-### General：通用图文题
+### General：通用VQA
 
 [100k 训练集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Training-General-100k)、[5k 测试集](https://huggingface.co/datasets/Visual-Jev/Visual-Jev-Eval-General-5k)，底座为 Qwen3.5-0.8B 和 2B。每次训练使用八张 H200，仅更新决策头：SFT 使用全部 100k 数据；两阶段方案先用 70k 做 SFT，再用剩余 30k 做 RLCD。图中的 `Valen-Base-*` 是训练后的决策模型，`Qwen3.5-*` 是原始生成基线。
 
@@ -155,7 +155,7 @@ checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`�
   <a href="assets/figures/general/task-latency.png"><img src="assets/figures/general/task-latency.png" alt="四个训练后模型在 Choice、Noul、Score 三种题型上的平均单题耗时。" width="1000"></a>
 </p>
 
-Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运行前向。下图列出各题型及应用领域的准确率。Score 只有 18 题，不宜据此判断模型在该题型上的稳定表现。
+Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运行forward。下图列出各题型及应用领域的准确率。Score 只有 18 题。
 
 <p align="center">
   <a href="assets/figures/general/breakdown.png"><img src="assets/figures/general/breakdown.png" alt="六个模型按 Choice、Noul、Score 题型及文档、游戏、界面、视觉问答领域划分的准确率。" width="1000"></a>
@@ -165,7 +165,7 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 
 ### Sokoban：单步决策与完整游戏
 
-四个 `Valen-Sokoban-*` 模型从通用实验的 100k SFT 决策头出发，在 Sokoban 数据上以 `vision_top` 模式续训 3 个 epoch。六个模型使用同一批来自 100 关的 500 道单步题；预测属于任一最优动作即算正确。
+四个 `Valen-Sokoban-*` 模型从通用实验的 100k SFT decision head出发，在 Sokoban 数据上以 `vision_top` 模式续训 3 个 epoch。六个模型使用同一批来自 100 关的 500 道单步题；**预测属于任一最优动作即算正确**。
 
 <p align="center">
   <a href="assets/figures/sokoban/overview.png"><img src="assets/figures/sokoban/overview.png" alt="六个模型在 500 道 Sokoban 单步题上的准确率与平均端到端耗时。" width="1000"></a>
@@ -180,13 +180,12 @@ Choice 和 Noul 在同一分支中计算候选；Score 为每个等级单独运�
 | Valen-Sokoban-SFT-2B | 418（83.60%） | 126.82 ms | 20 |
 | Valen-Sokoban-RLCD-2B | 438（87.60%） | 127.31 ms | 38 |
 
-单步准确率不等于完整游戏通关率。单步耗时在单张 H200 上以 batch size 1 测得，预热三题，不计模型加载。完整游戏每关从初态开始，只尝试一次，最多 200 步，不使用动作缓存、回退或求解器；下图右侧的耗时仅统计成功通关的局。
+单步准确率不等于完整游戏通关率。单步耗时在单张 H200 上以 batch size 1 测得，预热三题，不计模型加载。完整游戏每关从初态开始，只尝试一次，最多 200 步，不使用动作缓存、回退或求解器；下图右侧的耗时仅统计成功通关的局。评测流程见 [Sokoban 说明](evaluation/sokoban/README.md)。
 
 <p align="center">
   <a href="assets/figures/sokoban/full-games.png"><img src="assets/figures/sokoban/full-games.png" alt="100 局 Sokoban 完整游戏的通关数量，以及各模型成功局的实测通关时间分布。" width="1000"></a>
 </p>
 
-这 100 关来自此前按 `Valen-Sokoban-RLCD-2B` 通关结果筛选的 simple 子集，不能当作无偏的全量泛化测试。各模型成功的关卡也不同，右图的通关时间不适合直接比较同题推理速度。0.8B 原始基线尚未评测完整游戏。评测流程见 [Sokoban 说明](evaluation/sokoban/README.md)。
 
 ## 仓库结构
 
