@@ -1,6 +1,6 @@
 # General experiment figures
 
-The three PNGs used in the English and Chinese READMEs summarize the 100k training comparison on 5,000 general image questions:
+The three PNGs in the [technical notes](../../../docs/technical.md#完整实验) summarize the 100k training comparison on 5,000 general image questions:
 
 | Figure | Shows |
 | --- | --- |
@@ -17,4 +17,11 @@ python -m pip install matplotlib
 python scripts/eval/plot_general.py --output-dir /tmp/valen-general-details
 ```
 
-The script writes PNG, SVG and PDF files to that directory. It does not recreate the three README figures. The snapshot does not include per-question predictions or model weights.
+The script writes PNG, SVG and PDF files to that directory. It does not recreate the three original figures. The snapshot does not include per-question predictions or model weights.
+
+The main READMEs use a combined General / Sokoban accuracy–latency scatter plot.
+To regenerate its PNG, SVG and PDF versions in `assets/figures/`, run:
+
+```bash
+python scripts/eval/plot_readme_overview.py
+```
