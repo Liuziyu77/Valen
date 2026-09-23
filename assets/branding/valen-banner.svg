@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 320" role="img" aria-labelledby="title">
-  <title id="title">Valen</title>
-  <rect width="940" height="320" fill="#fff"/>
-  <path d="M72 82 173 148 188 264 72 192Z" fill="#12545b"/>
-  <path d="M173 148 283 72 283 187 188 264Z" fill="#559d82"/>
-  <path d="M283 28h57v57h-57z" fill="#559d82"/>
-  <text x="385" y="228" fill="#25333a" font-family="Arial, Helvetica, sans-serif" font-size="185" font-weight="700" letter-spacing="-7">Valen</text>
-</svg>
