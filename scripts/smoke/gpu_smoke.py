@@ -23,7 +23,7 @@ def main():
     model, compiler, progress = run(config)
     assert progress["step"] == 2
     from safetensors import safe_open
-    with safe_open("models/Qwen3.5-0.8B/model.safetensors-00001-of-00001.safetensors", framework="pt") as weights:
+    with safe_open(Path(config["model_path"]) / "model.safetensors-00001-of-00001.safetensors", framework="pt") as weights:
         expected = weights.get_slice("model.language_model.embed_tokens.weight")[:8].to(torch.bfloat16)
     actual = model.backbone.get_input_embeddings().weight[:8].detach().cpu()
     torch.testing.assert_close(actual, expected, rtol=0, atol=0)

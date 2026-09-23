@@ -46,6 +46,6 @@
 | [test_evaluate.py](../tests/test_evaluate.py) | 指标公式、有效样本分母、显式数据路径 |
 | [test_model_naming.py](../tests/test_model_naming.py) | 模型标识与 checkpoint 参数键兼容 |
 
-CPU 测试主要使用小模型替身。真实处理器测试需要本地 `models/Qwen3.5-0.8B/tokenizer.json` 等处理器文件；没有时跳过。真实权重加载、视觉梯度和 NCCL 恢复由 `scripts/smoke/` 中的 GPU 检查覆盖，命令见[脚本说明](../scripts/README.md)。
+CPU 测试主要使用小模型替身。真实处理器测试需要本地 `models/Qwen3.5-2B/tokenizer.json` 等处理器文件；没有时跳过。真实权重加载、视觉梯度和 NCCL 恢复由 `scripts/smoke/` 中的 GPU 检查覆盖，命令见[脚本说明](../scripts/README.md)。
 
 模型类使用 `Valen`；响应的 `model` 字段来自包顶层的 `MODEL_NAME`。Python 包、命令入口和下载模型清单使用 `valen` 命名。checkpoint 的参数键不变；加载器也能读取模型目录中仅有一份、字段完整的旧清单文件。

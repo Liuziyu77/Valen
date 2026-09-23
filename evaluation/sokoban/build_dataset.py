@@ -1,4 +1,4 @@
-"""Build 30k next-action records and 200 frozen complete-game test cases."""
+"""Build 30k next-action records and 100 frozen complete-game test cases."""
 import argparse
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
@@ -74,7 +74,7 @@ def _render_and_finalize(prepared, board, group_id, index_number, train_dir, rng
     return result
 
 
-def build(train_dir, eval_dir, train_count=30000, test_count=200, seed=20260922,
+def build(train_dir, eval_dir, train_count=30000, test_count=100, seed=20260922,
           workers=4, max_states=20000, tile_size=44, max_attempts=200000):
     train_dir, eval_dir = Path(train_dir).resolve(), Path(eval_dir).resolve()
     if train_count <= 0 or train_count % 20 or test_count < 1 or workers < 1:
@@ -228,7 +228,7 @@ def main():
     parser.add_argument("--train-dir", type=Path, default=ROOT / "data/train_sokoban")
     parser.add_argument("--eval-dir", type=Path, default=ROOT / "data/eval_sokoban")
     parser.add_argument("--train-count", type=int, default=30000)
-    parser.add_argument("--test-count", type=int, default=200)
+    parser.add_argument("--test-count", type=int, default=100)
     parser.add_argument("--seed", type=int, default=20260922)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--max-states", type=int, default=20000)

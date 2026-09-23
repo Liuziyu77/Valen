@@ -165,7 +165,7 @@ latest/
 ```bash
 python -m pytest -q
 
-# 需要本机有两张可见 GPU，并已下载 0.8B 模型。
+# 需要本机有两张可见 GPU，并已下载 2B 模型。
 python -m torch.distributed.run --standalone --nnodes=1 \
   --nproc_per_node=2 --max_restarts=0 scripts/smoke/rlcd_gpu_smoke.py
 ```

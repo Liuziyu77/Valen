@@ -1,5 +1,5 @@
 {
-  "model_path": "models/Qwen3.5-0.8B",
+  "model_path": "models/Qwen3.5-2B",
   "data": "data/smoke/train.jsonl",
   "output": "output/rlcd_warmup",
   "stage": "warmup",

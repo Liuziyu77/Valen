@@ -16,6 +16,8 @@
 
 ## 生成与校验数据
 
+已发布的 [Valen-Eval-Game](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 同时包含 Sokoban 训练集和评测集，训练与评测分别使用对应划分。也可以用以下命令在本地生成数据。
+
 先用小规模数据验证流程：
 
 ```bash
@@ -25,7 +27,7 @@ python -m evaluation.sokoban.build_dataset \
 python -m evaluation.sokoban.validate_dataset
 ```
 
-默认输出到 `data/train_sokoban/` 和 `data/eval_sokoban/`。训练数量必须是 20 的正整数倍，测试数量需为正整数。不带数量参数时生成 30,000 条训练记录和 200 个测试关卡。生成器拒绝覆盖非空目录；正式生成时使用新的 `--train-dir` 和 `--eval-dir`。
+默认输出到 `data/train_sokoban/` 和 `data/eval_sokoban/`。训练数量必须是 20 的正整数倍，测试数量需为正整数。不带数量参数时生成 30,000 条训练记录和 100 个测试关卡。生成器拒绝覆盖非空目录；正式生成时使用新的 `--train-dir` 和 `--eval-dir`。
 
 训练记录来自最优轨迹、偏离后可解和失败纠正三类状态，配比为 80/15/5；每张截图对应一道下一动作 Choice，多种同样最优的动作均分标签概率。
 
@@ -50,7 +52,7 @@ python -m evaluation.sokoban.evaluate \
 
 # 使用与决策头相同的基础模型及图片预处理配置。
 python -m evaluation.sokoban.evaluate \
-  --policy qwen --model-path models/Qwen3.5-0.8B \
+  --policy qwen --model-path models/Qwen3.5-2B \
   --media-config output/sft_warmup/latest/config.json \
   --output evaluation/sokoban/results/qwen
 ```
