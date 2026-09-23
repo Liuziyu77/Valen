@@ -19,8 +19,6 @@
 
 Visual-Jev scores candidates based on text, images or video. It combines a Qwen3.5-0.8B or 2B backbone with a shared decision head to return probabilities without generating answer tokens. The repository includes the model, JSONL data processing, SFT and experimental RLCD training, and inference and evaluation commands.
 
-The project is inspired by [Jev and System One models](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
-
 ## What it returns
 
 | Output | Use it for | Response |
