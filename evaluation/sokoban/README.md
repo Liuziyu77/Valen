@@ -110,7 +110,7 @@ python -m evaluation.sokoban.replay \
 ## 验证与迁移范围
 
 ```bash
-python -m pytest -q tests/test_sokoban.py
+python -m pytest -q tests/integration/test_sokoban.py
 ```
 
 测试覆盖规则、精确距离、多最优动作、数据去重、错误标签/媒体检测、完整 oracle 游戏、分片合并与通用比较。没有随代码迁入历史数据、结果、模型权重或集群配置。

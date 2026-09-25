@@ -5,8 +5,7 @@ from pathlib import Path
 import torch
 from valen import MODEL_NAME
 from valen.training.checkpoint import load_checkpoint
-from valen.data.compiler import Compiler
-from valen.modeling.model import build_model
+from valen.modeling.factory import build_model, build_compiler, get_backend, backend_for_model, normalize_model_config
 from valen.data.schema import read_jsonl
 
 
@@ -41,8 +40,11 @@ def answer(question, logits, temperature=1.0):
 @torch.no_grad()
 def predict(model, compiled, temperature=1.0):
     model.eval()
-    return {"model": MODEL_NAME,
-            "answers": {q.qid: answer(q, model(q), temperature) for q in compiled.questions},
+    decisions = [d for unit in backend_for_model(model).inference_units(model, compiled) for d in unit]
+    def calibrated(q):
+        return temperature[q.kind] if isinstance(temperature, dict) else temperature
+    return {"model": getattr(model, "model_name", MODEL_NAME),
+            "answers": {d.question.qid: answer(d.question, d.logits, calibrated(d.question)) for d in decisions},
             "usage": {"input_tokens": compiled.logical_tokens, "output_tokens": 0},
             "internal_usage": {"compute_tokens": compiled.compute_tokens}}
 
@@ -56,15 +58,16 @@ def main():
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     config = json.loads((Path(args.checkpoint) / "config.json").read_text(encoding="utf-8"))
+    config = normalize_model_config(config)
     config["device"] = args.device
     model = build_model(config)
     load_checkpoint(args.checkpoint, model)
-    from transformers import AutoProcessor
-    compiler = Compiler(AutoProcessor.from_pretrained(config["model_path"]), Path(args.data).parent,
-                        config.get("max_length", 8192), config.get("media_kwargs"))
+    backend = get_backend(config["architecture"])
+    compiler = build_compiler(config, Path(args.data).parent)
+    records = read_jsonl(args.data, candidate_fn=backend.candidates)
     temperature = json.loads(Path(args.calibration).read_text(encoding="utf-8"))["temperature"] if args.calibration else 1.0
     with Path(args.output).open("w", encoding="utf-8") as output:
-        for record in read_jsonl(args.data):
+        for record in records:
             output.write(json.dumps(predict(model, compiler.compile(record), temperature), ensure_ascii=False) + "\n")
 
 

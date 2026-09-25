@@ -1,4 +1,5 @@
 {
+  "architecture": "qwen",
   "model_path": "models/Qwen3.5-2B",
   "data": "data/smoke/train.jsonl",
   "output": "output/rlcd_vision_top",

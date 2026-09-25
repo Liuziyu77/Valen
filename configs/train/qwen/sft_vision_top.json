@@ -1,0 +1,33 @@
+{
+  "config_version": 2,
+  "model": {
+    "architecture": "qwen",
+    "model_path": "models/Qwen3.5-2B",
+    "dtype": "bf16",
+    "projection_dim": 256
+  },
+  "data": {
+    "path": "data/smoke/train.jsonl",
+    "max_length": 8192
+  },
+  "training": {
+    "output": "output/sft_vision_top",
+    "stage": "vision_top",
+    "device": "cuda",
+    "seed": 42,
+    "epochs": 3,
+    "max_steps": 100,
+    "tokens_per_step": 16384,
+    "gradient_checkpointing": true,
+    "lora_rank": 32,
+    "lora_alpha": 64,
+    "lora_lr": 5e-05,
+    "merger_lr": 1e-05,
+    "head_lr": 0.0002,
+    "vision_lr": 2e-06,
+    "save_every": 10
+  },
+  "objective": {
+    "rps_weight": 0.0
+  }
+}

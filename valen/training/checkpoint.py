@@ -3,7 +3,7 @@ import json
 import random
 from pathlib import Path
 import torch
-from valen.modeling.manifest import read_base_manifest
+from valen.modeling.manifest import read_model_manifest, manifests_match
 
 
 def capture_rank_state(progress, rng):
@@ -17,7 +17,7 @@ def save_checkpoint(path, model, optimizer, config, progress, rng, rank_states=N
     path.mkdir(parents=True, exist_ok=True)
     trainable = {name for name, p in model.named_parameters() if p.requires_grad}
     delta = {k: v.detach().cpu() for k, v in model.state_dict().items() if k in trainable}
-    manifest = read_base_manifest(config["model_path"])
+    manifest = getattr(model, "base_manifest", None) or read_model_manifest(config)
     payload = {"weights": delta, "optimizer": optimizer.state_dict(), "config": config,
                **capture_rank_state(progress, rng),
                "base_manifest": manifest}
@@ -49,7 +49,7 @@ def load_checkpoint(path, model, optimizer=None, rng=None, strict=True, rank=0, 
     base = payload.get("base_manifest")
     if base:
         current = getattr(model, "base_manifest", None)
-        if not current or current["revision"] != base["revision"] or current.get("weight_sha256") != base.get("weight_sha256"):
+        if not manifests_match(base, current):
             raise ValueError("Base model revision differs from checkpoint")
     result = model.load_state_dict(payload["weights"], strict=False)
     if result.unexpected_keys:

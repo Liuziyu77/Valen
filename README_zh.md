@@ -102,7 +102,7 @@ hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # 使用自己的配置训练模型。
 python -m valen.train \
-  --config configs/train/sft_warmup.json
+  --config configs/train/qwen/sft_warmup.json
 
 # 加载下载好的 Valen-Preview-0923 进行推理。
 python -m valen.inference \

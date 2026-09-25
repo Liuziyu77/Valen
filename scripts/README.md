@@ -4,11 +4,11 @@
 
 | 目录 | 工具 |
 | --- | --- |
-| `setup/` | 安装依赖，下载并核验 Qwen3.5-2B |
-| `train/` | 单机多卡 SFT/RLCD 启动器 |
-| `data/` | 生成随仓库提供的合成样例 |
+| `setup/` | 安装依赖，下载并核验基座模型 |
+| `train/` | 按配置运行 SFT/RLCD，本机启动与集群提交 |
+| `data/` | 生成合成样例、筛选双编码器训练检查子集 |
 | `eval/` | 从通用实验快照绘制额外的详细图 |
-| `smoke/` | 单卡、双卡训练与恢复集成检查 |
+| `smoke/qwen/`、`smoke/dual_encoder/` | 各架构的训练与恢复集成检查 |
 
 <a id="installation"></a>
 
@@ -51,9 +51,9 @@ python scripts/setup/prepare_model.py
 ## 训练与推理
 
 ```bash
-python -m valen.train --config configs/train/sft_warmup.json
+python -m valen.train --config configs/train/qwen/sft_warmup.json
 
-VJ_GPUS=4 bash scripts/train/launch_sft.sh configs/train/rlcd_joint.json \
+VALEN_GPUS=4 bash scripts/train/launch.sh configs/train/qwen/rlcd_joint.json \
   --initialize output/sft_warmup/latest
 
 python -m valen.inference \
@@ -62,7 +62,17 @@ python -m valen.inference \
   --output output/rlcd_joint/predictions.jsonl
 ```
 
-`launch_sft.sh` 支持两种训练目标；`VJ_GPUS` 指定本机进程数（默认 2），`VJ_PYTHON` 指定解释器（默认 `python`），`CUDA_VISIBLE_DEVICES` 选择 GPU。不传配置时使用 `sft_joint.json`；首个配置参数之后的参数原样传给训练 CLI。`tokens_per_step` 是每卡预算。推理输出文件的父目录需已存在。
+`launch.sh` 支持两种架构和两种训练目标；`VALEN_GPUS` 指定本机进程数（默认 1），`VALEN_PYTHON` 指定解释器（默认仓库 `.venv/bin/python`），`CUDA_VISIBLE_DEVICES` 选择 GPU。也接受原有的 `VJ_GPUS`、`VJ_PYTHON`。不传配置时使用 Qwen 的 `sft_joint.json`；配置参数之后的参数原样传给训练 CLI。`tokens_per_step` 是每卡预算。推理输出文件的父目录需已存在。旧入口 `launch_sft.sh` 转发到该脚本，并保留默认 2 进程。
+
+集群统一使用 `submit.sh <config> [训练参数]`。它复用仓库 `.venv`，默认申请 1 张 GPU，使用 `llmmultimodal_gpu_pool` 配额组和 `ailab-llmmultimodal` namespace；分别可通过 `VALEN_GPUS`、`RJOB_CHARGED_GROUP`、`RJOB_NAMESPACE` 修改。`VALEN_TIMEOUT` 默认 1800 秒，日志和退出码写入 `artifacts/jobs/<job>/`。
+
+```bash
+bash scripts/train/submit.sh configs/train/qwen/sft_warmup.json
+bash scripts/train/submit.sh smoke qwen --output artifacts/qwen_smoke_run
+bash scripts/train/submit.sh smoke dual_encoder --output artifacts/dual_smoke_run
+```
+
+两种 smoke 都可以用 `--config` 和 `--output` 指定输入配置与独立输出目录。旧的 `submit_dual.sh`、`dual_entry.sh` 和 smoke 文件路径保留转发入口。
 
 八份基础配置覆盖 SFT/RLCD × 四种 stage，均使用合成数据和短程设置。正式训练需调整 `data`、`model_path`、`epochs`、`max_steps` 和 `output`。每次独立训练使用新的输出目录；初始化与恢复见[训练指南](../valen/training/README.md)。
 

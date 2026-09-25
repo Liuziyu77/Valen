@@ -8,10 +8,9 @@ import time
 import torch
 
 from valen.training.checkpoint import load_checkpoint
-from valen.data.compiler import Compiler
 from valen.training.distributed import initialize, close
 from valen.evaluation.inference import answer
-from valen.modeling.model import build_model
+from valen.modeling.factory import build_model, build_compiler, get_backend, normalize_model_config
 from valen.data.schema import read_jsonl
 from .metrics import question_metrics, summarize
 
@@ -23,15 +22,17 @@ def run(checkpoint, data, output, device="cuda"):
     output, data, checkpoint = Path(output), Path(data), Path(checkpoint)
     output.mkdir(parents=True, exist_ok=True)
     config = json.loads((checkpoint / "config.json").read_text(encoding="utf-8"))
+    config = normalize_model_config(config)
     config.update(device=context.device, gradient_checkpointing=False)
     torch.manual_seed(config.get("seed", 42))
     model = build_model(config)
     payload = load_checkpoint(checkpoint, model)
     model.eval()
-    from transformers import AutoProcessor
-    compiler = Compiler(AutoProcessor.from_pretrained(config["model_path"], local_files_only=True),
-                        data.parent, config.get("max_length", 8192), config.get("media_kwargs"))
-    records = read_jsonl(data)
+    backend = get_backend(config["architecture"])
+    from valen.data.schema import target_distribution
+    compiler = build_compiler(config, data.parent)
+    candidate_fn = backend.candidates
+    records = read_jsonl(data, candidate_fn=candidate_fn)
     indices = list(range(context.rank, len(records), context.world_size))
     context.barrier()
     rows, started = [], time.monotonic()
@@ -45,27 +46,36 @@ def run(checkpoint, data, output, device="cuda"):
             compile_started = time.monotonic()
             compiled = compiler.compile(record, labeled_only=True)
             compile_seconds = time.monotonic() - compile_started
-            for question in compiled.questions:
+            units = iter(backend.inference_units(model, compiled))
+            while True:
                 synchronize()
                 forward_started = time.monotonic()
-                logits = model(question)
+                unit = next(units, None)
                 synchronize()
-                forward_seconds = time.monotonic() - forward_started
-                meta = record.get("meta", {})
-                row = {"record_index": index, "record_id": meta.get("record_id"),
-                       "group_id": record["group_id"], "qid": question.qid, "task": question.kind,
-                       "modality": meta.get("modality", "text" if question.is_text else "media"),
-                       "language": meta.get("language_bucket", "unknown"),
-                       "domain": meta.get("domain", "unknown"),
-                       "timing": {"compile_seconds": compile_seconds, "forward_seconds": forward_seconds,
-                                  "compile_plus_forward_seconds": compile_seconds + forward_seconds},
-                       "metrics": question_metrics(question, logits)}
-                rows.append(row)
-                probabilities = logits.float().softmax(-1).cpu().tolist()
-                prediction = dict(row, target=dict(zip(question.keys, question.target)),
-                                  probabilities=dict(zip(question.keys, probabilities)),
-                                  answer=answer(question, logits))
-                stream.write(json.dumps(prediction, ensure_ascii=False) + "\n")
+                if unit is None:
+                    break
+                unit_seconds = time.monotonic() - forward_started
+                forward_seconds = unit_seconds / len(unit)
+                for decision in unit:
+                    question, logits = decision.question, decision.logits
+                    meta = record.get("meta", {})
+                    row = {"record_index": index, "record_id": meta.get("record_id"),
+                           "group_id": record["group_id"], "qid": question.qid, "task": question.kind,
+                           "modality": meta.get("modality", "text" if question.is_text else "media"),
+                           "language": meta.get("language_bucket", "unknown"),
+                           "domain": meta.get("domain", "unknown"),
+                           "timing": {"compile_seconds": compile_seconds, "forward_seconds": forward_seconds,
+                                      "compile_plus_forward_seconds": compile_seconds + forward_seconds},
+                           "metrics": question_metrics(question, logits)}
+                    if backend.unit_scope == "state":
+                        row["timing"].update(shared_state_forward_seconds=unit_seconds,
+                                             forward_scope="amortized_per_question")
+                    rows.append(row)
+                    probabilities = logits.float().softmax(-1).cpu().tolist()
+                    prediction = dict(row, target=dict(zip(question.keys, question.target)),
+                                      probabilities=dict(zip(question.keys, probabilities)),
+                                      answer=answer(question, logits))
+                    stream.write(json.dumps(prediction, ensure_ascii=False) + "\n")
             if (local_index + 1) % 50 == 0 or local_index + 1 == len(indices):
                 stream.flush()
                 print(json.dumps({"event": "evaluation_progress", "rank": context.rank,
@@ -79,15 +89,15 @@ def run(checkpoint, data, output, device="cuda"):
     if context.primary:
         all_rows = [row for rank_rows in gathered for row in rank_rows]
         # Check coverage without recompiling media.
-        from valen.data.schema import candidates, target_distribution
         expected = {(i, qid) for i, record in enumerate(records)
                     for qid, q in record["request"]["questions"].items()
-                    if target_distribution(record.get("targets", {}).get(qid), [k for k, _ in candidates(q)]) is not None}
+                    if target_distribution(record.get("targets", {}).get(qid), [k for k, _ in candidate_fn(q)]) is not None}
         actual = [(row["record_index"], row["qid"]) for row in all_rows]
         if len(actual) != len(set(actual)) or set(actual) != expected:
             raise ValueError("Evaluation duplicated or omitted labeled questions")
         report = {"checkpoint": str(checkpoint), "training_step": payload["progress"]["step"],
-                  "base_model_path": config["model_path"], "seed": config.get("seed", 42),
+                  "base_model_path": backend.base_paths(config), "seed": config.get("seed", 42),
+                  "architecture": config.get("architecture", "qwen"),
                   "training_epoch": payload["progress"]["epoch"], "data": str(data),
                   "data_sha256": hashlib.sha256(data.read_bytes()).hexdigest(),
                   "checkpoint_sha256": hashlib.sha256((checkpoint / "checkpoint.pt").read_bytes()).hexdigest(),

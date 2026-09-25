@@ -1,0 +1,39 @@
+{
+  "config_version": 2,
+  "model": {
+    "architecture": "qwen",
+    "model_path": "models/Qwen3.5-2B",
+    "dtype": "bf16",
+    "projection_dim": 256
+  },
+  "data": {
+    "path": "data/smoke/train.jsonl",
+    "max_length": 8192
+  },
+  "training": {
+    "output": "output/rlcd_warmup",
+    "stage": "warmup",
+    "device": "cuda",
+    "seed": 42,
+    "epochs": 3,
+    "max_steps": 100,
+    "tokens_per_step": 16384,
+    "gradient_checkpointing": false,
+    "head_lr": 1e-05,
+    "save_every": 10
+  },
+  "objective": {
+    "rps_weight": 0.0,
+    "method": "rlcd",
+    "rlcd": {
+      "group_size": 16,
+      "num_iterations": 2,
+      "correctness_weight": 1.0,
+      "confidence_weight": 1.0,
+      "brier_weight": 1.0,
+      "beta": 0.02,
+      "clip_epsilon": 0.2,
+      "advantage_epsilon": 1e-06
+    }
+  }
+}

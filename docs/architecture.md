@@ -1,6 +1,8 @@
 # 模型与执行流程
 
-Valen 把每道题转换成候选集合，用 Qwen3.5 的隐状态为候选打分。候选数量由请求决定，决策头输出每个候选的一个 logit，不使用词表输出层，也不调用 `generate()`。三种任务共用backbone和decision head。
+Valen 把每道题转换成候选集合，输出候选概率。`modeling.factory` 根据 `architecture` 选择平级的 Qwen 或双编码器实现。它们共用训练目标、输出协议和评估工具；编译器、前向和反传粒度由各自的 backend 定义。下面详细说明 Qwen 路径。
+
+Qwen 路径使用 Qwen3.5 的隐状态为候选打分。候选数量由请求决定，决策头输出每个候选的一个 logit，不使用词表输出层，也不调用 `generate()`。三种任务共用 backbone 和 decision head。
 
 ![模型结构](../assets/figures/readme-architecture.png)
 
@@ -11,7 +13,7 @@ flowchart LR
     A[JSONL record] --> B[read_jsonl / validate_record]
     B --> C[Compiler.compile]
     C --> D[CompiledState / Question / Branch]
-    D --> E[Valen.forward]
+    D --> E[ValenQwen.forward]
     E --> F[Candidate logits]
     F --> G[SFT or RLCD loss]
     F --> H[answer / question_metrics]
@@ -29,7 +31,7 @@ flowchart LR
 
 ## 编译器做了什么
 
-实现位于 [data/compiler.py](../valen/data/compiler.py)，记录级校验位于 [data/schema.py](../valen/data/schema.py)。
+实现位于 [data/compilers/qwen.py](../valen/data/compilers/qwen.py)，记录级校验位于 [data/schema.py](../valen/data/schema.py)。
 
 1. 选择要处理的问题。训练和评估使用 `labeled_only=True`；整条记录没有标签时，在读取媒体之前返回空结果。
 2. 将文本 state 转成 user 消息，或读取已有的消息列表。解析本地媒体路径，记录媒体摘要。
@@ -62,16 +64,16 @@ compute_tokens = sum(B + Sᵢ)
 
 ## backbone与decision head
 
-[build_model](../valen/modeling/model.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，再取出 `.model`。词表输出层随外层容器释放。注意力实现固定为 `eager`；配置支持 `bf16` 和 `fp32`。
+[Qwen builder](../valen/modeling/qwen/builder.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，再取出 `.model`。词表输出层随外层容器释放。注意力实现固定为 `eager`；配置支持 `bf16` 和 `fp32`。
 
-`Valen.forward(question)` 按顺序执行各分支。`DecisionHead` 读取候选描述最后一个 token 的隐状态 `h_candidate[k]`，以及 `Decision:` 最后一个 token 的隐状态 `h_decision`。两组无偏置线性投影默认输出 256 维向量：
+`ValenQwen.forward(question)` 按顺序执行各分支。`DecisionHead` 读取候选描述最后一个 token 的隐状态 `h_candidate[k]`，以及 `Decision:` 最后一个 token 的隐状态 `h_decision`。两组无偏置线性投影默认输出 256 维向量：
 
 ```text
 logit[k] = dot(W_decision h_decision, W_candidate h_candidate[k]) / sqrt(projection_dim)
 p = softmax(logits / temperature)
 ```
 
-决策头先把读取的隐状态转成 FP32，损失也用 FP32。它的参数量为 `2 × hidden_size × projection_dim`，不随候选数变化。`Valen.forward` 返回 logits；softmax 和输出字段由推理或训练目标负责。
+决策头先把读取的隐状态转成 FP32，损失也用 FP32。它的参数量为 `2 × hidden_size × projection_dim`，不随候选数变化。`ValenQwen.forward` 返回 logits；softmax 和输出字段由推理或训练目标负责。
 
 ## 参数开放与优化
 
@@ -106,4 +108,4 @@ checkpoint 只保存当前可训练参数的值及优化器、进度、随机状
 
 Choice 返回最大概率候选，Noul 返回 `P(true)`，Score 返回等级索引的期望值。Choice/Score 的 `confidence` 是分布集中度指标。完整字段、公式与评估口径见[推理与评估](evaluation.md)。
 
-模型类和响应标识为 `Valen`。Python 包、命令入口和新生成的基础模型清单均使用 `valen`；checkpoint 的参数key没有变化。
+模型类为 `ValenQwen`，响应标识为 `Valen`，配置中的架构标识为 `qwen`。Python 包、命令入口和新生成的基础模型清单均使用 `valen`；checkpoint 使用 `backbone.*` 与 `head.*` 参数键。

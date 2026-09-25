@@ -4,27 +4,31 @@ from contextlib import nullcontext
 import hashlib
 import importlib.metadata
 import json
+import math
 import random
 import time
 from pathlib import Path
 import torch
 from valen.training.checkpoint import capture_rank_state, load_checkpoint, save_checkpoint
 from valen.training.distributed import initialize as initialize_distributed, close, epoch_shard, broadcast_trainable, synchronize_gradients
-from valen.data.compiler import Compiler
 from .sft import SFTObjective
 from .rlcd import RLCDObjective, validate_options
-from valen.modeling.model import build_model, optimizer_groups
+from valen.modeling.factory import build_model, build_compiler, get_backend, normalize_model_config, optimizer_groups
 from valen.data.schema import read_jsonl
 
 
 def normalize_config(config):
-    """Normalize objective settings and disabled legacy fields in SFT checkpoints."""
-    config = dict(config)
+    """Normalize architecture, objective settings and disabled legacy fields."""
+    config = normalize_model_config(config)
     if config.get("kd_weight", 0) != 0 or config.get("teacher_checkpoint"):
         raise ValueError("Teacher distillation was removed; remove teacher_checkpoint and nonzero kd_weight")
     for key in ("kd_weight", "kd_temperature", "teacher_checkpoint"):
         config.pop(key, None)
     method = config.setdefault("method", "sft")
+    for name in ("rps_weight", "brier_weight"):
+        value = config.get(name, 0.0)
+        if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value) or value < 0:
+            raise ValueError(f"{name} must be finite and nonnegative")
     if method not in {"sft", "rlcd"}:
         raise ValueError(f"Unknown training method: {method}")
     if method == "rlcd":
@@ -51,7 +55,8 @@ def run(config, resume=None, initialize=None):
     torch.manual_seed(seed)
     rng = random.Random(seed + context.rank)
     data_path = Path(config["data"])
-    records = read_jsonl(data_path)
+    backend = get_backend(config["architecture"])
+    records = read_jsonl(data_path, candidate_fn=backend.candidates)
     config = dict(config, data_sha256=hashlib.sha256(data_path.read_bytes()).hexdigest())
     fingerprints = context.gather({k: v for k, v in config.items() if k != "device"})
     if any(value != fingerprints[0] for value in fingerprints):
@@ -66,8 +71,8 @@ def run(config, resume=None, initialize=None):
     if initialize:
         payload = load_checkpoint(initialize, model, strict=False)
         previous = payload["config"]
-        if previous["model_path"] != config["model_path"] or previous.get("projection_dim", 256) != config.get("projection_dim", 256):
-            raise ValueError("Initialization backbone/head mismatch")
+        previous = normalize_model_config(previous)
+        backend.validate_initialization(previous, config)
     if resume:
         payload = load_checkpoint(resume, model, optimizer, rng, rank=context.rank, world_size=context.world_size)
         allowed_changes = {"output", "epochs", "max_steps", "device", "save_every"}
@@ -85,13 +90,11 @@ def run(config, resume=None, initialize=None):
     else:
         objective = SFTObjective(config)
     progress.setdefault("optimizer_steps", progress["step"])
-    from transformers import AutoProcessor
-    processor = AutoProcessor.from_pretrained(config["model_path"], local_files_only=True)
-    compiler = Compiler(processor, data_path.parent, config.get("max_length", 8192), config.get("media_kwargs"))
+    compiler = build_compiler(config, data_path.parent)
     report = {"config": config, "world_size": context.world_size, "gradient_sync": "sum_after_local_accumulation",
               "initialization_checkpoint": str(initialize) if initialize else None,
               "initialization_sha256": hashlib.sha256((Path(initialize) / "checkpoint.pt").read_bytes()).hexdigest() if initialize else None,
-              "tokens_per_step_scope": "per_rank", "lora_targets": model.lora_targets,
+              "tokens_per_step_scope": "per_rank", "adaptation": backend.adaptation(model, config),
               "trainable_parameters": {n: p.numel() for n, p in model.named_parameters() if p.requires_grad},
               "optimizer_groups": [{"name": g["name"], "lr": g["lr"], "parameters": sum(p.numel() for p in g["params"])} for g in groups],
               "versions": {p: importlib.metadata.version(p) for p in ("torch", "transformers", "peft", "av")}}
@@ -153,8 +156,7 @@ def run(config, resume=None, initialize=None):
                 progress["cursor"] += 1
                 if not compiled.questions:
                     continue
-                if config.get("stage") == "text" and any(not q.is_text for q in compiled.questions):
-                    raise ValueError("Text stage requires a text-only dataset")
+                backend.validate_state(config, compiled)
                 pack.append(compiled)
                 tokens += compiled.compute_tokens
                 media_log.write(json.dumps({"epoch": progress["epoch"], "step": progress["step"] + 1,
@@ -171,15 +173,17 @@ def run(config, resume=None, initialize=None):
                     optimizer.zero_grad(set_to_none=True)
                     stats = dict.fromkeys(accumulated, 0.0)
                     for state, state_rollouts in zip(pack, rollouts):
-                        for question, rollout in zip(state.questions, state_rollouts):
-                            loss, terms = objective.loss(model, question, rollout)
-                            if not torch.isfinite(loss):
-                                raise FloatingPointError(f"Non-finite loss for {question.qid}")
-                            scale = 1 / (global_states * len(state.questions))
-                            (loss * scale).backward()
-                            stats["loss"] += loss.item() * scale
-                            for name, value in terms.items():
-                                stats[name] += value.item() * scale
+                        scale = 1 / (global_states * len(state.questions))
+                        for unit in backend.training_units(model, state, state_rollouts):
+                            losses = [objective.loss_from_logits(d.logits, d.question, d.rollout) for d in unit]
+                            combined = (losses[0][0] if len(losses) == 1 else torch.stack([loss for loss, _ in losses]).sum()) * scale
+                            if not torch.isfinite(combined):
+                                raise FloatingPointError("Non-finite training unit loss")
+                            combined.backward()
+                            for loss, terms in losses:
+                                stats["loss"] += loss.item() * scale
+                                for name, value in terms.items():
+                                    stats[name] += value.item() * scale
                     synchronize_gradients(model, context)
                     stats = dict(zip(stats, context.sum(list(stats.values()))))
                     group_norms = {g["name"]: float(torch.stack([p.grad.detach().float().square().sum() for p in g["params"] if p.grad is not None]).sum().sqrt())
@@ -233,7 +237,7 @@ def main():
     group.add_argument("--initialize")
     args = parser.parse_args()
     try:
-        config = json.loads(Path(args.config).read_text(encoding="utf-8"))
+        config = normalize_model_config(json.loads(Path(args.config).read_text(encoding="utf-8")))
         if args.method:
             config["method"] = args.method
         if args.output:

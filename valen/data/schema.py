@@ -40,7 +40,7 @@ def target_distribution(target, keys):
     return values
 
 
-def validate_record(record):
+def validate_record(record, candidate_fn=candidates):
     request = record["request"]
     state = request["state"]
     if not isinstance(state, (str, dict)):
@@ -51,18 +51,18 @@ def validate_record(record):
     if set(targets) - set(request["questions"]):
         raise ValueError("Unknown target question IDs")
     for qid, question in request["questions"].items():
-        target_distribution(targets.get(qid), [k for k, _ in candidates(question)])
+        target_distribution(targets.get(qid), [k for k, _ in candidate_fn(question)])
     if not record.get("group_id"):
         raise ValueError("group_id is required for leakage-free splits")
     return record
 
 
-def read_jsonl(path):
+def read_jsonl(path, candidate_fn=candidates):
     records = []
     for line_number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
         if line.strip():
             try:
-                records.append(validate_record(json.loads(line)))
+                records.append(validate_record(json.loads(line), candidate_fn))
             except (ValueError, KeyError, TypeError, AttributeError) as exc:
                 raise ValueError(f"{path}:{line_number}: {exc}") from exc
     if not records:

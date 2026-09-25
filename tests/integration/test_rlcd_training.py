@@ -105,7 +105,7 @@ def test_rlcd_three_types_resume_matches_continuous_and_keeps_original_reference
     monkeypatch.setenv("WORLD_SIZE", "1")
     monkeypatch.setenv("RANK", "0")
     monkeypatch.setattr(runner, "build_model", lambda config: TinyModel())
-    monkeypatch.setattr(runner, "Compiler", TinyCompiler)
+    monkeypatch.setattr(runner, "build_compiler", lambda *args: TinyCompiler())
     monkeypatch.setattr(AutoProcessor, "from_pretrained", lambda *args, **kwargs: None)
     config = prepare_files(tmp_path)
     compare_runs(tmp_path, config)
@@ -117,7 +117,7 @@ def _distributed_worker(rank, root, config):
     os.environ.update(WORLD_SIZE="2", RANK=str(rank), LOCAL_RANK=str(rank))
     dist.init_process_group("gloo", init_method=f"file://{root}/rendezvous", rank=rank, world_size=2)
     runner.build_model = lambda config: TinyModel()
-    runner.Compiler = TinyCompiler
+    runner.build_compiler = lambda *args: TinyCompiler()
     AutoProcessor.from_pretrained = lambda *args, **kwargs: None
     try:
         metrics = compare_runs(root, config)
@@ -131,7 +131,7 @@ def _distributed_worker(rank, root, config):
 def test_rlcd_two_rank_idle_tail_and_resume(tmp_path):
     config = prepare_files(tmp_path)
     (tmp_path / "config.json").write_text(json.dumps(config))
-    environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[2]))
     result = subprocess.run([sys.executable, str(Path(__file__).resolve()), str(tmp_path)],
                             env=environment, text=True, capture_output=True, timeout=180)
     assert result.returncode == 0, result.stdout + result.stderr

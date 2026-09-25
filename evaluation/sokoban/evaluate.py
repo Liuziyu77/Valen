@@ -74,19 +74,16 @@ class MemoizedPolicy:
 class ValenPolicy:
     def __init__(self, checkpoint, device="cuda"):
         import torch
-        from transformers import AutoProcessor
-        from valen.data.compiler import Compiler
-        from valen.modeling.model import build_model
+        from valen.modeling.factory import build_model, build_compiler, normalize_model_config
         from valen.training.checkpoint import load_checkpoint
         from valen.evaluation.inference import predict
         checkpoint = Path(checkpoint).resolve()
-        config = json.loads((checkpoint / "config.json").read_text())
+        config = normalize_model_config(json.loads((checkpoint / "config.json").read_text()))
         config.update(device=device, gradient_checkpointing=False)
         self.model = build_model(config)
         load_checkpoint(checkpoint, self.model)
         self.model.eval()
-        self.compiler = Compiler(AutoProcessor.from_pretrained(config["model_path"], local_files_only=True),
-                                 ".", config.get("max_length", 8192), config.get("media_kwargs"))
+        self.compiler = build_compiler(config, ".")
         self.media_kwargs = config.get("media_kwargs") or {}
         self.torch, self.predict = torch, predict
 

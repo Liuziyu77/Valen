@@ -51,7 +51,7 @@ hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # 用随仓库提供的合成样本训练决策头。
 python -m valen.train \
-  --config configs/train/sft_warmup.json
+  --config configs/train/qwen/sft_warmup.json
 
 # 加载训练得到的 checkpoint 进行推理。
 python -m valen.inference \
@@ -118,25 +118,25 @@ SFT 和 RLCD 均使用带标签的训练数据。两种方法的 checkpoint 都�
 
 | Stage | 更新参数 | SFT | RLCD |
 | --- | --- | --- | --- |
-| `warmup` | 决策头 | [配置](../configs/train/sft_warmup.json) | [配置](../configs/train/rlcd_warmup.json) |
-| `text` | LLM LoRA、决策头；使用纯文本数据 | [配置](../configs/train/sft_text.json) | [配置](../configs/train/rlcd_text.json) |
-| `joint` | LLM LoRA、VIT merger、决策头 | [配置](../configs/train/sft_joint.json) | [配置](../configs/train/rlcd_joint.json) |
-| `vision_top` | `joint` 加视觉编码器最后 4 层 | [配置](../configs/train/sft_vision_top.json) | [配置](../configs/train/rlcd_vision_top.json) |
+| `warmup` | 决策头 | [配置](../configs/train/qwen/sft_warmup.json) | [配置](../configs/train/qwen/rlcd_warmup.json) |
+| `text` | LLM LoRA、决策头；使用纯文本数据 | [配置](../configs/train/qwen/sft_text.json) | [配置](../configs/train/qwen/rlcd_text.json) |
+| `joint` | LLM LoRA、VIT merger、决策头 | [配置](../configs/train/qwen/sft_joint.json) | [配置](../configs/train/qwen/rlcd_joint.json) |
+| `vision_top` | `joint` 加视觉编码器最后 4 层 | [配置](../configs/train/qwen/sft_vision_top.json) | [配置](../configs/train/qwen/rlcd_vision_top.json) |
 
 正式训练前复制一份配置，设置 `model_path`、`data`、`output`、`epochs` 和 `max_steps`。`tokens_per_step` 是**每张 GPU** 的预算，按 state 内全部问题分支的 token 总量计算。每卡持有完整模型，采用**数据并行**。默认值与修改示例见[配置参考](../docs/configuration.md)。
 
 ```bash
 # 单机八卡；每次独立实验使用新的输出目录。
-VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/sft_warmup.json
+VALEN_GPUS=8 bash scripts/train/launch.sh configs/train/qwen/sft_warmup.json
 
 # RLCD 从已训练的 SFT 决策头 checkpoint 初始化。
-VJ_GPUS=8 bash scripts/train/launch_sft.sh configs/train/rlcd_warmup.json \
+VALEN_GPUS=8 bash scripts/train/launch.sh configs/train/qwen/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 ```
 
 目前 SFT 使用标签监督；RLCD 使用 GRPO 形式，奖励同时考虑正确性和置信度误差，另加固定参考策略的 KL 约束和可选的 Brier 损失。公式、初始化和断点恢复命令见[训练说明](../valen/training/README.md)。
 
-checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch_sft.sh` 共用于 SFT 和 RLCD，可通过 `VJ_PYTHON` 指定解释器。
+checkpoint 将可训练参数的值和训练状态保存在 `<output>/latest/`，冻结的base模型另行加载。每次保存会覆盖 `latest/`，不保留历史版本。`--initialize` 从已有权重开始新实验；`--resume` 恢复优化器、数据游标和各 rank 状态，要求进程数不变。`launch.sh` 共用于 SFT 和 RLCD，可通过 `VALEN_PYTHON` 指定解释器。
 
 <a id="完整实验"></a>
 

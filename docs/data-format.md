@@ -87,7 +87,7 @@ Choice 的候选名也会作为输入文本，问题 ID 不会。Score 每个分
 
 media路径相对于 **JSONL 文件所在目录**，也可使用本地绝对路径。例如 `data/train.jsonl` 中的 `assets/light.png` 对应 `data/assets/light.png`。包含 `://` 的路径会被拒绝，包括 HTTP URL 和 `file://`；需要先将素材保存到本地。
 
-编译时会为实际使用的media计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的media仍会被读取并记录摘要。当前代码不强制清单覆盖全部media，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../valen/data/compiler.py)。
+编译时会为实际使用的media计算 SHA-256。`assets` 中有路径匹配的条目时才比对摘要；清单可省略，未列出的media仍会被读取并记录摘要。当前代码不强制清单覆盖全部media，也不检查未使用的清单条目。相关逻辑见 [Compiler._messages / compile](../valen/data/compilers/qwen.py)。
 
 `media_kwargs` 从训练配置传给处理器，随后保存在 checkpoint 中供推理和评估使用。默认读取基础模型的处理器设置；当前没有独立实现图片缩放或视频采样。media日志记录路径、摘要、视觉网格、视觉 token 数，以及处理器返回的帧索引、时间戳等信息。
 

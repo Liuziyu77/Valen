@@ -20,6 +20,8 @@ htmlcov/
 .DS_Store
 
 # Downloaded weights, generated data and run outputs
+/next-generation/
+/next-generation-exp/
 /models/
 /artifacts/
 /output/

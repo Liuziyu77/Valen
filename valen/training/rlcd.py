@@ -3,11 +3,11 @@
 This is an explicit local design, not TypeSafe's unpublished RLCD implementation.
 Rollouts and rewards are frozen for all policy updates in one group batch.
 """
-from copy import deepcopy
 from dataclasses import dataclass
 import math
 
 import torch
+from valen.modeling.factory import backend_for_model
 
 
 DEFAULTS = {
@@ -96,9 +96,9 @@ class RLCDObjective:
         self.reference_weights = None
         self.cache_features = cache_frozen_features
         self.cache_verified = False
-        if self.cache_features and (not hasattr(model, "extract_features") or
-                                    any(p.requires_grad for p in model.backbone.parameters())):
-            raise ValueError("Feature reuse requires a fully frozen Valen backbone")
+        self.backend = backend_for_model(model)
+        if self.cache_features:
+            self.backend.validate_feature_cache(model)
         if self.options["beta"]:
             names = {name for name, parameter in model.named_parameters() if parameter.requires_grad}
             if resuming:
@@ -107,15 +107,7 @@ class RLCDObjective:
                 self.reference_weights = state["reference_weights"]
             else:
                 self.reference_weights = {k: v.detach().cpu().clone() for k, v in model.state_dict().items() if k in names}
-            if self.cache_features:
-                if any(not name.startswith("head.") for name in names):
-                    raise ValueError("Feature reuse requires only head parameters to be trainable")
-                self.reference = deepcopy(model.head)
-                self.reference.load_state_dict({k.removeprefix("head."): v for k, v in self.reference_weights.items()})
-            else:
-                self.reference = deepcopy(model)
-                self.reference.load_state_dict(self.reference_weights, strict=False)
-            self.reference.requires_grad_(False).eval()
+            self.reference = self.backend.make_reference(model, self.reference_weights, self.cache_features)
 
     @torch.no_grad()
     def prepare(self, model, pack):
@@ -124,11 +116,10 @@ class RLCDObjective:
         result = []
         for state in pack:
             group = []
-            for question in state.questions:
-                features = model.extract_features(question) if self.cache_features else None
-                logits = (model.score_features(features) if features is not None else model(question)).float()
+            for item in self.backend.policy_inputs(model, state, self.reference, self.cache_features):
+                question, features, logits = item.question, item.features, item.logits.float()
                 if self.cache_features and not self.cache_verified:
-                    torch.testing.assert_close(logits, model(question).float(), rtol=0, atol=0)
+                    torch.testing.assert_close(logits, self.backend.question_logits(model, question).float(), rtol=0, atol=0)
                     self.cache_verified = True
                 if logits.ndim != 1 or not torch.isfinite(logits).all():
                     raise ValueError(f"Expected finite candidate logits for {question.qid}")
@@ -139,17 +130,20 @@ class RLCDObjective:
                 actions = torch.multinomial(log_probs.exp(), self.options["group_size"], replacement=True)
                 reward, correctness, confidence, error = decision_reward(
                     log_probs.exp(), target, actions, self.options["correctness_weight"], self.options["confidence_weight"])
-                reference = None
-                if self.reference is not None:
-                    reference = (model.score_features(features, self.reference) if features is not None
-                                 else self.reference(question)).float().log_softmax(-1)
+                reference = item.reference_logits.float().log_softmax(-1) if item.reference_logits is not None else None
                 group.append(Rollout(actions, log_probs[actions], group_advantages(reward, self.options["advantage_epsilon"]),
                                      reward, correctness, confidence, error, reference, features))
             result.append(group)
         return result
 
     def loss(self, model, question, rollout):
-        logits = model.score_features(rollout.features) if rollout.features is not None else model(question)
+        return self.loss_from_logits(self.backend.question_logits(model, question, rollout), question, rollout)
+
+    def state_losses(self, model, state, rollouts):
+        return [self.loss_from_logits(d.logits, d.question, d.rollout)
+                for unit in self.backend.training_units(model, state, rollouts) for d in unit]
+
+    def loss_from_logits(self, logits, question, rollout):
         log_probs = logits.float().log_softmax(-1)
         policy_loss, clip_fraction = clipped_policy_loss(
             log_probs, rollout.actions, rollout.old_log_probs, rollout.advantages, self.options["clip_epsilon"])

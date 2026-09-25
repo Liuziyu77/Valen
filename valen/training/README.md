@@ -1,6 +1,8 @@
 # Valen：SFT 与 RLCD
 
-`runner.py` 共用数据分片、token 预算、梯度同步和 checkpoint 流程。`sft.py` 实现标签监督，`rlcd.py` 实现基于 GRPO 的优化。四个 `stage` 决定更新哪些参数，`method` 决定训练目标，两者独立。
+`runner.py` 共用数据分片、token 预算、梯度同步和 checkpoint 流程。`sft.py` 实现标签监督，`rlcd.py` 实现基于 GRPO 的优化。stage 由各架构的 builder 解释，method 决定训练目标，两者独立。
+
+runner 从架构 backend 取得训练执行单元，再调用 `loss_from_logits`。Qwen 每道题单独前向和反传；双编码器的一个 state 内全部题目共享计算图，聚合损失后反传一次。两种方式都保持“题目内聚合、state 内平均、全局 state 平均”的权重规则。
 
 这里的 RLCD 是 Valen 的实验实现，奖励公式以本仓库的 [rlcd.py](rlcd.py) 为准。
 
@@ -18,10 +20,10 @@ $$
 $$
 
 $$
-L_{\mathrm{SFT}}=\mathrm{CE}+w_{\mathrm{RPS}}\mathrm{RPS}.
+L_{\mathrm{SFT}}=\mathrm{CE}+w_{\mathrm{RPS}}\mathrm{RPS}+w_{\mathrm{Brier}}\sum_k(p_k-y_k)^2.
 $$
 
-硬标签和软标签使用同一公式。`rps_weight` 对应公式中的 RPS 权重，默认 0，此时三种任务都只优化交叉熵。Score 的 RPS 区分等级间的远近，使用前 K−1 个累积分布差；Choice 和 Noul 的 RPS 项为 0。
+硬标签和软标签使用同一公式。`rps_weight` 和 SFT 的 `brier_weight` 缺省为 0，此时三种任务都只优化交叉熵。Score 的 RPS 区分等级间的远近，使用前 K−1 个累积分布差；Choice 和 Noul 的 RPS 项为 0。RLCD 的 Brier 权重使用单独的 `rlcd.brier_weight`。
 
 每个 state 内先对有标签的问题平均，再对当前批次的全局有效 state 平均。一条有三道题的记录与一条有一道题的记录权重相同。Score 的多个分支先拼成同一道题的 logits，不各自增加损失权重。
 
@@ -71,26 +73,26 @@ Brier 辅助项默认开启，设 `brier_weight=0` 可关闭该辅助项。
 
 ```bash
 # 先训练 SFT 决策头，产生后续命令需要的 checkpoint。
-python -m valen.train --config configs/train/sft_warmup.json
+python -m valen.train --config configs/train/qwen/sft_warmup.json
 
 # 单卡 RLCD；warmup 表示只更新决策头。
 python -m valen.train \
-  --config configs/train/rlcd_warmup.json \
+  --config configs/train/qwen/rlcd_warmup.json \
   --initialize output/sft_warmup/latest
 
 # 四卡 joint 实验，使用与单卡 warmup 不同的输出目录。
-VJ_GPUS=4 bash scripts/train/launch_sft.sh \
-  configs/train/rlcd_joint.json \
+VALEN_GPUS=4 bash scripts/train/launch.sh \
+  configs/train/qwen/rlcd_joint.json \
   --initialize output/sft_warmup/latest
 
 # 恢复中断的四卡 joint 实验；需要保持原卡数。
-VJ_GPUS=4 bash scripts/train/launch_sft.sh \
+VALEN_GPUS=4 bash scripts/train/launch.sh \
   output/rlcd_joint/latest/config.json --resume output/rlcd_joint/latest
 ```
 
 `configs/train/` 中，SFT 和 RLCD 各有四份 stage 示例。`rlcd_*.json` 已设置 `method`、独立输出目录及完整 RLCD 参数。这些参数用于运行示例，尚未经过正式数据集调优。上述命令使用随仓库提供的 smoke 数据；正式训练前设置 `data`、轮数、步数和输出目录。`text` 仅使用纯文本；RLCD 的 `rps_weight` 必须为 0。
 
-`--initialize` 加载已有权重，开始新实验；`--resume` 恢复优化器、随机状态和进度。已达到 `epochs` 或 `max_steps` 的任务不会因恢复而自动追加训练，如需继续，应在配置副本中提高对应上限。更换 GPU 数时使用 `--initialize`。单机多卡脚本使用当前环境的 `python`，也可通过 `VJ_PYTHON` 指定解释器。全部配置字段见[配置参考](../../docs/configuration.md)。
+`--initialize` 加载已有权重，开始新实验；`--resume` 恢复优化器、随机状态和进度。已达到 `epochs` 或 `max_steps` 的任务不会因恢复而自动追加训练，如需继续，应在配置副本中提高对应上限。更换 GPU 数时使用 `--initialize`。单机多卡脚本使用当前环境的 `python`，也可通过 `VALEN_PYTHON` 指定解释器。全部配置字段见[配置参考](../../docs/configuration.md)。
 
 奖励与优化参数在配置的 `rlcd` 对象中调整。示例使用以下默认值，实际值会写入 checkpoint 配置。
 
@@ -119,7 +121,7 @@ RLCD 仅训练决策头时，可设置 `cache_frozen_features=true`：每批只�
 
 ## 多卡与批次
 
-`launch_sft.sh` 启动单机 `torch.distributed.run`，默认两进程。每卡完整加载模型；CUDA 使用 NCCL，CPU 测试使用 Gloo。训练未使用 DDP 包装，而是在本地逐题累积后显式同步梯度，使图片、文本、Score 分支数不同的 rank 也能参加相同的 collective。
+`launch.sh` 启动单机 `torch.distributed.run`，默认一进程。每卡完整加载模型；CUDA 使用 NCCL，CPU 测试使用 Gloo。训练未使用 DDP 包装，而是在本地按架构执行单元累积后显式同步梯度，使图片、文本、Score 分支数不同的 rank 也能参加相同的 collective。
 
 每轮记录排序后按 rank 分片，不补齐样本、不丢弃尾部。各卡分别按 `tokens_per_step` 打包完整 state，较早耗尽数据的 rank 继续参加梯度同步。所有 rank 都耗尽当前分片后进入下一轮。每次更新前的梯度已经按全局 state 数归一化，同步使用求和。
 

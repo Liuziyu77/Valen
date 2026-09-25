@@ -102,7 +102,7 @@ hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
 
 # Train the model with your own configuration.
 python -m valen.train \
-  --config configs/train/sft_warmup.json
+  --config configs/train/qwen/sft_warmup.json
 
 # Run inference with the downloaded Valen-Preview-0923 checkpoint.
 python -m valen.inference \

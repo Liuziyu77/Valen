@@ -1,0 +1,28 @@
+{
+  "config_version": 2,
+  "model": {
+    "architecture": "qwen",
+    "model_path": "models/Qwen3.5-2B",
+    "dtype": "bf16",
+    "projection_dim": 256
+  },
+  "data": {
+    "path": "data/smoke/train.jsonl",
+    "max_length": 8192
+  },
+  "training": {
+    "output": "output/sft_warmup",
+    "stage": "warmup",
+    "device": "cuda",
+    "seed": 42,
+    "epochs": 3,
+    "max_steps": 100,
+    "tokens_per_step": 16384,
+    "gradient_checkpointing": false,
+    "head_lr": 0.0002,
+    "save_every": 10
+  },
+  "objective": {
+    "rps_weight": 0.0
+  }
+}

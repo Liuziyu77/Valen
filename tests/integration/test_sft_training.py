@@ -35,7 +35,7 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
             return SimpleNamespace(questions=[question], compute_tokens=1, media=[])
 
     monkeypatch.setattr(train, "build_model", lambda config: TinyModel())
-    monkeypatch.setattr(train, "Compiler", TinyCompiler)
+    monkeypatch.setattr(train, "build_compiler", lambda *args: TinyCompiler())
     monkeypatch.setattr(AutoProcessor, "from_pretrained", lambda *args, **kwargs: None)
     monkeypatch.setenv("WORLD_SIZE", "1")
     monkeypatch.setenv("RANK", "0")
@@ -50,6 +50,9 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
     assert progress["step"] == 1
     checkpoint = tmp_path / "run" / "latest"
     payload = torch.load(checkpoint / "checkpoint.pt", weights_only=False)
+    assert payload["config"]["architecture"] == "qwen"
+    assert json.loads((checkpoint / "config.json").read_text())["architecture"] == "qwen"
+    payload["config"].pop("architecture")
     payload["config"].update(kd_weight=0., kd_temperature=2.)
     manifest_path = tmp_path / "run" / "run_manifest.json"
     manifest = json.loads(manifest_path.read_text())

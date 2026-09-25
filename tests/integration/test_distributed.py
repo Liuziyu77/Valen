@@ -89,7 +89,7 @@ def _worker(rank, root):
 def test_distributed_matches_global_state_average_and_restores_each_rank(tmp_path):
     # A fresh interpreter also avoids inheriting optional media libraries'
     # sys.path changes from earlier processor tests into spawned workers.
-    environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[2]))
     result = subprocess.run([sys.executable, str(Path(__file__).resolve()), str(tmp_path)],
                             env=environment, text=True, capture_output=True, timeout=120)
     assert result.returncode == 0, result.stdout + result.stderr

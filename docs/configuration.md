@@ -2,7 +2,9 @@
 
 `python -m valen.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准；以下命令均从仓库根目录执行。
 
-现有八份配置使用 Qwen3.5-2B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。
+`configs/train/qwen/` 中的八份配置使用 Qwen3.5-2B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。配置按 `model`、`data`、`training`、`objective` 分区，`config_version` 为 2；`data.path` 是 JSONL 路径，其他字段沿用下表中的名称。
+
+CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展开后的字段。旧的平铺配置及原路径继续可用，同名字段出现相互冲突的值时直接报错。新旧配置归一化后相同，可以跨配置布局恢复同一次训练。双编码器的基座组合配置位于 `configs/train/dual_encoder/modernbert_dinov3b16/`。
 
 ## 数据、模型和训练budget
 
@@ -10,6 +12,7 @@
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
+| `architecture` | `"qwen"` | `qwen` 或 `dual_encoder`；下表中的 Qwen 参数只用于 Qwen 路径 |
 | `model_path` | 必填 | 本地 Qwen3.5 模型及处理器目录 |
 | `data` | 必填 | JSONL 文件路径；每卡读取完整文件后按记录分片 |
 | `output` | 必填 | 日志及 `latest/` checkpoint 的输出目录 |
@@ -44,11 +47,14 @@
 | `weight_decay` | `0.01` | AdamW 的权重衰减，作用于有梯度的参数 |
 | `max_grad_norm` | `1.0` | 同步后全部可训练参数的梯度裁剪阈值 |
 | `rps_weight` | `0.0` | SFT 中 Score 的 RPS 权重；RLCD 必须为 0 |
+| `brier_weight` | `0.0` | SFT 中完整候选概率分布的 Brier 权重；RLCD 使用 `rlcd.brier_weight` |
 | `cache_frozen_features` | `false` | 仅 RLCD 使用，要求backbone完全冻结 |
 
-只为当前 stage 的可训练部分建立优化器组，学习率在运行中保持常数。当前示例把 `head_lr` 设为 `1e-5`，SFT 示例为 `2e-4`。LoRA 目标模块和每组参数量会写入 `run_manifest.json`。
+只为当前 stage 的可训练部分建立优化器组，学习率在运行中保持常数。Qwen 的 RLCD 示例把 `head_lr` 设为 `1e-5`，SFT 示例为 `2e-4`。架构适配信息写入 `run_manifest.json` 的 `adaptation`，Qwen 的 LoRA 目标位于 `adaptation.lora_targets`；每组参数量仍在 `optimizer_groups`。
 
-`warmup` 指只训练决策头的 stage，不是学习率 warmup。
+stage 由各架构的 builder 解释。Qwen 的 `text` 要求纯文本数据；双编码器的 `text`/`joint` 允许图文数据，解冻文本塔末层并保持视觉塔冻结。切换架构不能沿用另一个架构的 stage 含义或 checkpoint。
+
+`warmup` 是冻结编码器的 stage：Qwen 只训练决策头，双编码器训练投影、融合与完整决策读取模块。它不表示学习率预热，也不是图片 + caption 的图文预训练。
 
 ## RLCD 参数
 
@@ -79,8 +85,9 @@ python - <<'PY'
 import json
 from pathlib import Path
 
-config = json.loads(Path("configs/train/sft_joint.json").read_text())
-config.update(data="data/train.jsonl", output="output/traffic-joint", epochs=5, max_steps=1000)
+config = json.loads(Path("configs/train/qwen/sft_joint.json").read_text())
+config["data"]["path"] = "data/train.jsonl"
+config["training"].update(output="output/traffic-joint", epochs=5, max_steps=1000)
 Path("output/experiment-configs/traffic-joint.json").write_text(
     json.dumps(config, indent=2) + "\n", encoding="utf-8"
 )
@@ -95,4 +102,4 @@ python -m valen.train --config output/experiment-configs/traffic-joint.json
 
 恢复时会比较 checkpoint 内的配置与当前配置，包括数据文件摘要。只允许调整 `output`、`epochs`、`max_steps`、`device`、`save_every`；更换数据、stage、学习率或 RLCD 参数，应使用 `--initialize` 开始新实验。
 
-普通配置并没有统一的字段 schema，拼错的顶层字段不一定报错。`normalize_config` 会检查训练目标和已移除的蒸馏选项：非零 `kd_weight` 或有效 `teacher_checkpoint` 会被拒绝；旧 checkpoint 中关闭的蒸馏字段会被清理。`rlcd` 子对象的字段则严格校验。实现分别见 [runner.py](../valen/training/runner.py)、[model.py](../valen/modeling/model.py) 和 [rlcd.py](../valen/training/rlcd.py)。
+普通配置并没有统一的字段 schema，拼错的顶层字段不一定报错。`normalize_config` 会检查架构标识、训练目标和已移除的蒸馏选项：非零 `kd_weight` 或有效 `teacher_checkpoint` 会被拒绝；旧 checkpoint 中关闭的蒸馏字段会被清理。`rlcd` 子对象的字段则严格校验。实现分别见 [runner.py](../valen/training/runner.py)、[factory.py](../valen/modeling/factory.py) 和 [rlcd.py](../valen/training/rlcd.py)。

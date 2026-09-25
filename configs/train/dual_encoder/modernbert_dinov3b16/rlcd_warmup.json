@@ -1,0 +1,54 @@
+{
+  "config_version": 2,
+  "model": {
+    "architecture": "dual_encoder",
+    "text_model_path": "models/ModernBERT-base",
+    "vision_model_path": "models/dinov3-vitb16-pretrain-lvd1689m",
+    "model_name": "Valen-DE-ModernBERTbase-DINOv3B16-en-v1",
+    "dtype": "bf16",
+    "hidden_size": 512,
+    "num_heads": 8,
+    "intermediate_size": 2048,
+    "fusion_layers": 2,
+    "question_layers": 3,
+    "candidate_layers": 2,
+    "question_queries": 8
+  },
+  "data": {
+    "path": "data/train_v1/smoke_dual.jsonl",
+    "image_size": 384,
+    "state_max_length": 1024,
+    "question_max_length": 128,
+    "candidate_max_length": 128,
+    "max_questions": 256
+  },
+  "training": {
+    "output": "output/dual_encoder_rlcd",
+    "stage": "warmup",
+    "device": "cuda",
+    "seed": 42,
+    "epochs": 3,
+    "max_steps": 3,
+    "tokens_per_step": 4096,
+    "save_every": 1,
+    "text_batch_size": 32,
+    "candidate_chunk_size": 256,
+    "decision_lr": 0.0002,
+    "text_lr": 1e-05,
+    "vision_lr": 2e-06,
+    "text_unfreeze_layers": 6,
+    "vision_unfreeze_layers": 2,
+    "gradient_checkpointing": true
+  },
+  "objective": {
+    "method": "rlcd",
+    "brier_weight": 0.0,
+    "rps_weight": 0.0,
+    "rlcd": {
+      "group_size": 8,
+      "num_iterations": 2,
+      "beta": 0.02,
+      "brier_weight": 1.0
+    }
+  }
+}
