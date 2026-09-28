@@ -59,12 +59,13 @@ def validate_record(record, candidate_fn=candidates):
 
 def read_jsonl(path, candidate_fn=candidates):
     records = []
-    for line_number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
-        if line.strip():
-            try:
-                records.append(validate_record(json.loads(line), candidate_fn))
-            except (ValueError, KeyError, TypeError, AttributeError) as exc:
-                raise ValueError(f"{path}:{line_number}: {exc}") from exc
+    with Path(path).open(encoding="utf-8") as stream:
+        for line_number, line in enumerate(stream, 1):
+            if line.strip():
+                try:
+                    records.append(validate_record(json.loads(line), candidate_fn))
+                except (ValueError, KeyError, TypeError, AttributeError) as exc:
+                    raise ValueError(f"{path}:{line_number}: {exc}") from exc
     if not records:
         raise ValueError("Empty dataset")
     return records

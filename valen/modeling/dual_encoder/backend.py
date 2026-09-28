@@ -48,7 +48,10 @@ class DualEncoderBackend(ArchitectureBackend):
             yield PolicyInput(q, z, ref)
 
     def base_paths(self, config):
-        return {"text": config["text_model_path"], "vision": config["vision_model_path"]}
+        paths = {"text": config["text_model_path"], "vision": config["vision_model_path"]}
+        if config.get("pretrained_shared_path"):
+            paths["pretrained_shared"] = config["pretrained_shared_path"]
+        return paths
 
     def validate_initialization(self, previous, config):
         super().validate_initialization(previous, config)

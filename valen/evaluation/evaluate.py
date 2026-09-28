@@ -116,7 +116,8 @@ def run(checkpoint, data, output, device="cuda"):
         (output / "metrics.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         predictions = []
         for rank in range(context.world_size):
-            predictions.extend(json.loads(line) for line in (output / f"predictions.rank{rank}.jsonl").read_text(encoding="utf-8").splitlines())
+            with (output / f"predictions.rank{rank}.jsonl").open(encoding="utf-8") as stream:
+                predictions.extend(json.loads(line) for line in stream)
         predictions.sort(key=lambda row: (row["record_index"], row["qid"]))
         with (output / "predictions.jsonl").open("w", encoding="utf-8") as stream:
             for row in predictions:
