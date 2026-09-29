@@ -53,3 +53,14 @@ def test_finished_sft_does_not_hide_interrupted_caption_preparation(tmp_path, mo
     (tmp_path / 'output').mkdir(); (tmp_path / 'output/complete.json').write_text('{}')
     module.main()
     assert json.loads(path.read_text())['terminal'] == 'needs_attention'
+
+
+def test_caption_completion_uses_registered_output_root(tmp_path, monkeypatch):
+    job = {'name': 'test', 'job_id': 'test-1', 'log_dir': 'logs', 'kind': 'sft_pipeline',
+           'output': 'output', 'attempt': 2, 'prepare_caption': True, 'caption_root': 'custom-caption'}
+    module, path = monitor(tmp_path, monkeypatch, job, 0)
+    (tmp_path / 'output').mkdir(); (tmp_path / 'output/complete.json').write_text('{}')
+    caption = tmp_path / 'custom-caption/train_caption'; caption.mkdir(parents=True)
+    (caption / 'train_1m.jsonl').touch()
+    module.main()
+    assert json.loads(path.read_text())['terminal'] == 'succeeded'

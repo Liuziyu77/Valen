@@ -73,12 +73,14 @@ class QwenBackend(ArchitectureBackend):
 
     def validate_initialization(self, previous, config):
         super().validate_initialization(previous, config)
-        if previous.get("projection_dim", 256) != config.get("projection_dim", 256):
+        from .heads import head_signature
+        if head_signature(previous) != head_signature(config):
             raise ValueError("Initialization backbone/head mismatch")
 
     def adaptation(self, model, config):
+        from .heads import head_signature
         stage = config.get("stage", "joint")
-        return {"stage": stage, "text": "lora" if stage != "warmup" else "frozen",
+        return {"stage": stage, "decision_head": head_signature(config), "text": "lora" if stage != "warmup" else "frozen",
                 "vision_merger": stage in {"joint", "vision_top"},
                 "vision_unfreeze_layers": 4 if stage == "vision_top" else 0,
                 "lora_targets": getattr(model, "lora_targets", [])}

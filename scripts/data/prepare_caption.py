@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 from pathlib import Path
 import random
 import re
@@ -84,10 +85,14 @@ def main():
     p.add_argument('--eval-count', type=int, default=20000)
     p.add_argument('--workers', type=int, default=64)
     p.add_argument('--write-workers', type=int, default=16)
-    p.add_argument('--credentials-config', default=str(Path.home() / 'petreloss.conf'))
-    p.add_argument('--source-root', default='/mnt/shared-storage-user/mllmexp/zangyuhang')
+    p.add_argument('--credentials-config', default=os.environ.get('VALEN_CREDENTIALS_CONFIG', str(Path.home() / 'petreloss.conf')))
+    p.add_argument('--source-root', default=os.environ.get('VALEN_CAPTION_SOURCE_ROOT'),
+                   help='Caption index directory; or set VALEN_CAPTION_SOURCE_ROOT')
+    p.add_argument('--caption-root', default=os.environ.get('VALEN_CAPTION_ROOT', 'data'))
     p.add_argument('--output', default='next-generation-exp/data-preparation')
     args = p.parse_args()
+    if not args.source_root:
+        p.error('--source-root or VALEN_CAPTION_SOURCE_ROOT is required')
     if args.count <= 0 or args.count % 20 or args.eval_count <= 0 or args.eval_count % 40:
         p.error('--count must be a positive multiple of 20; --eval-count a positive multiple of 40')
     logging.disable(logging.CRITICAL)
@@ -99,7 +104,7 @@ def main():
     except ImportError:
         pass
     out = Path(args.output); out.mkdir(parents=True, exist_ok=True)
-    roots = {'train': Path('data/train_caption'), 'eval': Path('data/eval_caption')}
+    roots = {'train': Path(args.caption_root) / 'train_caption', 'eval': Path(args.caption_root) / 'eval_caption'}
     for root in roots.values():
         (root / 'assets').mkdir(parents=True, exist_ok=True)
     tokenizer = AutoTokenizer.from_pretrained('models/ModernBERT-base', local_files_only=True)
@@ -180,7 +185,7 @@ def main():
             if split == 'train':
                 sizes = sorted({min(100000, args.count), args.count})
                 for n in sizes:
-                    name = {100000: 'train_100k', 1000000: 'train_1m'}.get(n, f'train_{n}')
+                    name = {100000: 'train_100k', 1000000: 'train_1m', 3000000: 'train_3m'}.get(n, f'train_{n}')
                     path = roots[split] / (name + '.jsonl')
                     if len(rows) >= n and not path.exists():
                         # Select balanced prefixes per source, then shuffle reproducibly.

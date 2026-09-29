@@ -2,9 +2,11 @@ import torch
 from torch import nn
 from .model import ValenQwen
 from ..manifest import read_base_manifest
+from .heads import head_signature
 
 
 def build_qwen(config):
+    head_config = head_signature(config)
     from transformers import Qwen3_5ForConditionalGeneration
     from peft import LoraConfig, get_peft_model
     dtype = {"bf16": torch.bfloat16, "fp32": torch.float32}[config.get("dtype", "bf16")]
@@ -37,7 +39,7 @@ def build_qwen(config):
             block.requires_grad_(True)
     if config.get("gradient_checkpointing", True) and stage != "warmup":
         backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-    model = ValenQwen(backbone, config.get("projection_dim", 256))
+    model = ValenQwen(backbone, head_config=head_config)
     model.base_manifest = read_base_manifest(config["model_path"])
     model.to(config.get("device", "cuda"))
     model.lora_targets = targets

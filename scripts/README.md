@@ -64,7 +64,11 @@ python -m valen.inference \
 
 `launch.sh` 支持两种架构和两种训练目标；`VALEN_GPUS` 指定本机进程数（默认 1），`VALEN_PYTHON` 指定解释器（默认仓库 `.venv/bin/python`），`CUDA_VISIBLE_DEVICES` 选择 GPU。也接受原有的 `VJ_GPUS`、`VJ_PYTHON`。不传配置时使用 Qwen 的 `sft_joint.json`；配置参数之后的参数原样传给训练 CLI。`tokens_per_step` 是每卡预算。推理输出文件的父目录需已存在。旧入口 `launch_sft.sh` 转发到该脚本，并保留默认 2 进程。
 
-集群统一使用 `submit.sh <config> [训练参数]`。它复用仓库 `.venv`，默认申请 1 张 GPU，使用 `llmmultimodal_gpu_pool` 配额组和 `ailab-llmmultimodal` namespace；分别可通过 `VALEN_GPUS`、`RJOB_CHARGED_GROUP`、`RJOB_NAMESPACE` 修改。`VALEN_TIMEOUT` 默认 1800 秒，日志和退出码写入 `artifacts/jobs/<job>/`。
+集群提交需要可用的 `rjob` 客户端和本机配置。复制 `scripts/train/cluster.env.example` 到仓库根目录的 `.env.cluster`，填写 namespace、配额组、镜像和挂载；该本机文件已被 Git 忽略。提交脚本自动加载它，也支持直接通过环境变量配置。
+
+`RJOB_BIN` 默认从 PATH 查找 `rjob`。`RJOB_NAMESPACE`、`RJOB_CHARGED_GROUP`、`RJOB_IMAGE` 为必填；`RJOB_MOUNTS` 每行一个挂载，路径含空格时仍作为一个参数传递。仓库、模型和数据须在提交节点及工作节点的相同路径可见。
+
+`submit.sh <config> [训练参数]` 默认申请 1 张 GPU，可用 `VALEN_GPUS` 修改；`VALEN_TIMEOUT` 默认 1800 秒。`VALEN_PYTHON` 默认使用仓库 `.venv/bin/python`。日志和退出码写入 `artifacts/jobs/<job>/`。`submit_experiment.sh` 默认申请 8 卡，使用 `VALEN_RUN_NAME` 命名，输出到 `VALEN_EXPERIMENT_ROOT`（默认 `next-generation-exp`）。
 
 ```bash
 bash scripts/train/submit.sh configs/train/qwen/sft_warmup.json
@@ -154,3 +158,24 @@ CPU 测试不需要模型权重；与真实处理器相关的测试在没有本�
 | 恢复后没有新增 step | 已到 `epochs` 或 `max_steps` 上限；在配置副本中提高已用尽的上限 |
 | `No optimizer step` | 数据没有有效标签，或 `epochs` / `max_steps` 为 0 |
 | 图片和视频指标都归到 `media` | 在记录中填写 `meta.modality`；缺省时评估不区分图片与视频 |
+
+## Caption 数据准备
+
+安装可选依赖 `python -m pip install -e '.[caption-data]'`。源索引、输出目录和凭据文件通过参数配置：
+
+```bash
+python scripts/data/prepare_caption.py \
+  --source-root /datasets/caption-indices \
+  --caption-root data \
+  --credentials-config "$HOME/petreloss.conf"
+```
+
+也可设置 `VALEN_CAPTION_SOURCE_ROOT`、`VALEN_CAPTION_ROOT` 和 `VALEN_CREDENTIALS_CONFIG`。默认输出到 `data/train_caption/` 与 `data/eval_caption/`；自定义目录后，需要同步修改自己的预训练配置副本。凭据配置中的 `langchao` / `langchao2` 段须对应索引 URI 的存储集群，包含 `host_base`、`access_key` 和 `secret_key`；凭据文件放在仓库外。
+
+`sft_with_caption_preparation.py` 使用同样的目录参数。监控注册项可保存 `caption_root`，恢复时会沿用它；否则读取 `VALEN_CAPTION_ROOT`，默认 `data`。
+
+## Qwen 决策头
+
+四种评分头的输入、配置和阶段初始化说明见 [Qwen 决策头](../valen/modeling/qwen/HEADS.md)。统一通过 `python -m valen.train --config ...` 训练，通过 `python -m valen.evaluate` 评估。
+
+Python 监控脚本读取环境变量 `RJOB_BIN`。使用本机配置时，先运行 `source .env.cluster` 再启动监控。集群脚本不是通用调度器适配层；使用 Slurm 等环境时，可直接运行本机 `launch.sh` 或自行包装提交命令。

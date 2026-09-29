@@ -8,7 +8,7 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-RJOB = '/mnt/shared-storage-user/liuziyu/miniconda3/envs/lmm_xc/bin/rjob'
+RJOB = os.environ.get('RJOB_BIN', 'rjob')
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     args = parser.parse_args()
     root = ROOT / 'next-generation-exp'
     registry = root / 'monitor-registry'
-    registry.mkdir(exist_ok=True)
+    registry.mkdir(parents=True, exist_ok=True)
     while not (root / 'STOP_MONITOR').exists():
         for path in sorted(registry.glob('*.json')):
             job = json.loads(path.read_text())
@@ -28,8 +28,9 @@ def main():
             result = {'time_utc': datetime.now(timezone.utc).isoformat(), 'job': job['job_id'], 'name': job['name']}
             failed = False
             completion = ROOT / job.get('output', '') / 'complete.json'
+            caption_root = ROOT / job.get('caption_root', os.environ.get('VALEN_CAPTION_ROOT', 'data'))
             completion_ready = completion.exists() and (not job.get('prepare_caption') or
-                                                        (ROOT / 'data/train_caption/train_1m.jsonl').exists())
+                                                        (caption_root / 'train_caption/train_1m.jsonl').exists())
             if status.exists():
                 result['exit_status'] = status.read_text().strip()
                 failed = result['exit_status'] != 'EXIT_CODE=0'
@@ -83,6 +84,8 @@ def main():
                                    '--label', job['label']]
                         if job.get('shared'):
                             command.extend(['--shared', job['shared']])
+                        if job.get('prepare_caption'):
+                            command.extend(['--caption-root', str(caption_root)])
                     try:
                         submitted = subprocess.run(command, cwd=ROOT, env=dict(os.environ, VALEN_RUN_NAME=name, VALEN_GPUS='8',
                                                    VALEN_CAPTION_SOURCE_MOUNT='1' if job.get('prepare_caption') else '0'),

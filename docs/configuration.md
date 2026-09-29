@@ -36,7 +36,14 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
-| `projection_dim` | `256` | 决策头两组投影的维度 |
+| `head_type` | `"bilinear"` | Qwen 评分头：`bilinear`、`mlp`、`role_mlp` 或 `mixer` |
+| `projection_dim` | `256` | `bilinear` 两组投影的维度 |
+| `head_hidden_dim` | `512` / `1024` | `mlp` / `role_mlp` 的隐藏层维度 |
+| `head_bottleneck_dim` | `128` | `mlp` 的第二个隐藏层维度 |
+| `head_width` | `256` | `role_mlp` / `mixer` 的角色投影维度 |
+| `head_layers` | `2` | `mixer` 的模块数 |
+| `head_token_hidden_dim` | `16` | `mixer` 角色混合 MLP 的隐藏维度 |
+| `head_channel_hidden_dim` | `1024` | `mixer` 通道混合 MLP 的隐藏维度 |
 | `lora_rank` | `32` | LLM LoRA rank；`warmup` 不创建 LoRA |
 | `lora_alpha` | `64` | LoRA alpha；dropout 固定为 0 |
 | `gradient_checkpointing` | `true` | 非 `warmup` stage 启用非重入梯度检查点 |
@@ -49,6 +56,8 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 | `rps_weight` | `0.0` | SFT 中 Score 的 RPS 权重；RLCD 必须为 0 |
 | `brier_weight` | `0.0` | SFT 中完整候选概率分布的 Brier 权重；RLCD 使用 `rlcd.brier_weight` |
 | `cache_frozen_features` | `false` | 仅 RLCD 使用，要求backbone完全冻结 |
+
+`head_*` 模型参数可放在分区配置的 `model` 内。相关维度必须为正整数；初始化时须保持 head 类型与维度一致。输入池化和各网络结构见 [Qwen 决策头](../valen/modeling/qwen/HEADS.md)。
 
 只为当前 stage 的可训练部分建立优化器组，学习率在运行中保持常数。Qwen 的 RLCD 示例把 `head_lr` 设为 `1e-5`，SFT 示例为 `2e-4`。架构适配信息写入 `run_manifest.json` 的 `adaptation`，Qwen 的 LoRA 目标位于 `adaptation.lora_targets`；每组参数量仍在 `optimizer_groups`。
 

@@ -13,6 +13,9 @@ class Branch:
     inputs: dict
     candidate_positions: list
     decision_position: int
+    context_span: tuple | None = None
+    instruction_span: tuple | None = None
+    candidate_spans: list | None = None
 
 
 @dataclass(init=False)
@@ -119,18 +122,32 @@ class Compiler:
             groups = [[pair] for pair in pairs] if question["type"] == "score" else [pairs]
             for group in groups:
                 suffix = []
-                def append(text):
-                    suffix.extend(self.tokenizer.encode(text, add_special_tokens=False))
+                def append(text, char_span=None):
+                    start = base_length + len(suffix)
+                    if char_span is None:
+                        suffix.extend(self.tokenizer.encode(text, add_special_tokens=False))
+                        return None
+                    # 保持原有分词，只额外记录区间。 / Preserve token IDs; record role spans.
+                    encoded = self.tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
+                    suffix.extend(encoded["input_ids"])
+                    indices = [i for i, (a, b) in enumerate(encoded["offset_mapping"])
+                               if a < char_span[1] and b > char_span[0]]
+                    if not indices:
+                        raise ValueError("Empty token span for decision role")
+                    return (start + indices[0], start + indices[-1] + 1)
                 # Canonical segment tokenization makes endpoints exact; no string searching.
                 suffix.extend(self.tokenizer.encode("<|im_start|>user\n", add_special_tokens=False))
                 for value in [question["instructions"]] + [v for pair in group for v in pair]:
                     if any(t in value for t in self.tokenizer.all_special_tokens):
                         raise ValueError("Reserved tokenizer control token in question/criteria")
-                append("Task: " + question["type"] + "\nQuestion: " + question["instructions"] + "\nCandidates:\n")
-                positions = []
+                prefix = "Task: " + question["type"] + "\nQuestion: "
+                instruction_span = append(prefix + question["instructions"] + "\nCandidates:\n",
+                                          (len(prefix), len(prefix) + len(question["instructions"])))
+                positions, candidate_spans = [], []
                 for key, description in group:
                     # Score never sees its level ID, nor any other level description.
-                    append((key + ": " if question["type"] != "score" else "") + description)
+                    prefix = key + ": " if question["type"] != "score" else ""
+                    candidate_spans.append(append(prefix + description, (len(prefix), len(prefix) + len(description))))
                     positions.append(base_length + len(suffix) - 1)
                     append("\n")
                 append("Decision:")
@@ -142,7 +159,8 @@ class Compiler:
                 inputs["attention_mask"] = torch.ones_like(inputs["input_ids"])
                 if "mm_token_type_ids" in base:
                     inputs["mm_token_type_ids"] = torch.cat([base["mm_token_type_ids"], torch.zeros((1, len(suffix)), dtype=torch.long)], dim=1)
-                branches.append(Branch(inputs, positions, length - 1))
+                branches.append(Branch(inputs, positions, length - 1, (0, base_length),
+                                       instruction_span, candidate_spans))
                 compute_tokens += length
                 logical_tokens += len(suffix)
             compiled.append(Question(qid, question["type"], keys, [v for _, v in pairs], branches,

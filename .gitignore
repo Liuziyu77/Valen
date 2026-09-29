@@ -22,6 +22,7 @@ htmlcov/
 # Downloaded weights, generated data and run outputs
 /next-generation/
 /next-generation-exp/
+/next-generation-qwen/
 /models/
 /artifacts/
 /output/

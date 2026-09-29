@@ -58,6 +58,26 @@ def test_real_tokenizer_endpoints_and_score_isolation(compiler):
             assert q.target[q.keys.index("red")] == 1
 
 
+def test_role_spans_preserve_original_tokenization(compiler):
+    record = read_jsonl("data/smoke/text.jsonl")[0]
+    state = compiler.compile(record)
+    for q in state.questions:
+        instruction = record["request"]["questions"][q.qid]["instructions"]
+        for i, branch in enumerate(q.branches):
+            ids = branch.inputs["input_ids"][0]
+            a, b = branch.instruction_span
+            assert compiler.tokenizer.decode(ids[a:b]).strip() == instruction.strip()
+            pairs = list(zip(q.keys, q.descriptions))
+            group = [pairs[i]] if q.kind == "score" else pairs
+            pieces = ["<|im_start|>user\n", f"Task: {q.kind}\nQuestion: {instruction}\nCandidates:\n"]
+            for (key, description), (a, b) in zip(group, branch.candidate_spans):
+                assert compiler.tokenizer.decode(ids[a:b]).strip() == description.strip()
+                pieces.extend([(key + ": " if q.kind != "score" else "") + description, "\n"])
+            pieces.append("Decision:")
+            old_suffix = [token for text in pieces for token in compiler.tokenizer.encode(text, add_special_tokens=False)]
+            assert ids[branch.context_span[1]:].tolist() == old_suffix
+
+
 def test_question_id_does_not_enter_prompt(compiler):
     record = read_jsonl("data/smoke/text.jsonl")[0]
     first = compiler.compile(record).questions[0].branches[0].inputs["input_ids"]
