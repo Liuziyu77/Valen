@@ -23,5 +23,8 @@ Issues = "https://github.com/Liuziyu77/Valen/issues"
 [tool.setuptools.packages.find]
 include = ["valen*", "evaluation*"]
 
+[tool.setuptools.package-data]
+"evaluation.jevbench._upstream" = ["LICENSE"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

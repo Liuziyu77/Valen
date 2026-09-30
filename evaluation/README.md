@@ -2,6 +2,10 @@
 
 This directory contains environments for evaluating complete decision sequences. For labeled JSONL questions and probability metrics, use `python -m valen.evaluate`; see the [script guide](../scripts/README.md).
 
+The [JevBench evaluator](jevbench/README.md) runs local Valen checkpoints on a
+frozen 231-task public snapshot, with upstream scoring, calibration and latency
+reports. Its local experiment files live in the Git-ignored `JevBench-exp/`.
+
 The [Sokoban benchmark](sokoban/README.md) includes a deterministic environment, an exact solver, synthetic data generation and validation, full-game evaluation, result comparison, and trajectory replay. It supports Valen, the original Qwen generation model, a random policy, and an oracle sanity check.
 
 Run commands from the repository root after installing the project. Generated data and results are excluded from Git. The modules are included in the Python package; default data paths are relative to the working directory.
