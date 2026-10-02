@@ -21,6 +21,9 @@ def backend_for_model(model):
 def normalize_model_config(config):
     config = flatten_config(config)
     get_backend(config.setdefault("architecture", "qwen"))
+    if "qwen_execution" in config:
+        if config["architecture"] != "qwen" or config["qwen_execution"] not in ("question", "shared_state"):
+            raise ValueError("qwen_execution requires architecture=qwen and question or shared_state")
     return config
 
 

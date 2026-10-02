@@ -67,7 +67,7 @@ def run(checkpoint, data, output, device="cuda"):
                            "timing": {"compile_seconds": compile_seconds, "forward_seconds": forward_seconds,
                                       "compile_plus_forward_seconds": compile_seconds + forward_seconds},
                            "metrics": question_metrics(question, logits)}
-                    if backend.unit_scope == "state":
+                    if backend.unit_scope == "state" or getattr(compiled, "inputs", None) is not None:
                         row["timing"].update(shared_state_forward_seconds=unit_seconds,
                                              forward_scope="amortized_per_question")
                     rows.append(row)
