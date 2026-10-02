@@ -4,6 +4,12 @@ Valen 把每道题转换成候选集合，输出候选概率。`modeling.factory
 
 Qwen 路径使用 Qwen3.5 的隐状态为候选打分。候选数量由请求决定，决策头输出每个候选的一个 logit，不使用词表输出层，也不调用 `generate()`。三种任务共用 backbone 和 decision head。
 
+Qwen 支持两种执行模式：默认 `qwen_execution="question"` 保持逐题/Score 逐等级分支；
+`qwen_execution="shared_state"` 将同一记录的全部问题放入一个序列，backbone forward 一次，
+各题从共享隐状态读取候选特征，合并损失后反传一次。后者使用普通 causal attention，
+全部问题和 Score 等级描述共享上下文。配置及语义差异见[共享前向说明](qwen-shared-state.md)。
+下文的分支展开和重复前缀计数描述默认 `question` 模式。
+
 ![模型结构](../assets/figures/readme-architecture.png)
 
 ## 从 JSONL 到决策

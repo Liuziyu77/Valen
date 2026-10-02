@@ -2,7 +2,7 @@
 
 `python -m valen.train --config <file.json>` 读取一个 JSON 对象。`--method` 和 `--output` 可覆盖对应字段，其他训练参数在 JSON 中修改。配置中的相对路径以**进程工作目录**为基准；以下命令均从仓库根目录执行。
 
-`configs/train/qwen/` 中的八份配置使用 Qwen3.5-2B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。配置按 `model`、`data`、`training`、`objective` 分区，`config_version` 为 2；`data.path` 是 JSONL 路径，其他字段沿用下表中的名称。
+`configs/train/qwen/` 中的配置使用 Qwen3.5-2B 和合成数据集，运行 3 个 epoch、100 个 step，先达到的上限结束训练。配置按 `model`、`data`、`training`、`objective` 分区，`config_version` 为 2；`data.path` 是 JSONL 路径，其他字段沿用下表中的名称。
 
 CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展开后的字段。旧的平铺配置及原路径继续可用，同名字段出现相互冲突的值时直接报错。新旧配置归一化后相同，可以跨配置布局恢复同一次训练。双编码器的基座组合配置位于 `configs/train/dual_encoder/modernbert_dinov3b16/`。
 
@@ -13,6 +13,7 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 | 字段 | 默认值 | 含义 |
 | --- | --- | --- |
 | `architecture` | `"qwen"` | `qwen` 或 `dual_encoder`；下表中的 Qwen 参数只用于 Qwen 路径 |
+| `qwen_execution` | `"question"` | Qwen 逐题执行；设为 `"shared_state"` 时同一记录全部题目共享一次 backbone forward，可放在 `model` 段 |
 | `model_path` | 必填 | 本地 Qwen3.5 模型及处理器目录 |
 | `data` | 必填 | JSONL 文件路径；每卡读取完整文件后按记录分片 |
 | `output` | 必填 | 日志及 `latest/` checkpoint 的输出目录 |
@@ -23,7 +24,7 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 | `seed` | `42` | 初始化、记录排序及采样使用的种子 |
 | `epochs` | `1` | 最大数据遍历轮数 |
 | `max_steps` | `2**63-1` | 最大批次数 |
-| `max_length` | `8192` | 单个完整分支的 token 上限，超限报错 |
+| `max_length` | `8192` | 单个完整分支的 token 上限；`shared_state` 模式限制整条共享序列，超限报错 |
 | `tokens_per_step` | `16384` | 每 rank 每批的 `compute_tokens` 上限，必须为正 |
 | `media_kwargs` | `{}` | 传给官方处理器的参数；随 checkpoint 保存 |
 | `save_every` | `100` | 每隔多少批覆盖保存 `latest/`；应设为正整数，正常结束也会保存 |
@@ -31,6 +32,10 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 `tokens_per_step` 控制每次更新累积多少个完整 state。state 内所有有标签题目的全部分支要一起放入预算；单个 state 超限时直接报错，不会拆分或截断。
 
 `max_length` 与 `tokens_per_step` 是两层限制。例如，一条记录有五个长度 2000 的分支：每个分支满足 `max_length=8192`，但总量为 10000，无法放入 `tokens_per_step=8000`。
+
+`shared_state` 模式只计算一次视频/文本前缀，`compute_tokens` 等于共享序列长度。
+使用 `configs/train/qwen/sft_shared_state.json` 开始多题实验；模式会随 checkpoint 保存，
+恢复训练不能切换模式。输入上下文与 Score 语义的变化见[共享前向说明](qwen-shared-state.md)。
 
 ## 可训练参数与优化器
 

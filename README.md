@@ -31,6 +31,13 @@
 
 Valen (万澜) brings visual perception to System One decision-making. Inspired by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), it evaluates text, images and video against task instructions and returns probabilities over supplied candidates, giving software a structured decision interface. A Qwen3.5-0.8B or 2B backbone and a shared decision head score candidates without generating answer tokens. The repository includes the model implementation, data processing, SFT and experimental RLCD training, and inference and evaluation commands, with support for training on your own data.
 
+For multiple questions about the same video or state, opt into
+`model.qwen_execution="shared_state"`: one backbone forward scores every question,
+including all Score levels, using the existing candidate heads. See the
+[shared-state guide](docs/qwen-shared-state.md) and
+[SFT recipe](configs/train/qwen/sft_shared_state.json). Existing checkpoints keep
+the default per-question execution and prompt semantics.
+
 <a id="demos"></a>
 
 ## 🎬 Demos

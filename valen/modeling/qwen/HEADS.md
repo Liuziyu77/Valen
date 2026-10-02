@@ -13,7 +13,9 @@ existing checkpoint parameter names. All heads return one FP32 logit per candida
 四角色头先对编译器标记的上下文、问题和候选描述区间求均值，第四个角色取 Decision 位置。
 上下文包含公共 state 的文本和视觉位置；这些都是 Qwen 处理后的隐状态。平均池化可能丢失空间细节。
 候选名称继续进入原有提示词，候选描述池化使用描述所覆盖的 token；边界 token 可能同时覆盖空格或分隔符。
-编译器增加区间元数据，不改变原有分词序列。Score 保留每个等级独立分支。
+默认 `qwen_execution="question"` 保持原有分词序列和 Score 每等级独立分支。
+`shared_state` 模式将所有问题及候选编入同一序列，各题保留各自的角色区间与 Decision 位置，
+四种评分头均可使用。Score 的全部等级共享一次 forward，详见[共享前向说明](../../../docs/qwen-shared-state.md)。
 
 Candidate rows share parameters and never mix inside the head. This does not make
 the full Qwen model invariant to option order: causal backbone states already depend

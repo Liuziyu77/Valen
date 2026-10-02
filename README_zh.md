@@ -31,6 +31,11 @@
 
 Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 启发，它根据任务指令，对文本、图像和视频中的信息进行判断，直接输出给定候选的概率分布，为程序提供结构化的决策接口。模型以 Qwen3.5-0.8B/2B 为骨干，通过共享决策头完成评分，无需生成答案 token。仓库提供模型实现、数据处理、SFT 与实验性 RLCD 训练，以及推理和评估命令，支持使用自有数据训练。
 
+同一视频或 state 包含多道题时，可设置 `model.qwen_execution="shared_state"`，
+以一次 backbone forward 和原有候选评分头完成全部问题及 Score 等级评分。
+使用方式见[共享前向说明](docs/qwen-shared-state.md)和
+[SFT 配置](configs/train/qwen/sft_shared_state.json)。旧 checkpoint 默认保持逐题执行与原提示词语义。
+
 <a id="演示"></a>
 
 ## 🎬 演示
