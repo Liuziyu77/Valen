@@ -7,6 +7,7 @@ from valen import MODEL_NAME
 from valen.training.checkpoint import load_checkpoint
 from valen.modeling.factory import build_model, build_compiler, get_backend, backend_for_model, normalize_model_config
 from valen.data.schema import read_jsonl
+from valen.modeling.qwen.attention import ATTENTION_IMPLEMENTATIONS, with_attention_implementation
 
 
 def answer(question, logits, temperature=1.0):
@@ -56,10 +57,14 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--calibration")
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--attn-implementation", choices=ATTENTION_IMPLEMENTATIONS,
+                        help="Override the Qwen checkpoint's attention backend")
     args = parser.parse_args()
     config = json.loads((Path(args.checkpoint) / "config.json").read_text(encoding="utf-8"))
     config = normalize_model_config(config)
+    config = with_attention_implementation(config, args.attn_implementation)
     config["device"] = args.device
+    config["gradient_checkpointing"] = False
     model = build_model(config)
     load_checkpoint(args.checkpoint, model)
     backend = get_backend(config["architecture"])

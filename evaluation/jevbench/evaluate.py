@@ -15,6 +15,7 @@ from .dataset import (DEFAULT_FILES, DEFAULT_ROOT, MAPPING_VERSION, REVISION, fi
                       load_dataset, probabilities, to_record, write_json)
 from .metrics import summarize_run
 from ._upstream.scoring import score_task
+from valen.modeling.qwen.attention import ATTENTION_IMPLEMENTATIONS, with_attention_implementation
 
 
 def source_hashes():
@@ -61,7 +62,7 @@ def read_predictions(path, task_ids):
 
 
 def run(checkpoint, dataset, output, device="cuda", files=DEFAULT_FILES, limit=None,
-        max_length=None, warmup=1, resume=False):
+        max_length=None, warmup=1, resume=False, attn_implementation=None):
     if warmup < 0 or limit is not None and limit <= 0:
         raise ValueError("warmup must be nonnegative; limit must be positive")
     tasks, data_manifest = load_dataset(dataset, files)
@@ -69,6 +70,7 @@ def run(checkpoint, dataset, output, device="cuda", files=DEFAULT_FILES, limit=N
         tasks = tasks[:limit]
     checkpoint, output = Path(checkpoint).resolve(), Path(output).resolve()
     config = normalize_model_config(json.loads((checkpoint / "config.json").read_text(encoding="utf-8")))
+    config = with_attention_implementation(config, attn_implementation)
     config.update(device=device, gradient_checkpointing=False)
     if max_length is not None:
         if max_length <= 0:
@@ -199,6 +201,7 @@ def main():
     parser.add_argument("--dataset", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--output", required=True)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--attn-implementation", choices=ATTENTION_IMPLEMENTATIONS)
     parser.add_argument("--files", nargs="+", choices=DEFAULT_FILES, default=DEFAULT_FILES)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--max-length", type=int)
@@ -206,7 +209,7 @@ def main():
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     run(args.checkpoint, args.dataset, args.output, args.device, args.files, args.limit,
-        args.max_length, args.warmup, args.resume)
+        args.max_length, args.warmup, args.resume, args.attn_implementation)
 
 
 if __name__ == "__main__":

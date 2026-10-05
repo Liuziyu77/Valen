@@ -23,13 +23,18 @@ flowchart LR
 
 | 入口 | 执行路径 | 处理范围 |
 | --- | --- | --- |
-| `python -m valen.train` | `training.runner.main → run` | 只编译有标签的问题，执行 SFT 或 RLCD |
+| `python -m valen.train` | `training.runner.main → run` | 只对有标签的题目计算 SFT 或 RLCD loss |
 | `python -m valen.inference` | `evaluation.inference.main → predict → answer` | 编译所有问题，每条输入返回一条响应 |
 | `python -m valen.evaluate` | `evaluation.evaluate.main → run → question_metrics / summarize` | 只评估有标签的问题，逐题输出并汇总指标 |
 
 完整目录和测试对应关系见[代码目录](../valen/README.md)。仓库根目录的 `evaluation/` 是独立的任务环境包；其中 Sokoban 的 `ValenPolicy` 复用这里的编译器、模型和 `predict`，将每步截图与规则转换成下一动作。完整游戏流程见[任务评测](../evaluation/README.md)。
 
 ## 编译器做了什么
+
+以下分支流程描述默认的 `qwen_execution="question"`。新模式 `shared_state`
+让全部问题、候选和 Decision 位置共用一个 Qwen 序列及一次前向/反向；
+单题和多题使用相同的共享实现。训练时无标签题目仍保留在共享上下文中。
+模型、批量训练和数据合并详见[共享 state 架构](qwen-shared-state.md)。
 
 实现位于 [data/compilers/qwen.py](../valen/data/compilers/qwen.py)，记录级校验位于 [data/schema.py](../valen/data/schema.py)。
 
@@ -64,7 +69,7 @@ compute_tokens = sum(B + Sᵢ)
 
 ## backbone与decision head
 
-[Qwen builder](../valen/modeling/qwen/builder.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，再取出 `.model`。词表输出层随外层容器释放。注意力实现固定为 `eager`；配置支持 `bf16` 和 `fp32`。
+[Qwen builder](../valen/modeling/qwen/builder.py) 先用 `Qwen3_5ForConditionalGeneration.from_pretrained` 加载本地权重，再取出 `.model`。词表输出层随外层容器释放。注意力后端可配置为 `eager`、`sdpa` 或 `flash_attention_2`；配置支持 `bf16` 和 `fp32`，FlashAttention-2 使用 BF16。
 
 `ValenQwen.forward(question)` 按顺序执行各分支。`DecisionHead` 读取候选描述最后一个 token 的隐状态 `h_candidate[k]`，以及 `Decision:` 最后一个 token 的隐状态 `h_decision`。两组无偏置线性投影默认输出 256 维向量：
 

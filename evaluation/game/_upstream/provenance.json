@@ -1,0 +1,12 @@
+{
+  "source_component": "VisionJev fork: evaluation/game, snapshot of published dataset generators",
+  "dataset_revisions": [
+    "game-v4",
+    "arcade-v2"
+  ],
+  "license": "Apache-2.0",
+  "files_sha256": {
+    "envs.py": "241ba7b64e6ecbd10966fc70461b90e51430e30444a7894a4970ba300cb09c2f",
+    "arcade_envs.py": "0eff534e92fb1f78cfee91884906d42a93982ffa0b8ca296113f5dcf65a3beb6"
+  }
+}

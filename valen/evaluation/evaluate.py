@@ -13,16 +13,18 @@ from valen.evaluation.inference import answer
 from valen.modeling.factory import build_model, build_compiler, get_backend, normalize_model_config
 from valen.data.schema import read_jsonl
 from .metrics import question_metrics, summarize
+from valen.modeling.qwen.attention import ATTENTION_IMPLEMENTATIONS, with_attention_implementation
 
 
 @torch.no_grad()
-def run(checkpoint, data, output, device="cuda"):
+def run(checkpoint, data, output, device="cuda", attn_implementation=None):
     run_started = time.monotonic()
     context = initialize(device)
     output, data, checkpoint = Path(output), Path(data), Path(checkpoint)
     output.mkdir(parents=True, exist_ok=True)
     config = json.loads((checkpoint / "config.json").read_text(encoding="utf-8"))
     config = normalize_model_config(config)
+    config = with_attention_implementation(config, attn_implementation)
     config.update(device=context.device, gradient_checkpointing=False)
     torch.manual_seed(config.get("seed", 42))
     model = build_model(config)
@@ -67,7 +69,7 @@ def run(checkpoint, data, output, device="cuda"):
                            "timing": {"compile_seconds": compile_seconds, "forward_seconds": forward_seconds,
                                       "compile_plus_forward_seconds": compile_seconds + forward_seconds},
                            "metrics": question_metrics(question, logits)}
-                    if backend.unit_scope == "state":
+                    if backend.unit_scope == "state" or getattr(compiled, "inputs", None) is not None:
                         row["timing"].update(shared_state_forward_seconds=unit_seconds,
                                              forward_scope="amortized_per_question")
                     rows.append(row)
@@ -107,6 +109,8 @@ def run(checkpoint, data, output, device="cuda"):
                   "evaluation_wall_seconds": max(r["evaluation_seconds"] for r in rank_timing),
                   "load_and_evaluation_wall_seconds": max(r["load_and_evaluation_seconds"] for r in rank_timing),
                   "metrics": summarize(all_rows)}
+        if hasattr(model, "attention_backends"):
+            report["attention_backends"] = model.attention_backends
         report["questions_per_second"] = len(all_rows) / report["evaluation_wall_seconds"]
         report["latency_seconds"] = {}
         for name in ("compile_seconds", "forward_seconds", "compile_plus_forward_seconds"):
@@ -133,9 +137,11 @@ def main():
     parser.add_argument("--data", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--attn-implementation", choices=ATTENTION_IMPLEMENTATIONS,
+                        help="Override the Qwen checkpoint's attention backend")
     args = parser.parse_args()
     try:
-        run(args.checkpoint, args.data, args.output, args.device)
+        run(args.checkpoint, args.data, args.output, args.device, args.attn_implementation)
     finally:
         close()
 

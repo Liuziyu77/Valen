@@ -13,7 +13,8 @@ def test_removed_training_mode_fails_before_model_or_device_loading(legacy):
         run(dict(device="not_a_device", **legacy))
 
 
-def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, monkeypatch):
+@pytest.mark.parametrize("iterations", [1, 2])
+def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, monkeypatch, iterations):
     from transformers import AutoProcessor
     from valen.training import runner as train
 
@@ -45,7 +46,8 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
         "targets": {"q": {"probabilities": {"true": 0., "false": 1.}}},
         "group_id": "example", "assets": []}) + "\n")
     config = dict(model_path=str(tmp_path / "base"), data=str(data), output=str(tmp_path / "run"),
-                  stage="warmup", device="cpu", epochs=2, max_steps=1, tokens_per_step=1, save_every=1)
+                  stage="warmup", device="cpu", epochs=2, max_steps=1, tokens_per_step=1, save_every=1,
+                  sft_iterations=iterations)
     _, _, progress = run(config)
     assert progress["step"] == 1
     checkpoint = tmp_path / "run" / "latest"
@@ -53,6 +55,8 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
     assert payload["config"]["architecture"] == "qwen"
     assert json.loads((checkpoint / "config.json").read_text())["architecture"] == "qwen"
     payload["config"].pop("architecture")
+    payload["config"].pop("qwen_execution")
+    payload["config"].pop("loss_reduction")
     payload["config"].update(kd_weight=0., kd_temperature=2.)
     manifest_path = tmp_path / "run" / "run_manifest.json"
     manifest = json.loads(manifest_path.read_text())
@@ -60,7 +64,7 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
     manifest_path.write_text(json.dumps(manifest))
     # Emulate the metadata in already-delivered, pure-SFT checkpoints.
     torch.save(payload, checkpoint / "checkpoint.pt")
-    _, _, progress = run(dict(config, max_steps=2), resume=checkpoint)
+    _, _, progress = run(dict(config, max_steps=2, qwen_execution="question"), resume=checkpoint)
     assert progress["step"] == 2 and progress["epoch"] == 2
     metrics = [json.loads(line) for line in (tmp_path / "run" / "metrics.jsonl").read_text().splitlines()]
     assert len(metrics) == 2 and all(row["loss"] == row["ce"] for row in metrics)
@@ -72,4 +76,5 @@ def test_sft_step_and_resume_checkpoint_with_disabled_legacy_fields(tmp_path, mo
     assert all("kd" not in row for row in metrics)
     saved = torch.load(checkpoint / "checkpoint.pt", weights_only=False)
     assert saved["config"] == normalize_config(saved["config"])
-    assert saved["optimizer"]["state"][0]["step"] == 2
+    assert saved["optimizer"]["state"][0]["step"] == 2 * iterations
+    assert saved["progress"]["optimizer_steps"] == 2 * iterations

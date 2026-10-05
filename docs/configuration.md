@@ -20,17 +20,115 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 | `stage` | `"joint"` | `warmup`、`text`、`joint`、`vision_top` |
 | `device` | `"cuda"` | 设备；多卡 CUDA 训练按 `LOCAL_RANK` 绑定 |
 | `dtype` | `"bf16"` | backbone精度，可选 `bf16`、`fp32`；决策头保持 FP32 |
+| `attn_implementation` | `"eager"` | Qwen 注意力后端：`eager`、`sdpa`、`flash_attention_2` |
+| `qwen_execution` | `"question"` | Qwen 执行方式；`shared_state` 让同一记录各题共享一次前向；接受 `share_state` 别名 |
 | `seed` | `42` | 初始化、记录排序及采样使用的种子 |
 | `epochs` | `1` | 最大数据遍历轮数 |
 | `max_steps` | `2**63-1` | 最大批次数 |
 | `max_length` | `8192` | 单个完整分支的 token 上限，超限报错 |
 | `tokens_per_step` | `16384` | 每 rank 每批的 `compute_tokens` 上限，必须为正 |
+| `microbatch_size` | `1` | Qwen 每次并行前向/反向的 QA 数量；shared_state 模式下为 state 数量，支持 SFT 和 RLCD |
+| `microbatch_max_tokens` | `32768` | 每次 backbone 前向的补齐后 token 总量上限 |
+| `data_prefetch` | `false` | Qwen SFT 或 shared_state RLCD 在 CPU 上预处理下一批，同时执行当前批的 GPU 计算 |
+| `sft_iterations` | `1` | 同一 SFT 批次的优化次数，正整数；可与 RLCD 的 `num_iterations` 对齐进行实验对照 |
+| `loss_reduction` | `"state_mean"` | 先对 state 内各题平均，再对 state 平均；`question_mean` 按全部有标签 QA 平均 |
 | `media_kwargs` | `{}` | 传给官方处理器的参数；随 checkpoint 保存 |
 | `save_every` | `100` | 每隔多少批覆盖保存 `latest/`；应设为正整数，正常结束也会保存 |
 
 `tokens_per_step` 控制每次更新累积多少个完整 state。state 内所有有标签题目的全部分支要一起放入预算；单个 state 超限时直接报错，不会拆分或截断。
 
 `max_length` 与 `tokens_per_step` 是两层限制。例如，一条记录有五个长度 2000 的分支：每个分支满足 `max_length=8192`，但总量为 10000，无法放入 `tokens_per_step=8000`。
+
+## Qwen 共享 state 训练
+
+`qwen_execution="shared_state"` 使用一次 backbone 前向为同一记录的全部题目评分，
+单题也是同一实现的特例。`microbatch_size` 在此模式下是并行 state 数量上限；
+同一 state 的图像/视频输入不会按题目重复。`loss_reduction="question_mean"` 可在
+每条记录题目数量不同时保留按 QA 数指定的数据比例。模式和 loss reduction 随
+checkpoint 保存，切换它们需要 `--initialize` 开始新实验。
+
+模型结构、数据合并、两阶段 Mixer 配方和验证命令见[共享 state 说明](qwen-shared-state.md)。
+
+## Qwen 多 QA 并行训练
+
+`microbatch_size > 1` 会把多条 QA 的语言输入组成真正的 batch，同时拼接图像、
+视频的 patch 和 grid。文本在右侧补齐，原有候选位置和角色池化区间保持有效。
+每次更新内部按长度分组，减少 padding；Score 的多个分支按原顺序合并后计算 loss。
+每个 state 的题目平均权重以及 `tokens_per_step` 控制的优化器更新预算保持不变。
+
+例如，可在 `training` 中配置：
+
+```json
+{
+  "tokens_per_step": 32768,
+  "microbatch_size": 16,
+  "microbatch_max_tokens": 65536,
+  "data_prefetch": true
+}
+```
+
+`microbatch_size` 是 QA 上限，实际数量还受序列长度和 Score 分支数限制。
+`microbatch_max_tokens` 限制单次前向的补齐后分支 token 总数；单条分支超过该预算时
+仍单独执行，原有 `max_length` 校验继续生效。多个 Score 分支可能共享一次前向，
+也可能分为几次前向；它们的计算图保留至该题完成一次反向。
+
+`data_prefetch` 使用每卡一个 CPU 工作线程。checkpoint 仅保存已消费批次的游标和
+候选排列 RNG，尚在预取的数据会在恢复后重新准备。训练指标中每卡的
+`prepare_wait_seconds` 记录等待预处理的时间，`cpu_prepare_seconds` 记录预处理耗时。
+并行 QA 和预取目前支持 Qwen SFT。
+
+## Qwen FlashAttention-2
+
+在配置的 `model` 段中加入 `"attn_implementation": "flash_attention_2"`，或使用
+`--attn-implementation` 覆盖。平铺配置支持同名字段。缺省值仍为 `eager`，旧
+checkpoint 可以在推理或独立评估时切换后端，无需转换权重。
+
+FlashAttention-2 要求 CUDA GPU、Ampere 或更新架构、`dtype="bf16"`，以及与
+当前 PyTorch/CUDA 匹配的 `flash-attn` 扩展。先安装项目依赖，再在 GPU 环境安装
+扩展；源码安装需要 CUDA toolkit 和编译工具。已验证的扩展版本为 2.7.4.post1，
+框架最低要求为 2.3.3。Qwen3.5-2B 已在单卡 H200 上通过图文/视频前向、SFT/RLCD
+反向、checkpoint 保存恢复及优化器恢复检查，文本与视觉实际后端均为 FlashAttention-2。
+
+```bash
+python -m pip install packaging ninja psutil
+MAX_JOBS=4 python -m pip install 'flash-attn==2.7.4.post1' --no-build-isolation
+
+python -m valen.train --config configs/train/qwen/sft_joint.json \
+  --attn-implementation flash_attention_2 --output output/qwen-flash-joint
+
+python -m valen.inference --checkpoint output/qwen-flash-joint/latest \
+  --data data/smoke/train.jsonl --output output/predictions.jsonl \
+  --attn-implementation flash_attention_2
+
+python -m valen.evaluate --checkpoint output/qwen-flash-joint/latest \
+  --data data/smoke/train.jsonl --output output/flash-evaluation \
+  --attn-implementation flash_attention_2
+```
+
+`sdpa` 使用 PyTorch 的 scaled dot-product attention，不需要额外安装 `flash-attn`；
+CUDA 上的具体融合内核由 PyTorch 根据输入与设备选择，CPU 与 FP32 也可使用。
+显式选择 FlashAttention-2 时，设备、精度或扩展不兼容会直接报错。
+
+Qwen3.5 的语言 full-attention 层及视觉注意力使用所选后端；Gated DeltaNet
+linear-attention 层仍使用自身实现，其优化依赖 `flash-linear-attention` 和
+`causal-conv1d`。四种 decision head 保持 FP32。训练 manifest 的
+`adaptation.attention_backends` 及普通评估结果的 `attention_backends` 记录文本与视觉
+的实际后端。不同后端可能产生浮点舍入差异，做速度比较时应明确记录后端。
+
+推理/评估的 CLI 覆盖不会修改 checkpoint。Qwen 恢复训练时允许切换注意力后端、
+并行 QA 数量、并行 token 预算、激活检查点和预取设置，并继续恢复优化器及 RNG。
+manifest 的 `resume_runtime_changes` 记录这些运行设置的变化。模型、数据、损失和
+学习率继续受配置一致性检查约束；后端及批量计算可能带来浮点舍入差异。
+
+GPU 集成验证可复用现有 smoke 脚本，覆盖图文/视频、联合反向、保存/恢复和 RLCD：
+
+```bash
+python scripts/smoke/qwen/gpu_smoke.py --attn-implementation flash_attention_2 \
+  --output artifacts/qwen-flash-smoke
+```
+
+参考：[Transformers 5.4 注意力后端](https://huggingface.co/docs/transformers/v5.4.0/en/attention_interface)、
+[FlashAttention 安装要求](https://github.com/Dao-AILab/flash-attention/tree/v2.7.4.post1)。
 
 ## 可训练参数与优化器
 
@@ -81,6 +179,12 @@ stage 由各架构的 builder 解释。Qwen 的 `text` 要求纯文本数据；�
 | `advantage_epsilon` | `1e-6` | 组内优势标准化的分母稳定项，必须为正 |
 
 所有浮点参数必须有限且非负，两个奖励权重不能同时为 0。奖励、KL 方向及损失公式见[训练说明](../valen/training/README.md)。
+
+Qwen `shared_state` RLCD 支持 `microbatch_size > 1` 与 `data_prefetch`。
+策略、固定参考策略以及梯度更新都按完整 state 组批；每题的采样动作与原题对应，
+不会因长度排序错位。使用 `cache_frozen_features=true` 时仍要求单条 microbatch。
+示例见 [rlcd_shared_state_joint.json](../configs/train/qwen/rlcd_shared_state_joint.json)，
+启动时使用 `--initialize` 指向 SFT checkpoint。
 
 `step`、`max_steps` 和 `save_every` 均按 rollout 批次计；`optimizer_steps` 按实际更新计。默认 RLCD 每批更新两次，SFT 每批一次。对比实验除了 step，还需比较 `optimizer_steps` 和实际耗时。
 

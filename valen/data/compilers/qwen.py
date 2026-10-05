@@ -1,4 +1,4 @@
-"""Compile state once; expand Score branches without changing question weights."""
+"""Compile Qwen question branches or a shared sequence with per-question readouts."""
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,10 +34,15 @@ class CompiledState:
     logical_tokens: int
     compute_tokens: int
     media: list
+    inputs: dict | None = None
 
 
 class Compiler:
-    def __init__(self, processor, media_root=".", max_length=8192, media_kwargs=None, verified_media_hashes=None):
+    def __init__(self, processor, media_root=".", max_length=8192, media_kwargs=None, verified_media_hashes=None,
+                 execution="question"):
+        if execution not in {"question", "shared_state"}:
+            raise ValueError(f"Unknown qwen_execution: {execution}")
+        self.execution = execution
         self.processor = processor
         self.tokenizer = processor.tokenizer
         self.media_root = Path(media_root)
@@ -83,12 +88,15 @@ class Compiler:
         for qid, question in record["request"]["questions"].items():
             pairs = candidates(question)
             target = record.get("targets", {}).get(qid)
-            if labeled_only and target_distribution(target, [k for k, _ in pairs]) is None:
+            if labeled_only and self.execution == "question" and target_distribution(target, [k for k, _ in pairs]) is None:
                 continue
             if rng is not None and question["type"] == "choice":
                 rng.shuffle(pairs)
             selected.append((qid, question, pairs, target))
-        if not selected:
+        # 标签只决定监督范围，共享序列仍保留所有题。 / Labels select losses, never prompt content.
+        if not selected or (labeled_only and not any(
+                target_distribution(target, [k for k, _ in pairs]) is not None
+                for _, _, pairs, target in selected)):
             return CompiledState([], 0, 0, [])
         messages, media = self._messages(record["request"]["state"])
         expected_assets = {str((self.media_root / a["path"]).resolve()): a["sha256"] for a in record.get("assets", [])}
@@ -114,6 +122,8 @@ class Compiler:
                 grid = base[name]
                 media.append({name: grid.tolist(), "visual_tokens": int(grid.prod(-1).sum()) // 4})
         base_length = base["input_ids"].shape[1]
+        if self.execution == "shared_state":
+            return self._compile_shared(selected, base, media, labeled_only)
         logical_tokens, compute_tokens = base_length, 0
         compiled = []
         for qid, question, pairs, target in selected:
@@ -166,3 +176,64 @@ class Compiler:
             compiled.append(Question(qid, question["type"], keys, [v for _, v in pairs], branches,
                                      target_distribution(target, keys), not media))
         return CompiledState(compiled, logical_tokens, compute_tokens, media)
+
+    def _compile_shared(self, selected, base, media, labeled_only=False):
+        """All schemas precede all readouts; labels and external IDs never enter inputs.
+
+        This is ordinary causal attention, not isolated question/Score branches.
+        No answer tokens or LM output layer are required by the decision heads.
+        """
+        base_length = base["input_ids"].shape[1]
+        suffix, compiled = [], []
+
+        def append(text, span=None):
+            start = base_length + len(suffix)
+            if span is None:
+                suffix.extend(self.tokenizer.encode(text, add_special_tokens=False))
+                return None
+            encoded = self.tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
+            suffix.extend(encoded["input_ids"])
+            indices = [i for i, (a, b) in enumerate(encoded["offset_mapping"]) if a < span[1] and b > span[0]]
+            if not indices:
+                raise ValueError("Empty token span for decision role")
+            return start + indices[0], start + indices[-1] + 1
+
+        append("<|im_start|>user\n")
+        for index, (qid, question, pairs, target) in enumerate(selected):
+            for value in [question["instructions"]] + [v for pair in pairs for v in pair]:
+                if any(t in value for t in self.tokenizer.all_special_tokens):
+                    raise ValueError("Reserved tokenizer control token in question/criteria")
+            prefix = f"Question {index + 1}\nTask: {question['type']}\nQuestion: "
+            instruction = append(prefix + question["instructions"] + "\nCandidates:\n",
+                                 (len(prefix), len(prefix) + len(question["instructions"])))
+            positions, spans = [], []
+            for key, description in pairs:
+                prefix = key + ": " if question["type"] != "score" else ""
+                spans.append(append(prefix + description, (len(prefix), len(prefix) + len(description))))
+                positions.append(base_length + len(suffix) - 1)
+                append("\n")
+            # Inputs and the decision position are filled after all schemas are appended.
+            branch = Branch({}, positions, -1, (0, base_length), instruction, spans)
+            keys = [key for key, _ in pairs]
+            compiled.append(Question(qid, question["type"], keys, [v for _, v in pairs], [branch],
+                                     target_distribution(target, keys), not media))
+        append("<|im_end|>\n<|im_start|>assistant\n")
+        for index, question in enumerate(compiled):
+            append(f"Question {index + 1} Decision:")
+            question.branches[0].decision_position = base_length + len(suffix) - 1
+            append("\n")
+        length = base_length + len(suffix)
+        if length > self.max_length:
+            raise ValueError(f"Shared state: {length} tokens exceed max_length={self.max_length}; no truncation")
+        inputs = dict(base)
+        inputs["input_ids"] = torch.cat([base["input_ids"], base["input_ids"].new_tensor([suffix])], dim=1)
+        inputs["attention_mask"] = torch.cat([base["attention_mask"],
+                                             base["attention_mask"].new_ones((1, len(suffix)))], dim=1)
+        if "mm_token_type_ids" in base:
+            inputs["mm_token_type_ids"] = torch.cat([base["mm_token_type_ids"],
+                                                    base["mm_token_type_ids"].new_zeros((1, len(suffix)))], dim=1)
+        for question in compiled:
+            question.branches[0].inputs = inputs
+        if labeled_only:
+            compiled = [question for question in compiled if question.target is not None]
+        return CompiledState(compiled, length, length, media, inputs)

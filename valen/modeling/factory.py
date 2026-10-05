@@ -21,6 +21,15 @@ def backend_for_model(model):
 def normalize_model_config(config):
     config = flatten_config(config)
     get_backend(config.setdefault("architecture", "qwen"))
+    if config["architecture"] == "qwen":
+        # 补齐默认值，旧 ckpt 和显式 question 配置等价。 / Canonicalize old and explicit defaults.
+        execution = config.setdefault("qwen_execution", "question")
+        if execution == "share_state":
+            config["qwen_execution"] = "shared_state"
+        if config["qwen_execution"] not in ("question", "shared_state"):
+            raise ValueError("qwen_execution must be question or shared_state")
+    elif "qwen_execution" in config:
+        raise ValueError("qwen_execution requires architecture=qwen")
     return config
 
 

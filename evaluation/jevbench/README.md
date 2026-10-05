@@ -25,6 +25,7 @@ python -m evaluation.jevbench.compare \
 The downloader's `--output` and evaluator's `--dataset` select another dataset
 directory. Set `VALEN_JEVBENCH_DATA` to change the default dataset directory for
 all JevBench commands. The evaluator accepts `--device`, `--files easy original hard`,
+`--attn-implementation eager|sdpa|flash_attention_2` (Valen Qwen only),
 `--max-length`, `--warmup` (unmeasured calls per question type), `--limit`
 (explicitly marked as a smoke subset), and `--resume`. Each task is evaluated
 as an independent request on one device. Run models sequentially on the same
@@ -128,6 +129,13 @@ The cross-model comparer rescoring all predictions verifies coverage, input
 evidence, native answer mapping and all aggregate metrics, then requires the
 same frozen dataset, GPU model, evaluator source, warmup and runtime versions.
 Models retain their own prompt templates, context budgets and calibration.
+Valen also retains its checkpoint attention setting (`eager` when unspecified)
+and executes the trained LoRA adapters without merging. Intern-Decision's native
+HF interface uses SDPA and released dense weights. These settings affect latency;
+the shared GPU and package versions alone do not make the timing comparison an
+isolation of decision-head cost. Use Valen's `--attn-implementation sdpa` for a
+separate run when comparing attention backends, and keep its predictions and
+manifest in a new output directory.
 
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \

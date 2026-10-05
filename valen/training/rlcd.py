@@ -89,12 +89,14 @@ class RLCDObjective:
                     "sample_confidence", "confidence_error", "reward_std",
                     "zero_advantage_group", "clip_fraction")
 
-    def __init__(self, model, options, state=None, resuming=False, cache_frozen_features=False):
+    def __init__(self, model, options, state=None, resuming=False, cache_frozen_features=False,
+                 batch_config=None):
         self.options = validate_options(options)
         self.num_iterations = self.options["num_iterations"]
         self.reference = None
         self.reference_weights = None
         self.cache_features = cache_frozen_features
+        self.batch_config = batch_config or {"microbatch_size": 1}
         self.cache_verified = False
         self.backend = backend_for_model(model)
         if self.cache_features:
@@ -113,10 +115,28 @@ class RLCDObjective:
     def prepare(self, model, pack):
         # Deterministic forwards: dropout is disabled by the runner, while train
         # mode remains enabled for gradient checkpointing in subsequent updates.
+        policy_inputs = None
+        if self.batch_config.get("microbatch_size", 1) > 1:
+            from valen.modeling.interfaces import PolicyInput
+            from .batching import shared_state_indices
+            if self.backend.name != "qwen" or self.cache_features or any(getattr(s, "inputs", None) is None for s in pack):
+                raise ValueError("Batched RLCD requires Qwen shared states without feature caching")
+            policy_inputs = [[] for _ in pack]
+            for indices in shared_state_indices(pack, self.batch_config):
+                states = [pack[index] for index in indices]
+                budget = self.batch_config.get("microbatch_max_tokens", 32768)
+                values = model.forward_state_batch(states, max_tokens=budget)
+                refs = (self.reference.forward_state_batch(states, max_tokens=budget) if self.reference is not None
+                        else [[None] * len(s.questions) for s in states])
+                for index, state, outputs, references in zip(indices, states, values, refs):
+                    policy_inputs[index] = [PolicyInput(q, z, ref) for q, z, ref in zip(state.questions, outputs, references)]
         result = []
-        for state in pack:
+        for index, state in enumerate(pack):
             group = []
-            for item in self.backend.policy_inputs(model, state, self.reference, self.cache_features):
+            # Sample in original pack order, independent of length sorting. / 采样顺序不随长度排序改变。
+            inputs = (policy_inputs[index] if policy_inputs is not None else
+                      self.backend.policy_inputs(model, state, self.reference, self.cache_features))
+            for item in inputs:
                 question, features, logits = item.question, item.features, item.logits.float()
                 if self.cache_features and not self.cache_verified:
                     torch.testing.assert_close(logits, self.backend.question_logits(model, question).float(), rtol=0, atol=0)

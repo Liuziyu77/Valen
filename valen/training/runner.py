@@ -12,9 +12,12 @@ import torch
 from valen.training.checkpoint import capture_rank_state, load_checkpoint, save_checkpoint
 from valen.training.distributed import initialize as initialize_distributed, close, epoch_shard, broadcast_trainable, synchronize_gradients
 from .sft import SFTObjective
+from .batching import training_batches
 from .rlcd import RLCDObjective, validate_options
 from valen.modeling.factory import build_model, build_compiler, get_backend, normalize_model_config, optimizer_groups
 from valen.data.schema import read_jsonl
+from valen.data.prefetch import PackPrefetcher
+from valen.modeling.qwen.attention import ATTENTION_IMPLEMENTATIONS, with_attention_implementation
 
 
 def normalize_config(config):
@@ -37,6 +40,20 @@ def normalize_config(config):
             raise ValueError("RLCD uses Brier calibration; rps_weight must be zero")
     elif config.get("rlcd"):
         raise ValueError("Set method=rlcd to use RLCD options")
+    if config.setdefault("loss_reduction", "state_mean") not in ("state_mean", "question_mean"):
+        raise ValueError("loss_reduction must be state_mean or question_mean")
+    for name, default in (("tokens_per_step", 16384), ("microbatch_size", 1), ("microbatch_max_tokens", 32768)):
+        value = config.setdefault(name, default)
+        if type(value) is not int or value <= 0:
+            raise ValueError(f"{name} must be a positive integer")
+    shared_rl = (method == "rlcd" and config.get("qwen_execution") == "shared_state"
+                 and not config.get("cache_frozen_features", False))
+    if config["microbatch_size"] > 1 and (config["architecture"] != "qwen" or not (method == "sft" or shared_rl)):
+        raise ValueError("Parallel microbatches require Qwen SFT or shared_state RLCD without feature caching")
+    if type(config.setdefault("data_prefetch", False)) is not bool:
+        raise ValueError("data_prefetch must be a boolean")
+    if config["data_prefetch"] and (config["architecture"] != "qwen" or not (method == "sft" or shared_rl)):
+        raise ValueError("Data prefetch requires Qwen SFT or shared_state RLCD")
     return config
 
 
@@ -75,7 +92,10 @@ def run(config, resume=None, initialize=None):
         backend.validate_initialization(previous, config)
     if resume:
         payload = load_checkpoint(resume, model, optimizer, rng, rank=context.rank, world_size=context.world_size)
-        allowed_changes = {"output", "epochs", "max_steps", "device", "save_every"}
+        allowed_changes = {"output", "epochs", "max_steps", "device", "save_every",
+                           "microbatch_size", "microbatch_max_tokens", "data_prefetch"}
+        if config["architecture"] == "qwen":
+            allowed_changes.update({"attn_implementation", "gradient_checkpointing"})
         previous = normalize_config(payload["config"])
         if {k: v for k, v in previous.items() if k not in allowed_changes} != {k: v for k, v in config.items() if k not in allowed_changes}:
             raise ValueError("Resume config/data changed; use --initialize for a new stage")
@@ -86,7 +106,8 @@ def run(config, resume=None, initialize=None):
             torch.manual_seed(seed + context.rank)
         objective = RLCDObjective(model, config["rlcd"],
                                   payload.get("training_state") if resume else None, resuming=bool(resume),
-                                  cache_frozen_features=config.get("cache_frozen_features", False))
+                                  cache_frozen_features=config.get("cache_frozen_features", False),
+                                  batch_config=config)
     else:
         objective = SFTObjective(config)
     progress.setdefault("optimizer_steps", progress["step"])
@@ -107,6 +128,10 @@ def run(config, resume=None, initialize=None):
                     report[key] = origin.get(key)
             report["resume_checkpoint"] = str(resume)
             report["resume_step"] = progress["step"]
+            report["resume_runtime_changes"] = {
+                key: {"previous": previous.get(key), "current": config.get(key)}
+                for key in ("attn_implementation", "gradient_checkpointing", "microbatch_size", "microbatch_max_tokens", "data_prefetch")
+                if previous.get(key) != config.get(key)}
         (output / "run_manifest.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({"world_size": context.world_size, "optimizer_groups": report["optimizer_groups"]}), flush=True)
     max_steps = config.get("max_steps", 2**63-1)
@@ -132,10 +157,10 @@ def run(config, resume=None, initialize=None):
             row = json.loads(line)
             if row["step"] == progress["step"]:
                 prior_elapsed = row.get("elapsed_seconds", 0.0)
-    session_states = 0
+    session_states = session_questions = 0
     metric_file = (output / "metrics.jsonl").open("a" if resume else "w", encoding="utf-8") if context.primary else nullcontext(None)
     media_name = "media.jsonl" if context.world_size == 1 else f"media.rank{context.rank}.jsonl"
-    with metric_file as log, (output / media_name).open("a" if resume else "w", encoding="utf-8") as media_log:
+    with metric_file as log, (output / media_name).open("a" if resume else "w", encoding="utf-8") as media_log, PackPrefetcher(records, compiler, backend, config) as pack_source:
         while progress["epoch"] < config.get("epochs", 1) and progress["step"] < max_steps:
             if progress["order"] is None:
                 if context.world_size == 1:
@@ -143,47 +168,38 @@ def run(config, resume=None, initialize=None):
                     rng.shuffle(progress["order"])
                 else:
                     progress["order"] = epoch_shard(len(records), seed, progress["epoch"], context.rank, context.world_size)
-            pack, tokens = [], 0
-            while progress["cursor"] < len(progress["order"]):
-                state_index = progress["order"][progress["cursor"]]
-                rng_before = rng.getstate()
-                compiled = compiler.compile(records[state_index], rng, labeled_only=True)
-                if compiled.compute_tokens > token_budget:
-                    raise ValueError(f"State {state_index} exceeds tokens_per_step: {compiled.compute_tokens} > {token_budget}")
-                if pack and tokens + compiled.compute_tokens > token_budget:
-                    rng.setstate(rng_before)
-                    break
-                progress["cursor"] += 1
-                if not compiled.questions:
-                    continue
-                backend.validate_state(config, compiled)
-                pack.append(compiled)
-                tokens += compiled.compute_tokens
+            prepare_started = time.monotonic()
+            prepared = pack_source.take(progress["order"], progress["cursor"], rng.getstate(),
+                                        prefetch_next=progress["step"] + 1 < max_steps)
+            prepare_wait_seconds = time.monotonic() - prepare_started
+            pack, tokens = prepared.states, prepared.tokens
+            progress["cursor"] = prepared.cursor
+            rng.setstate(prepared.rng_state)
+            for event in prepared.media:
                 media_log.write(json.dumps({"epoch": progress["epoch"], "step": progress["step"] + 1,
-                                            "rank": context.rank, "state_index": state_index, "group_id": records[state_index]["group_id"],
-                                            "media": compiled.media}, default=str) + "\n")
+                                            "rank": context.rank, **event}, default=str) + "\n")
             local_counts = [len(pack), sum(len(s.questions) for s in pack), tokens,
                             int(progress["cursor"] == len(progress["order"]))]
             counts = context.sum(local_counts)
             global_states, global_questions, global_tokens, finished_ranks = map(int, counts)
             if global_states:
+                normalization = global_questions if config["loss_reduction"] == "question_mean" else global_states
                 rollouts = objective.prepare(model, pack)
                 accumulated = {name: 0.0 for name in ("loss", *objective.metric_names)}
                 for _ in range(objective.num_iterations):
                     optimizer.zero_grad(set_to_none=True)
                     stats = dict.fromkeys(accumulated, 0.0)
-                    for state, state_rollouts in zip(pack, rollouts):
-                        scale = 1 / (global_states * len(state.questions))
-                        for unit in backend.training_units(model, state, state_rollouts):
-                            losses = [objective.loss_from_logits(d.logits, d.question, d.rollout) for d in unit]
-                            combined = (losses[0][0] if len(losses) == 1 else torch.stack([loss for loss, _ in losses]).sum()) * scale
-                            if not torch.isfinite(combined):
-                                raise FloatingPointError("Non-finite training unit loss")
-                            combined.backward()
-                            for loss, terms in losses:
-                                stats["loss"] += loss.item() * scale
-                                for name, value in terms.items():
-                                    stats[name] += value.item() * scale
+                    for unit in training_batches(model, backend, pack, rollouts, config):
+                        losses = [(objective.loss_from_logits(d.logits, d.question, d.rollout), weight / normalization)
+                                  for d, weight in unit]
+                        combined = torch.stack([loss * scale for (loss, _), scale in losses]).sum()
+                        if not torch.isfinite(combined):
+                            raise FloatingPointError("Non-finite training unit loss")
+                        combined.backward()
+                        for (loss, terms), scale in losses:
+                            stats["loss"] += loss.item() * scale
+                            for name, value in terms.items():
+                                stats[name] += value.item() * scale
                     synchronize_gradients(model, context)
                     stats = dict(zip(stats, context.sum(list(stats.values()))))
                     group_norms = {g["name"]: float(torch.stack([p.grad.detach().float().square().sum() for p in g["params"] if p.grad is not None]).sum().sqrt())
@@ -197,8 +213,11 @@ def run(config, resume=None, initialize=None):
                 progress["step"] += 1
                 rank_counts = context.gather({"rank": context.rank, "states": len(pack), "compute_tokens": tokens,
                                               "cursor": progress["cursor"],
+                                              "prepare_wait_seconds": prepare_wait_seconds,
+                                              "cpu_prepare_seconds": prepared.prepare_seconds,
                                               "peak_cuda_bytes": torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0})
                 session_states += global_states
+                session_questions += global_questions
                 elapsed = time.monotonic() - started
                 epoch_records = sum(r["cursor"] for r in rank_counts)
                 completed_records = progress["epoch"] * len(records) + epoch_records
@@ -211,6 +230,7 @@ def run(config, resume=None, initialize=None):
                              completed_records=completed_records, total_records=total_records,
                              epoch_fraction=epoch_records / len(records), elapsed_seconds=prior_elapsed + elapsed,
                              states_per_second=session_states / elapsed,
+                             questions_per_second=session_questions / elapsed,
                              eta_epoch_seconds=(len(records) - epoch_records) * elapsed / session_states)
                 if context.primary:
                     log.write(json.dumps(stats) + "\n")
@@ -230,6 +250,8 @@ def run(config, resume=None, initialize=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
+    parser.add_argument("--attn-implementation", choices=ATTENTION_IMPLEMENTATIONS,
+                        help="Override the Qwen attention backend in the training config")
     parser.add_argument("--method", choices=("sft", "rlcd"), help="Override the training objective (default: SFT)")
     parser.add_argument("--output", help="Override output directory")
     group = parser.add_mutually_exclusive_group()
@@ -238,6 +260,7 @@ def main():
     args = parser.parse_args()
     try:
         config = normalize_model_config(json.loads(Path(args.config).read_text(encoding="utf-8")))
+        config = with_attention_implementation(config, args.attn_implementation)
         if args.method:
             config["method"] = args.method
         if args.output:

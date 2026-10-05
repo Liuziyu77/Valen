@@ -41,12 +41,17 @@ def test_soft_targets_do_not_get_hard_accuracy():
         question_metrics(question, torch.tensor([float("nan"), 1.]))
 
 
-def test_cli_uses_explicit_dataset_despite_legacy_request_file(tmp_path, monkeypatch):
+@pytest.mark.parametrize("attention", [None, "flash_attention_2"])
+def test_cli_uses_explicit_dataset_despite_legacy_request_file(tmp_path, monkeypatch, attention):
     from valen.evaluation import evaluate
     (tmp_path / "evaluation_request.json").write_text(json.dumps({"data": "only_visual_200.jsonl"}))
-    monkeypatch.setattr(sys, "argv", ["evaluate", "--checkpoint", "checkpoint", "--data", "old_test.jsonl", "--output", str(tmp_path)])
+    argv = ["evaluate", "--checkpoint", "checkpoint", "--data", "old_test.jsonl", "--output", str(tmp_path)]
+    if attention:
+        argv += ["--attn-implementation", attention]
+    monkeypatch.setattr(sys, "argv", argv)
     calls = []
-    monkeypatch.setattr(evaluate, "run", lambda checkpoint, data, output, device: calls.append(data))
+    monkeypatch.setattr(evaluate, "run", lambda checkpoint, data, output, device, attn_implementation=None:
+                        calls.append((data, attn_implementation)))
     monkeypatch.setattr(evaluate, "close", lambda: None)
     evaluate.main()
-    assert calls == ["old_test.jsonl"]
+    assert calls == [("old_test.jsonl", attention)]

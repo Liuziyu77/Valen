@@ -16,7 +16,8 @@ class QwenBackend(ArchitectureBackend):
         from transformers import AutoProcessor
         from valen.data.compilers.qwen import Compiler
         return Compiler(AutoProcessor.from_pretrained(config["model_path"], local_files_only=True),
-                        media_root, config.get("max_length", 8192), config.get("media_kwargs"))
+                        media_root, config.get("max_length", 8192), config.get("media_kwargs"),
+                        execution=config.get("qwen_execution", "question"))
 
     def candidates(self, question):
         from valen.data.schema import candidates
@@ -27,6 +28,10 @@ class QwenBackend(ArchitectureBackend):
         return qwen_optimizer_groups(model, config)
 
     def inference_units(self, model, state):
+        if getattr(state, "inputs", None) is not None:
+            if state.questions:
+                yield [Decision(q, z) for q, z in zip(state.questions, model.forward_state(state))]
+            return
         for question in state.questions:
             yield [Decision(question, model(question))]
 
@@ -37,11 +42,32 @@ class QwenBackend(ArchitectureBackend):
     def training_units(self, model, state, rollouts):
         if len(rollouts) != len(state.questions):
             raise ValueError("Rollout/question count mismatch")
+        if getattr(state, "inputs", None) is not None:
+            cached = [getattr(rollout, "features", None) for rollout in rollouts]
+            if any(features is not None for features in cached):
+                if not all(features is not None for features in cached):
+                    raise ValueError("Shared state requires all or none of its features cached")
+                logits = [model.score_features(features) for features in cached]
+            else:
+                logits = model.forward_state(state)
+            if state.questions:
+                yield [Decision(q, z, r) for q, z, r in zip(state.questions, logits, rollouts)]
+            return
         for question, rollout in zip(state.questions, rollouts):
             # Yield before the next forward, allowing immediate backward and release.
             yield [Decision(question, self.question_logits(model, question, rollout), rollout)]
 
     def policy_inputs(self, model, state, reference, cache_features=False):
+        if getattr(state, "inputs", None) is not None:
+            features = model.extract_state_features(state) if cache_features else [None] * len(state.questions)
+            logits = [model.score_features(f) for f in features] if cache_features else model.forward_state(state)
+            refs = [None] * len(state.questions)
+            if reference is not None:
+                refs = ([model.score_features(f, reference) for f in features] if cache_features
+                        else reference.forward_state(state))
+            for q, z, ref, f in zip(state.questions, logits, refs, features):
+                yield PolicyInput(q, z, ref, f)
+            return
         for question in state.questions:
             features = model.extract_features(question) if cache_features else None
             logits = model.score_features(features) if cache_features else model(question)
@@ -80,7 +106,10 @@ class QwenBackend(ArchitectureBackend):
     def adaptation(self, model, config):
         from .heads import head_signature
         stage = config.get("stage", "joint")
-        return {"stage": stage, "decision_head": head_signature(config), "text": "lora" if stage != "warmup" else "frozen",
+        return {"stage": stage, "decision_head": head_signature(config),
+                "qwen_execution": config.get("qwen_execution", "question"),
+                "text": "lora" if stage != "warmup" else "frozen",
                 "vision_merger": stage in {"joint", "vision_top"},
                 "vision_unfreeze_layers": 4 if stage == "vision_top" else 0,
+                "attention_backends": getattr(model, "attention_backends", None),
                 "lora_targets": getattr(model, "lora_targets", [])}

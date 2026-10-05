@@ -21,6 +21,9 @@ class SFTObjective:
     num_iterations = 1
 
     def __init__(self, config):
+        self.num_iterations = config.get("sft_iterations", 1)
+        if type(self.num_iterations) is not int or self.num_iterations < 1:
+            raise ValueError("sft_iterations must be a positive integer")
         self.rps_weight = config.get("rps_weight", 0.0)
         self.brier_weight = config.get("brier_weight", 0.0)
         if self.brier_weight:

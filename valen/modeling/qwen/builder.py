@@ -3,10 +3,12 @@ from torch import nn
 from .model import ValenQwen
 from ..manifest import read_base_manifest
 from .heads import head_signature
+from .attention import attention_implementation
 
 
 def build_qwen(config):
     head_config = head_signature(config)
+    attention = attention_implementation(config)
     from transformers import Qwen3_5ForConditionalGeneration
     from peft import LoraConfig, get_peft_model
     dtype = {"bf16": torch.bfloat16, "fp32": torch.float32}[config.get("dtype", "bf16")]
@@ -14,7 +16,7 @@ def build_qwen(config):
     # Loading Qwen3_5Model directly can trigger a language-prefix remapping in
     # Transformers 5.4 and silently initialize the language tower from scratch.
     container, loading_info = Qwen3_5ForConditionalGeneration.from_pretrained(
-        config["model_path"], dtype=dtype, attn_implementation="eager",
+        config["model_path"], dtype=dtype, attn_implementation=attention,
         local_files_only=True, output_loading_info=True)
     if any(loading_info.get(key) for key in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")):
         raise ValueError(f"Incomplete pretrained model load: {loading_info}")
@@ -43,6 +45,9 @@ def build_qwen(config):
     model.base_manifest = read_base_manifest(config["model_path"])
     model.to(config.get("device", "cuda"))
     model.lora_targets = targets
+    model.attention_backends = {
+        name: getattr(getattr(backbone.config, field, None), "_attn_implementation", attention)
+        for name, field in (("text", "text_config"), ("vision", "vision_config"))}
     return model
 
 

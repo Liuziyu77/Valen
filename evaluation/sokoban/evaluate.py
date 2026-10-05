@@ -48,7 +48,11 @@ class MemoizedPolicy:
     def choose(self, request):
         visible = deepcopy(request)
         for message in visible["state"]["messages"]:
-            for item in message["content"]:
+            content = message["content"]
+            # Keep plain system prompts in the key. / 保留纯文本系统提示作为缓存键。
+            if isinstance(content, str):
+                continue
+            for item in content:
                 if item["type"] == "image_url":
                     item["image_url"]["url"] = "sha256:" + sha256_file(item["image_url"]["url"])
         # Preserve candidate insertion order, which affects model input order.
