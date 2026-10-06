@@ -195,7 +195,7 @@ Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77
 Scan the QR code below to join the Valen WeChat group, discuss the project and share your experiments.
 
 <p align="center">
-  <img src="assets/figures/wechat_1006.jpg" alt="QR code for the Valen WeChat discussion group" width="200">
+  <img src="assets/figures/wechat_1013.png" alt="QR code for the Valen WeChat discussion group" width="200">
 </p>
 
 <a id="license-and-acknowledgments"></a>
