@@ -37,8 +37,9 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 📰 News
 
-- **2026-10-06**：发布正式版 **Valen models** 和 [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 评测基准。
-- **2026-09-23**：**Valen** 仓库开源，同时发布 [**Valen-preview**](https://huggingface.co/Valen-Team/Valen-Preview-0923)。
+- **2026-10-06**：发布支持文本、图像和视频的最新多模态 System One 模型 **Valen（0.8B / 2B / 4B）**，以及 [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 评测基准。
+- **2026-09-30**：**Training&Inference Support:** 支持 Flash Attention 2 训练与推理、多机多卡训练，并提高训练时的 GPU 显存利用率。
+- **2026-09-23**：**Valen** 仓库开源，同时发布 [**Valen-preview**](https://huggingface.co/Valen-Team/Valen-Preview-0923) 及其对应的[**训练数据**](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)。
 
 <a id="演示"></a>
 
