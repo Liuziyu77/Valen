@@ -92,12 +92,7 @@ The demos above use **Valen-preview**, which requires both the **Valen checkpoin
 
 ### Dataset
 
-| Dataset | Purpose | Download |
-| --- | --- | --- |
-| VisualDecisionBench | VisualDecisionBench-Image and VisualDecisionBench-Video evaluation | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) |
-| General 100k (earlier release) | Training | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
-| General 5k (earlier release) | Evaluation | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) |
-| Sokoban (earlier release) | Training and evaluation | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+[VisualDecisionBench](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) contains Image and Video subsets for visual decision evaluation. Earlier releases include [General 100k](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) for training, [General 5k](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) for evaluation, and [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) for game training and evaluation.
 
 <a id="results"></a>
 

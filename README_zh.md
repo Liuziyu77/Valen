@@ -92,12 +92,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ### Dataset（数据集）
 
-| 数据集 | 用途 | 下载 |
-| --- | --- | --- |
-| VisualDecisionBench | VisualDecisionBench-Image 与 VisualDecisionBench-Video 评测 | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) |
-| General 100k（早期版本） | 训练 | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) |
-| General 5k（早期版本） | 评测 | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) |
-| Sokoban（早期版本） | 训练与评测 | [🤗 Hugging Face](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) |
+[VisualDecisionBench](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 包含 Image 和 Video 两个子集，用于图像与视频决策评测。此前发布的 [General 100k](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) 用于训练，[General 5k](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) 用于评测，[Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 用于游戏训练与评测。
 
 <a id="实验结果"></a>
 
