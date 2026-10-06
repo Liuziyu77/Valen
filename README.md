@@ -87,7 +87,7 @@ The **Valen** models and **VisualDecisionBench** dataset are available on Huggin
 | Valen 4B | [🤗 Valen-4B](https://huggingface.co/Valen-Team/Valen-4B) |
 | Valen-preview (earlier release) | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
 
-The demos above and quick start below use **Valen-preview**, which requires both the **Valen checkpoint** and the **Qwen3.5-2B base model**.
+The demos above use **Valen-preview**, which requires both the **Valen checkpoint** and the **Qwen3.5-2B base model**. The quick start below uses the current releases.
 
 ### Dataset
 
@@ -122,69 +122,73 @@ Earlier results remain in the [archived README](history/README_preview.md).
 
 ## 🚀 Quick start
 
-Install the dependencies listed in [requirements](docs/technical.md#环境要求), then download both the Valen-preview checkpoint and its Qwen3.5-2B base model.
+[Install the dependencies](scripts/README.md#installation). Run `hf auth login` if the Hugging Face repositories require access.
+
+### 1. Inference
+
+The default loads the complete merged model. Set `use_lora=True` to load the separate LoRA, Mixer and visual-merger weights; the pinned Qwen base is downloaded automatically. Change the repository ID for 0.8B or 4B.
+
+```python
+import torch
+from huggingface_hub import snapshot_download
+from transformers import AutoModel
+
+use_lora = False
+folder = snapshot_download(
+    "Valen-Team/Valen-2B", allow_patterns="unmerged/*" if use_lora else None,
+)
+model = AutoModel.from_pretrained(
+    f"{folder}/unmerged" if use_lora else folder,
+    trust_remote_code=True, dtype=torch.bfloat16,
+    attn_implementation="sdpa", local_files_only=False,
+).to("cuda").eval()
+torch.set_float32_matmul_precision("highest")
+torch.backends.cudnn.allow_tf32 = False
+
+print(model.predict({
+    "state": "A cat is on the sofa.",
+    "questions": {
+        "animal": {"type": "choice", "instructions": "Which animal is present?",
+                   "criteria": {"cat": "A cat", "dog": "A dog"}},
+        "on_sofa": {"type": "noul", "instructions": "The cat is on the sofa."},
+    },
+}, execution="shared_state"))
+```
+
+Use `execution="question"` for separate questions or `attn_implementation="flash_attention_2"` with Flash Attention installed. Image/video inputs follow the [data format](docs/data-format.md).
+
+### 2. Evaluate VisualDecisionBench
+
+Download and unpack the media, then run the [evaluation script](evaluation/visualdecisionbench/evaluate.py):
 
 ```bash
-# Download the Valen-preview checkpoint.
-hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
-
-# Download the Qwen3.5-2B base model.
-hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
-
-# Train the model with your own configuration.
-python -m valen.train \
-  --config configs/train/qwen/sft_warmup.json
-
-# Run inference with the downloaded Valen-preview checkpoint.
-python -m valen.inference \
-  --checkpoint models/Valen-Preview-0923 \
-  --data data/smoke/train.jsonl \
-  --output output/sft_warmup/predictions.jsonl
-
-# Check the evaluation pipeline on the same synthetic examples.
-python -m valen.evaluate \
-  --checkpoint models/Valen-Preview-0923 \
-  --data data/smoke/train.jsonl \
-  --output output/sft_warmup/smoke_eval
+hf download Valen-Team/VisualDecisionBench --repo-type dataset --local-dir data/VisualDecisionBench
+python data/VisualDecisionBench/unpack_assets.py
+python -m evaluation.visualdecisionbench.evaluate \
+  --model Valen-Team/Valen-2B --data data/VisualDecisionBench \
+  --output output/visualdecisionbench
 ```
 
-`data/smoke` contains a small set of simple questions for checking that the pipeline runs correctly.
+Add `--lora` for the unmerged model. Outputs: `predictions.jsonl` and `metrics.json`, including image/video and Choice/Noul/Score breakdowns and elapsed time. Videos use 16 frames; accuracy uses hard labels, while soft-label Score questions contribute probability metrics.
 
-<details>
-<summary>A labeled record with an image input</summary>
+### 3. Training
 
-Each JSONL line contains one record. The example below uses the [evaluation overview figure](assets/figures/evaluation-results.png) from the repository, assuming the file is saved as `example.jsonl` in the repository root.
+The shared-state recipes use Mixer. Install Flash Attention 2 or set `model.attn_implementation` to `sdpa`. Set your data paths, output directories and training budget in the [configs](configs/train/qwen/); the defaults use smoke data and a 100-step limit.
 
-```json
-{
-  "group_id": "evaluation-general-2b",
-  "request": {
-    "state": {
-      "messages": [{
-        "role": "user",
-        "content": [
-          {"type": "text", "text": "Compare the accuracy and the average latency per question of the 2B models on General in the figure."},
-          {"type": "image_url", "image_url": {"url": "assets/figures/evaluation-results.png"}}
-        ]
-      }]
-    },
-    "questions": {
-      "best_2b": {
-        "type": "choice",
-        "instructions": "On General, among the 2B models with average latency below 200 ms per question, which has the highest accuracy?",
-        "criteria": {
-          "qwen": "Qwen3.5-2B",
-          "valen": "Valen-preview"
-        }
-      }
-    }
-  },
-  "targets": {
-    "best_2b": {"probabilities": {"qwen": 0.0, "valen": 1.0}}
-  }
-}
+```bash
+python scripts/setup/prepare_model.py
+
+# Two-stage SFT: head warmup, then joint LoRA + Mixer + visual merger.
+python -m valen.train --config configs/train/qwen/sft_shared_state_warmup.json
+python -m valen.train --config configs/train/qwen/sft_shared_state_joint.json \
+  --initialize output/qwen-shared-state/warmup/latest
+
+# RLCD: candidate-action RL initialized from the SFT checkpoint.
+python -m valen.train --config configs/train/qwen/rlcd_shared_state_joint.json \
+  --initialize output/qwen-shared-state/joint/latest
 ```
-</details>
+
+For multiple GPUs, use `VALEN_GPUS=8 bash scripts/train/launch.sh <config> [--initialize <checkpoint>]`. See the [training guide](valen/training/README.md) for RLCD rewards and checkpoint recovery.
 
 <a id="contributions"></a>
 
@@ -195,7 +199,7 @@ Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77
 Scan the QR code below to join the Valen WeChat group, discuss the project and share your experiments.
 
 <p align="center">
-  <img src="assets/figures/wechat_1013.png" alt="QR code for the Valen WeChat discussion group" width="200">
+  <img src="assets/figures/wechat_1013.jpg" alt="QR code for the Valen WeChat discussion group" width="200">
 </p>
 
 <a id="license-and-acknowledgments"></a>

@@ -87,7 +87,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 | Valen 4B | [🤗 Valen-4B](https://huggingface.co/Valen-Team/Valen-4B) |
 | Valen-preview（早期版本） | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
 
-上方演示与下方快速开始使用 **Valen-preview**，该版本需同时下载 **Valen checkpoint** 和 **Qwen3.5-2B Base 模型**。
+上方演示使用 **Valen-preview**，需要同时下载 **Valen checkpoint** 和 **Qwen3.5-2B Base 模型**；下方快速开始使用当前正式版。
 
 ### Dataset（数据集）
 
@@ -122,69 +122,73 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 🚀 快速开始
 
-先按[环境要求](docs/technical.md#环境要求)安装依赖，再下载 Valen-preview checkpoint 及其对应的 Qwen3.5-2B Base 模型。
+先按[安装说明](scripts/README.md#installation)准备依赖；Hugging Face 仓库需要访问权限时，先运行 `hf auth login`。
+
+### 1. 推理
+
+默认加载完整合并模型；设置 `use_lora=True`，即可加载独立的 LoRA、Mixer 和视觉 merger，程序会自动下载固定版本的 Qwen 基座。使用 0.8B 或 4B 时替换仓库 ID。
+
+```python
+import torch
+from huggingface_hub import snapshot_download
+from transformers import AutoModel
+
+use_lora = False
+folder = snapshot_download(
+    "Valen-Team/Valen-2B", allow_patterns="unmerged/*" if use_lora else None,
+)
+model = AutoModel.from_pretrained(
+    f"{folder}/unmerged" if use_lora else folder,
+    trust_remote_code=True, dtype=torch.bfloat16,
+    attn_implementation="sdpa", local_files_only=False,
+).to("cuda").eval()
+torch.set_float32_matmul_precision("highest")
+torch.backends.cudnn.allow_tf32 = False
+
+print(model.predict({
+    "state": "A cat is on the sofa.",
+    "questions": {
+        "animal": {"type": "choice", "instructions": "Which animal is present?",
+                   "criteria": {"cat": "A cat", "dog": "A dog"}},
+        "on_sofa": {"type": "noul", "instructions": "The cat is on the sofa."},
+    },
+}, execution="shared_state"))
+```
+
+逐题推理使用 `execution="question"`；安装 Flash Attention 后可设置 `attn_implementation="flash_attention_2"`。图片和视频输入见[数据格式](docs/data-format.md)。
+
+### 2. 评估 VisualDecisionBench
+
+下载并解压媒体，然后运行[评估脚本](evaluation/visualdecisionbench/evaluate.py)：
 
 ```bash
-# 下载 Valen-preview checkpoint。
-hf download Valen-Team/Valen-Preview-0923 --local-dir models/Valen-Preview-0923
-
-# 下载 Qwen3.5-2B Base 模型。
-hf download Qwen/Qwen3.5-2B --local-dir models/Qwen3.5-2B
-
-# 使用自己的配置训练模型。
-python -m valen.train \
-  --config configs/train/qwen/sft_warmup.json
-
-# 加载下载好的 Valen-preview 进行推理。
-python -m valen.inference \
-  --checkpoint models/Valen-Preview-0923 \
-  --data data/smoke/train.jsonl \
-  --output output/sft_warmup/predictions.jsonl
-
-# 用同一组合成样本检查评估流程。
-python -m valen.evaluate \
-  --checkpoint models/Valen-Preview-0923 \
-  --data data/smoke/train.jsonl \
-  --output output/sft_warmup/smoke_eval
+hf download Valen-Team/VisualDecisionBench --repo-type dataset --local-dir data/VisualDecisionBench
+python data/VisualDecisionBench/unpack_assets.py
+python -m evaluation.visualdecisionbench.evaluate \
+  --model Valen-Team/Valen-2B --data data/VisualDecisionBench \
+  --output output/visualdecisionbench
 ```
 
-`data/smoke` 有少量简单题目，仅仅用于测试功能是否正常运行。
+添加 `--lora` 可评估未合并模型。输出 `predictions.jsonl` 和 `metrics.json`，包含图像/视频、Choice/Noul/Score 分项与耗时。视频采样 16 帧；准确率仅统计硬标签题，软标签 Score 题参与概率指标计算。
 
-<details>
-<summary>一条带图片输入的标注记录</summary>
+### 3. 训练
 
-JSONL 每行是一条记录。下例使用仓库里的[评测总览图](assets/figures/evaluation-results.png)，假设保存为仓库根目录的 `example.jsonl`。
+共享 state 配方使用 Mixer。请安装 Flash Attention 2，或将 `model.attn_implementation` 设置为 `sdpa`。先在[配置](configs/train/qwen/)中设置数据路径、输出目录和训练预算；默认使用 smoke 数据，最多训练 100 步。
 
-```json
-{
-  "group_id": "evaluation-general-2b",
-  "request": {
-    "state": {
-      "messages": [{
-        "role": "user",
-        "content": [
-          {"type": "text", "text": "比较图中 General 任务上 2B 模型的准确率和平均单题耗时。"},
-          {"type": "image_url", "image_url": {"url": "assets/figures/evaluation-results.png"}}
-        ]
-      }]
-    },
-    "questions": {
-      "best_2b": {
-        "type": "choice",
-        "instructions": "在 General 任务上，平均单题耗时低于 200 ms 的 2B 模型中，哪个准确率最高？",
-        "criteria": {
-          "qwen": "Qwen3.5-2B",
-          "valen": "Valen-preview"
-        }
-      }
-    }
-  },
-  "targets": {
-    "best_2b": {"probabilities": {"qwen": 0.0, "valen": 1.0}}
-  }
-}
+```bash
+python scripts/setup/prepare_model.py
+
+# 两阶段 SFT：先预热决策头，再联合训练 LoRA、Mixer 和视觉 merger。
+python -m valen.train --config configs/train/qwen/sft_shared_state_warmup.json
+python -m valen.train --config configs/train/qwen/sft_shared_state_joint.json \
+  --initialize output/qwen-shared-state/warmup/latest
+
+# RLCD：从 SFT checkpoint 开始，对候选动作进行 RL 优化。
+python -m valen.train --config configs/train/qwen/rlcd_shared_state_joint.json \
+  --initialize output/qwen-shared-state/joint/latest
 ```
-</details>
+
+多卡使用 `VALEN_GPUS=8 bash scripts/train/launch.sh <config> [--initialize <checkpoint>]`。奖励设置与 checkpoint 恢复见[训练指南](valen/training/README.md)。
 
 <a id="参与贡献"></a>
 
@@ -195,7 +199,7 @@ JSONL 每行是一条记录。下例使用仓库里的[评测总览图](assets/f
 欢迎扫描下方二维码加入 Valen 微信群，一起讨论项目、交流使用体验和实验结果。
 
 <p align="center">
-  <img src="assets/figures/wechat_1013.png" alt="Valen 微信讨论群二维码" width="200">
+  <img src="assets/figures/wechat_1013.jpg" alt="Valen 微信讨论群二维码" width="200">
 </p>
 
 <a id="许可与致谢"></a>
