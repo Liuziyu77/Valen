@@ -12,7 +12,7 @@ Two-stage SFT with Qwen3.5, the Mixer decision head, `shared_state`, and FlashAt
 
 The recorded runs use **32 GPUs (4 nodes × 8 H200 GPUs)**. `tokens_per_step` is a per-GPU accumulation budget: 32,768 for warmup and 65,536 for joint SFT, giving nominal global budgets of 1,048,576 and 2,097,152 tokens. These budgets count compiled tokens; microbatch limits also account for padding. Each stage runs one epoch; `max_steps` is an upper bound. The warmup dataset is a subset reused in joint SFT.
 
-4B joint SFT initially used 16 / 65,536 and encountered an out-of-memory error. `4b_joint_initial.json` preserves that configuration; `4b_joint.json` contains the recovery settings. The completed 4B warmup used 32 / 131,072. The recovery keeps the 32-GPU world size, accumulation budget, data, and learning rates unchanged. **The 4B joint run is still in progress when these configs are recorded.**
+4B joint SFT uses a smaller microbatch of 8 states and a padded token limit of 32,768 per GPU to reduce peak memory. The completed 4B warmup used 32 / 131,072. The joint accumulation budget remains 65,536 tokens per GPU. **The 4B joint run has not completed when these configs are recorded.**
 
 ## Run
 
@@ -35,6 +35,6 @@ torchrun --nnodes=4 --nproc_per_node=8 --node_rank="$NODE_RANK" \
   --initialize "output/valen1/${VALEN_SIZE}/warmup/latest"
 ```
 
-To resume an interrupted joint run, replace `--initialize ...` with `--resume "output/valen1/${VALEN_SIZE}/joint/latest"`. Keep the same world size and data/config paths as the checkpoint. For an existing checkpoint created with different absolute paths, use its original runtime config with the documented microbatch changes, or use `--initialize` for a new stage with reset optimizer and progress.
+To resume an interrupted joint run, replace `--initialize ...` with `--resume "output/valen1/${VALEN_SIZE}/joint/latest"`. Keep the same world size and data/config paths as the checkpoint. For an existing checkpoint created with different absolute paths, use its original runtime config with the current microbatch limits, or use `--initialize` for a new stage with reset optimizer and progress.
 
 断点续训使用 `--resume`；切换阶段使用 `--initialize`。公开配置已替换本地路径，不能直接作为旧训练任务的原路径断点配置。
