@@ -1,0 +1,62 @@
+{
+  "config_version": 2,
+  "model": {
+    "architecture": "qwen",
+    "model_path": "models/Qwen3.5-4B",
+    "qwen_execution": "shared_state",
+    "finetuning_type": "full",
+    "dtype": "bf16",
+    "attn_implementation": "flash_attention_2",
+    "head_type": "mixer",
+    "head_width": 256,
+    "head_layers": 2,
+    "head_token_hidden_dim": 16,
+    "head_channel_hidden_dim": 1024
+  },
+  "data": {
+    "path": "data/valen1/train.jsonl",
+    "max_length": 32768,
+    "media_kwargs": {
+      "images_kwargs": {
+        "size": {
+          "shortest_edge": 65536,
+          "longest_edge": 262144
+        }
+      },
+      "videos_kwargs": {
+        "num_frames": 16,
+        "fps": null,
+        "size": {
+          "shortest_edge": 131072,
+          "longest_edge": 2097152
+        }
+      }
+    }
+  },
+  "training": {
+    "seed": 42,
+    "method": "sft",
+    "device": "cuda",
+    "epochs": 1,
+    "max_steps": 1000000,
+    "tokens_per_step": 65536,
+    "save_every": 10,
+    "weight_decay": 0.01,
+    "stage": "joint",
+    "output": "output/valen1/4b/joint",
+    "gradient_checkpointing": true,
+    "head_lr": 0.0001,
+    "merger_lr": 5e-06,
+    "microbatch_size": 8,
+    "microbatch_max_tokens": 32768,
+    "data_prefetch": true,
+    "loss_reduction": "question_mean",
+    "sft_iterations": 1,
+    "language_lr": 1e-05,
+    "vision_lr": 2e-06
+  },
+  "objective": {
+    "rps_weight": 0.2,
+    "brier_weight": 0.1
+  }
+}
