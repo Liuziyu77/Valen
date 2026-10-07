@@ -1,4 +1,4 @@
-"""Complete merged Qwen + decision head. / 已合并的完整 Qwen 和决策头。"""
+"""Standalone Qwen + decision head. / 可独立加载的 Qwen 和决策头。"""
 import torch
 from transformers import AutoProcessor
 from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5Model, Qwen3_5PreTrainedModel
@@ -30,6 +30,10 @@ class ValenQwenForDecisionMaking(Qwen3_5PreTrainedModel):
         self.backbone = backbone if backbone is not None else Qwen3_5Model(config)
         self.head = head if head is not None else build_head(config.text_config.hidden_size, config.valen_head)
         self.head.float()
+        # Preserve full-SFT FP32 weights with BF16 compute. / 保留全参 SFT 的存储与计算精度。
+        self.backbone_autocast_dtype = (
+            torch.bfloat16 if config.valen_backbone_autocast_dtype == "bfloat16" else None
+        )
         self._processor = None
         # Supplied weights are already trained: do not reinitialize them.
         # 传入的参数已训练完成，不能再次调用初始化覆盖它们。
@@ -60,6 +64,9 @@ class ValenQwenForDecisionMaking(Qwen3_5PreTrainedModel):
     forward_state_batch = ValenQwen.forward_state_batch
     forward_batch = ValenQwen.forward_batch
     score_features = ValenQwen.score_features
+    # Earlier LoRA runtime snapshots do not use this helper. / 兼容旧 LoRA 运行时代码。
+    if hasattr(ValenQwen, "_hidden"):
+        _hidden = ValenQwen._hidden
 
     def make_compiler(self, media_root=".", execution=None, processor=None):
         if processor is None:

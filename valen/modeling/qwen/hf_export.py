@@ -161,6 +161,10 @@ def merge_checkpoint(checkpoint, output, work, runtime_source, validation_data, 
     from valen.training.checkpoint import load_checkpoint
 
     checkpoint, output, work, runtime_source = map(Path, (checkpoint, output, work, runtime_source))
+    config = json.loads((checkpoint / "config.json").read_text(encoding="utf-8"))
+    if config.get("finetuning_type", "lora") == "full":
+        from .hf_full_export import export_full_checkpoint
+        return export_full_checkpoint(checkpoint, output, work, runtime_source, validation_data, device, attention)
     work.mkdir(parents=True, exist_ok=True)
     if output.exists():
         unexpected = [p.name for p in output.iterdir() if p.name not in {".git", ".gitattributes", "README.md"}]

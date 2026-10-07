@@ -92,6 +92,7 @@ def main():
     parser.add_argument("--data", required=True, help="Unpacked dataset root or native subset JSONL")
     parser.add_argument("--output", required=True)
     parser.add_argument("--lora", action="store_true", help="Load the release's unmerged/ bundle")
+    parser.add_argument("--revision", default="main", help="Hub branch or tag (for example, lora-ckpt)")
     parser.add_argument("--base-model", help="Optional local original Qwen base for --lora")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--execution", choices=("question", "shared_state"), default="shared_state")
@@ -105,8 +106,9 @@ def main():
 
     folder = Path(args.model)
     if not folder.is_dir():
-        folder = Path(snapshot_download(args.model, allow_patterns="unmerged/*" if args.lora else None))
-    options = {"trust_remote_code": True, "dtype": torch.bfloat16,
+        folder = Path(snapshot_download(args.model, revision=args.revision,
+                                        allow_patterns="unmerged/*" if args.lora else None))
+    options = {"trust_remote_code": True, "dtype": torch.bfloat16 if args.lora else "auto",
                "attn_implementation": args.attn_implementation, "local_files_only": False}
     if args.lora:
         folder /= "unmerged"
@@ -120,7 +122,7 @@ def main():
     torch.set_float32_matmul_precision("highest")
     torch.backends.cudnn.allow_tf32 = False
     report = evaluate(model, args.data, args.output, args.device, args.execution)
-    report.update(model=args.model, format="unmerged" if args.lora else "merged",
+    report.update(model=args.model, revision=args.revision, format="unmerged" if args.lora else "complete",
                   attention=args.attn_implementation, load_seconds=load_seconds)
     path = Path(args.output) / "metrics.json"
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")

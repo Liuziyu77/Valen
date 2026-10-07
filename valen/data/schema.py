@@ -16,8 +16,9 @@ def candidates(question):
             raise ValueError("Choice needs 1–255 named criteria")
         result = list(criteria.items())
     elif kind == "score":
-        if not isinstance(criteria, list) or not 2 <= len(criteria) <= 10:
-            raise ValueError("Score criteria must be an ordered list of 2–10 descriptions")
+        # Counting benchmarks can have eleven or more bins. / 计数题可能超过十档。
+        if not isinstance(criteria, list) or not 2 <= len(criteria) <= 255:
+            raise ValueError("Score criteria must be an ordered list of 2–255 descriptions")
         result = [(str(i), text) for i, text in enumerate(criteria)]
     else:
         raise ValueError(f"Unsupported question type: {kind}")

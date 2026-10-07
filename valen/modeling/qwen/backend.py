@@ -106,10 +106,15 @@ class QwenBackend(ArchitectureBackend):
     def adaptation(self, model, config):
         from .heads import head_signature
         stage = config.get("stage", "joint")
+        full = config.get("finetuning_type", "lora") == "full" and stage == "joint"
         return {"stage": stage, "decision_head": head_signature(config),
+                "finetuning_type": config.get("finetuning_type", "lora"),
+                "parameter_dtype": str(next(model.parameters()).dtype),
+                "backbone_autocast_dtype": str(getattr(model, "backbone_autocast_dtype", None)),
                 "qwen_execution": config.get("qwen_execution", "question"),
-                "text": "lora" if stage != "warmup" else "frozen",
+                "text": "full" if full else "lora" if stage != "warmup" else "frozen",
                 "vision_merger": stage in {"joint", "vision_top"},
-                "vision_unfreeze_layers": 4 if stage == "vision_top" else 0,
+                "vision_unfreeze_layers": len(model.backbone.visual.blocks) if full else 4 if stage == "vision_top" else 0,
+                "vision": "full" if full else "partial" if stage == "vision_top" else "merger" if stage == "joint" else "frozen",
                 "attention_backends": getattr(model, "attention_backends", None),
                 "lora_targets": getattr(model, "lora_targets", [])}

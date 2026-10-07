@@ -163,14 +163,17 @@ def test_partial_labels_keep_identical_training_and_inference_context():
                                c.compile(record(), random.Random(5), True).inputs["input_ids"], rtol=0, atol=0)
 
 
-def test_single_question_is_supported_by_shared_path_including_score():
+@pytest.mark.parametrize('bins', [5, 11])
+def test_single_question_is_supported_by_shared_path_including_score(bins):
     r = record()
     r["request"]["questions"] = {"private-score-id": r["request"]["questions"]["private-score-id"]}
     r["targets"] = {"private-score-id": r["targets"]["private-score-id"]}
+    r["request"]["questions"]["private-score-id"]["criteria"] = [f'Count {i}' for i in range(bins)]
+    r["targets"]["private-score-id"]["probabilities"] = {str(i): float(i == 2) for i in range(bins)}
     state = compiler().compile(r)
     m = model("mixer")
     logits = m.forward_state(state)
-    assert len(logits) == 1 and logits[0].shape == (5,)
+    assert len(logits) == 1 and logits[0].shape == (bins,)
     assert m.backbone.calls == 1
 
 

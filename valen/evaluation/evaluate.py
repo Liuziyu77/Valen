@@ -1,13 +1,12 @@
 """Evaluate labeled decisions once, sharded without padding across GPUs."""
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import time
 
 import torch
 
-from valen.training.checkpoint import load_checkpoint
+from valen.training.checkpoint import file_sha256, load_checkpoint
 from valen.training.distributed import initialize, close
 from valen.evaluation.inference import answer
 from valen.modeling.factory import build_model, build_compiler, get_backend, normalize_model_config
@@ -101,8 +100,8 @@ def run(checkpoint, data, output, device="cuda", attn_implementation=None):
                   "base_model_path": backend.base_paths(config), "seed": config.get("seed", 42),
                   "architecture": config.get("architecture", "qwen"),
                   "training_epoch": payload["progress"]["epoch"], "data": str(data),
-                  "data_sha256": hashlib.sha256(data.read_bytes()).hexdigest(),
-                  "checkpoint_sha256": hashlib.sha256((checkpoint / "checkpoint.pt").read_bytes()).hexdigest(),
+                  "data_sha256": file_sha256(data),
+                  "checkpoint_sha256": file_sha256(checkpoint / "checkpoint.pt"),
                   "records": len(records), "questions": len(all_rows), "world_size": context.world_size,
                   "temperature": 1.0, "elapsed_seconds": time.monotonic() - started,
                   "rank_timing": rank_timing,

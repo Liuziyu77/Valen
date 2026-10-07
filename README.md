@@ -37,15 +37,15 @@ Valen (万澜) brings visual perception to System One decision-making. Inspired 
 
 ## 📰 News
 
-- **2026-10-06**: Released the latest multimodal System One model **Valen ([0.8B](https://huggingface.co/Valen-Team/Valen-0.8B), [2B](https://huggingface.co/Valen-Team/Valen-2B) and [4B](https://huggingface.co/Valen-Team/Valen-4B))**, supporting text, images and video, and the [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) benchmark.
-- **2026-09-30**: Training&Inference Support. Added Flash Attention 2 support, enabled training across multiple nodes and GPUs, and improved GPU memory utilization during training.
+- **2026-10-07**: **Faster, more accurate, more versatile.** Released the latest multimodal System One model **Valen ([0.8B](https://huggingface.co/Valen-Team/Valen-0.8B), [2B](https://huggingface.co/Valen-Team/Valen-2B) and [4B](https://huggingface.co/Valen-Team/Valen-4B))**, supporting text, images and video, and the [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) benchmark.
+- **2026-09-30**: **Training&Inference Support:** Added Flash Attention 2 support, enabled training across multiple nodes and GPUs, and improved GPU memory utilization during training.
 - **2026-09-23**: Open-sourced the **Valen** repository and released [**Valen-preview-0923**](https://huggingface.co/Valen-Team/Valen-Preview-0923) with its corresponding [**training data**](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k).
 
 <a id="demos"></a>
 
 ## 🎬 Demos
 
-Try **Valen-preview** in the [online demo](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923).
+Try **Valen-preview-0923** in the [online demo](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923). A demo for the latest Valen models is coming soon.
 
 <a id="demo-comparison"></a>
 
@@ -77,20 +77,12 @@ Four successful **Valen-preview** trajectories run side by side at 1× speed wit
 
 ## 📥 Models and datasets
 
-The **Valen** models and **VisualDecisionBench** dataset are available on Hugging Face.
-
-### Model
-
 | Model | Download |
 | --- | --- |
 | Valen 0.8B | [🤗 Valen-0.8B](https://huggingface.co/Valen-Team/Valen-0.8B) |
 | Valen 2B | [🤗 Valen-2B](https://huggingface.co/Valen-Team/Valen-2B) |
 | Valen 4B | [🤗 Valen-4B](https://huggingface.co/Valen-Team/Valen-4B) |
-| Valen-preview (earlier release) | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
-
-The demos above use **Valen-preview**, which requires both the **Valen checkpoint** and the **Qwen3.5-2B base model**. The quick start below uses the current releases.
-
-### Dataset
+| Valen-preview-0923 (earlier release) | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
 
 [VisualDecisionBench](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) contains Image and Video subsets for visual decision evaluation. Earlier releases include [General 100k](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) for training, [General 5k](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) for evaluation, and [Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) for game training and evaluation.
 
@@ -122,21 +114,13 @@ Earlier results remain in the [archived README](history/README_preview.md).
 
 ### 1. Inference
 
-The default loads the complete merged model. Set `use_lora=True` to load the separate LoRA, Mixer and visual-merger weights; the pinned Qwen base is downloaded automatically. Change the repository ID for 0.8B or 4B.
-
 ```python
 import torch
-from huggingface_hub import snapshot_download
 from transformers import AutoModel
 
-use_lora = False
-folder = snapshot_download(
-    "Valen-Team/Valen-2B", allow_patterns="unmerged/*" if use_lora else None,
-)
 model = AutoModel.from_pretrained(
-    f"{folder}/unmerged" if use_lora else folder,
-    trust_remote_code=True, dtype=torch.bfloat16,
-    attn_implementation="sdpa", local_files_only=False,
+    "Valen-Team/Valen-2B", trust_remote_code=True, dtype="auto",
+    attn_implementation="sdpa",
 ).to("cuda").eval()
 torch.set_float32_matmul_precision("highest")
 torch.backends.cudnn.allow_tf32 = False
@@ -165,7 +149,7 @@ python -m evaluation.visualdecisionbench.evaluate \
   --output output/visualdecisionbench
 ```
 
-Add `--lora` for the unmerged model. Outputs: `predictions.jsonl` and `metrics.json`, including image/video and Choice/Noul/Score breakdowns and elapsed time. Videos use 16 frames; accuracy uses hard labels, while soft-label Score questions contribute probability metrics.
+Add `--lora --revision lora-ckpt` to evaluate the earlier LoRA model. Outputs: `predictions.jsonl` and `metrics.json`, including image/video and Choice/Noul/Score breakdowns and elapsed time. Videos use 16 frames; accuracy uses hard labels, while soft-label Score questions contribute probability metrics.
 
 ### 3. Training
 
@@ -184,13 +168,20 @@ python -m valen.train --config configs/train/qwen/rlcd_shared_state_joint.json \
   --initialize output/qwen-shared-state/joint/latest
 ```
 
+For **full training**, keep the warmup stage and replace the joint SFT recipe with [`sft_shared_state_full_joint.json`](configs/train/qwen/sft_shared_state_full_joint.json), using the same `--initialize` checkpoint. This sets `model.finetuning_type="full"` and updates the language backbone, vision backbone and Mixer; `"lora"` selects adapter training. Set the model and data paths in both stages consistently.
+
+```bash
+python -m valen.train --config configs/train/qwen/sft_shared_state_full_joint.json \
+  --initialize output/qwen-shared-state/warmup/latest
+```
+
 For multiple GPUs, use `VALEN_GPUS=8 bash scripts/train/launch.sh <config> [--initialize <checkpoint>]`. See the [training guide](valen/training/README.md) for RLCD rewards and checkpoint recovery.
 
 <a id="contributions"></a>
 
 ## 🤝 Contributions
 
-Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77/Valen/issues) to report a problem, share a use case or discuss experimental results. Submit a [pull request](https://github.com/Liuziyu77/Valen/pulls) to improve the code or documentation, contribute training data or add evaluation tasks.
+Contributions to Valen are welcome. Open an [issue](https://github.com/Liuziyu77/Valen/issues) to report a problem, share a use case or discuss experimental results. Submit a [pull request](https://github.com/Liuziyu77/Valen/pulls) to improve the code or documentation, contribute training data or add evaluation tasks. Active contributors can become part of Valen's core development team.
 
 Scan the QR code below to join the Valen WeChat group, discuss the project and share your experiments.
 

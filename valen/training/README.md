@@ -69,6 +69,8 @@ Brier 辅助项默认开启，设 `brier_weight=0` 可关闭该辅助项。
 
 ## 运行
 
+Qwen 默认使用 `finetuning_type="lora"`。设置 `finetuning_type="full"` 时，`warmup` 仍只训练决策头，`joint` 更新整个语言主干、视觉主干和决策头；学习率分别由 `language_lr`、`vision_lr`、`merger_lr` 和 `head_lr` 控制。全参数联合训练保留 FP32 参数及优化器状态，`dtype="bf16"` 使用 BF16 autocast 前向。共享 state 配方见 [sft_shared_state_full_joint.json](../../configs/train/qwen/sft_shared_state_full_joint.json)，从预热 checkpoint 使用 `--initialize` 启动。checkpoint 保存所有训练参数与优化器状态，可直接恢复训练或评估。
+
 先按[安装说明](../../scripts/README.md#installation)准备并激活 Python 环境，下载base model。以下命令均在仓库根目录执行，`python` 使用当前激活的环境。RLCD 必须指定初始化 checkpoint 或恢复 checkpoint，独立实验输出到新目录。
 
 ```bash

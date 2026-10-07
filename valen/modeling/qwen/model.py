@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 import torch
 from torch import nn
 from valen import MODEL_NAME
@@ -16,13 +17,22 @@ class ValenQwen(nn.Module):
         self.backbone = backbone
         self.head = build_head(backbone.config.text_config.hidden_size,
                                dict({"projection_dim": projection_dim}, **(head_config or {})))
+        self.backbone_autocast_dtype = None
+
+    def _hidden(self, inputs):
+        # 保留 FP32 参数更新，前向使用 BF16。 / FP32 updates with BF16 backbone compute.
+        device = next(self.backbone.parameters()).device
+        context = (torch.autocast(device.type, dtype=self.backbone_autocast_dtype)
+                   if self.backbone_autocast_dtype is not None else nullcontext())
+        with context:
+            return self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
 
     def forward(self, question):
         device = next(self.backbone.parameters()).device
         outputs = []
         for branch in question.branches:
             inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in branch.inputs.items()}
-            hidden = self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
+            hidden = self._hidden(inputs)
             outputs.append(self.head.score_features(self.head.extract_features(hidden, branch)))
         return torch.cat(outputs)
 
@@ -32,7 +42,7 @@ class ValenQwen(nn.Module):
         features = []
         for branch in question.branches:
             inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in branch.inputs.items()}
-            hidden = self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
+            hidden = self._hidden(inputs)
             features.append(self.head.extract_features(hidden, branch))
         return features
 
@@ -44,7 +54,7 @@ class ValenQwen(nn.Module):
             raise ValueError("Shared-state features require compiled shared inputs")
         device = next(self.backbone.parameters()).device
         inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in state.inputs.items()}
-        hidden = self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
+        hidden = self._hidden(inputs)
         return self._state_features(hidden, state)
 
     def _state_features(self, hidden, state):
@@ -72,7 +82,7 @@ class ValenQwen(nn.Module):
         for batch in branch_batches(representatives, max_tokens):
             inputs = collate_branches([branch for _, branch in batch], pad_token_id)
             inputs = {key: value.to(device) for key, value in inputs.items()}
-            hidden = self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
+            hidden = self._hidden(inputs)
             for row, (index, _) in enumerate(batch):
                 original = indices[index]
                 features = self._state_features(hidden[row:row + 1], states[original])
@@ -90,7 +100,7 @@ class ValenQwen(nn.Module):
         for batch in branch_batches(questions, max_tokens):
             inputs = collate_branches([branch for _, branch in batch], pad_token_id)
             inputs = {key: value.to(device) for key, value in inputs.items()}
-            hidden = self.backbone(**inputs, use_cache=False, return_dict=True).last_hidden_state
+            hidden = self._hidden(inputs)
             for row, (question_index, branch) in enumerate(batch):
                 features = self.head.extract_features(hidden[row:row + 1], branch)
                 outputs[question_index].append(self.head.score_features(features))

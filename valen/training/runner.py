@@ -1,7 +1,6 @@
 """Shared SFT/RLCD loop: token budgets, distributed updates and exact resume."""
 import argparse
 from contextlib import nullcontext
-import hashlib
 import importlib.metadata
 import json
 import math
@@ -9,7 +8,7 @@ import random
 import time
 from pathlib import Path
 import torch
-from valen.training.checkpoint import capture_rank_state, load_checkpoint, save_checkpoint
+from valen.training.checkpoint import capture_rank_state, file_sha256, load_checkpoint, save_checkpoint
 from valen.training.distributed import initialize as initialize_distributed, close, epoch_shard, broadcast_trainable, synchronize_gradients
 from .sft import SFTObjective
 from .batching import training_batches
@@ -74,7 +73,7 @@ def run(config, resume=None, initialize=None):
     data_path = Path(config["data"])
     backend = get_backend(config["architecture"])
     records = read_jsonl(data_path, candidate_fn=backend.candidates)
-    config = dict(config, data_sha256=hashlib.sha256(data_path.read_bytes()).hexdigest())
+    config = dict(config, data_sha256=file_sha256(data_path))
     fingerprints = context.gather({k: v for k, v in config.items() if k != "device"})
     if any(value != fingerprints[0] for value in fingerprints):
         raise ValueError("All ranks must use identical config and dataset contents")
@@ -114,7 +113,7 @@ def run(config, resume=None, initialize=None):
     compiler = build_compiler(config, data_path.parent)
     report = {"config": config, "world_size": context.world_size, "gradient_sync": "sum_after_local_accumulation",
               "initialization_checkpoint": str(initialize) if initialize else None,
-              "initialization_sha256": hashlib.sha256((Path(initialize) / "checkpoint.pt").read_bytes()).hexdigest() if initialize else None,
+              "initialization_sha256": file_sha256(Path(initialize) / "checkpoint.pt") if initialize else None,
               "tokens_per_step_scope": "per_rank", "adaptation": backend.adaptation(model, config),
               "trainable_parameters": {n: p.numel() for n, p in model.named_parameters() if p.requires_grad},
               "optimizer_groups": [{"name": g["name"], "lr": g["lr"], "parameters": sum(p.numel() for p in g["params"])} for g in groups],

@@ -10,7 +10,6 @@ def build_qwen(config):
     head_config = head_signature(config)
     attention = attention_implementation(config)
     from transformers import Qwen3_5ForConditionalGeneration
-    from peft import LoraConfig, get_peft_model
     dtype = {"bf16": torch.bfloat16, "fp32": torch.float32}[config.get("dtype", "bf16")]
     # Load the exact published architecture before extracting its backbone.
     # Loading Qwen3_5Model directly can trigger a language-prefix remapping in
@@ -27,7 +26,12 @@ def build_qwen(config):
     if stage not in {"warmup", "text", "joint", "vision_top"}:
         raise ValueError(f"Unknown stage: {stage}")
     targets = []
-    if stage != "warmup":
+    finetuning = config.get("finetuning_type", "lora")
+    if finetuning == "full" and stage == "joint":
+        # 全参数更新语言及视觉主干。 / Update the entire language and vision backbone.
+        backbone.float().requires_grad_(True)
+    elif stage != "warmup":
+        from peft import LoraConfig, get_peft_model
         # Enumerate exact language Linear paths. This covers DeltaNet, full attention
         # and FFN, without accidentally adapting the visual tower or decision head.
         targets = [name for name, module in backbone.language_model.named_modules() if isinstance(module, nn.Linear)]
@@ -42,6 +46,8 @@ def build_qwen(config):
     if config.get("gradient_checkpointing", True) and stage != "warmup":
         backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model = ValenQwen(backbone, head_config=head_config)
+    if finetuning == "full" and stage == "joint" and dtype == torch.bfloat16:
+        model.backbone_autocast_dtype = torch.bfloat16
     model.base_manifest = read_base_manifest(config["model_path"])
     model.to(config.get("device", "cuda"))
     model.lora_targets = targets
@@ -52,8 +58,8 @@ def build_qwen(config):
 
 
 def qwen_optimizer_groups(model, config):
-    groups = {"head": [], "lora": [], "merger": [], "vision": []}
-    rates = {"head": 2e-4, "lora": 5e-5, "merger": 1e-5, "vision": 2e-6}
+    groups = {"head": [], "lora": [], "language": [], "merger": [], "vision": []}
+    rates = {"head": 2e-4, "lora": 5e-5, "language": 1e-5, "merger": 1e-5, "vision": 2e-6}
     for name, parameter in model.named_parameters():
         if not parameter.requires_grad:
             continue
@@ -64,6 +70,10 @@ def qwen_optimizer_groups(model, config):
         elif ".visual.merger." in name:
             group = "merger"
         elif ".visual.blocks." in name:
+            group = "vision"
+        elif config.get("finetuning_type", "lora") == "full" and name.startswith("backbone.language_model."):
+            group = "language"
+        elif config.get("finetuning_type", "lora") == "full" and name.startswith("backbone.visual."):
             group = "vision"
         else:
             raise ValueError(f"Unclassified trainable parameter: {name}")

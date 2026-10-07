@@ -18,8 +18,9 @@ CLI 在应用 `--method`、`--output` 之前展开配置，checkpoint 保存展�
 | `output` | 必填 | 日志及 `latest/` checkpoint 的输出目录 |
 | `method` | `"sft"` | `sft` 或 `rlcd` |
 | `stage` | `"joint"` | `warmup`、`text`、`joint`、`vision_top` |
+| `finetuning_type` | `"lora"` | Qwen 使用 `lora` 或 `full`；`full` 支持 `warmup`、`joint`，联合阶段更新全部主干和决策头 |
 | `device` | `"cuda"` | 设备；多卡 CUDA 训练按 `LOCAL_RANK` 绑定 |
-| `dtype` | `"bf16"` | backbone精度，可选 `bf16`、`fp32`；决策头保持 FP32 |
+| `dtype` | `"bf16"` | 主干计算精度，可选 `bf16`、`fp32`；full 联合训练以 FP32 保存参数，`bf16` 时使用 BF16 autocast；决策头保持 FP32 |
 | `attn_implementation` | `"eager"` | Qwen 注意力后端：`eager`、`sdpa`、`flash_attention_2` |
 | `qwen_execution` | `"question"` | Qwen 执行方式；`shared_state` 让同一记录各题共享一次前向；接受 `share_state` 别名 |
 | `seed` | `42` | 初始化、记录排序及采样使用的种子 |
@@ -147,8 +148,9 @@ python scripts/smoke/qwen/gpu_smoke.py --attn-implementation flash_attention_2 \
 | `gradient_checkpointing` | `true` | 非 `warmup` stage 启用非重入梯度检查点 |
 | `head_lr` | `2e-4` | 决策头学习率 |
 | `lora_lr` | `5e-5` | LLM LoRA 学习率 |
+| `language_lr` | `1e-5` | full 联合训练的语言主干学习率 |
 | `merger_lr` | `1e-5` | VIT merger 学习率 |
-| `vision_lr` | `2e-6` | 最后四个视觉 block 的学习率 |
+| `vision_lr` | `2e-6` | `vision_top` 的最后四个视觉 block；full 联合训练的完整视觉主干（merger 单独设置） |
 | `weight_decay` | `0.01` | AdamW 的权重衰减，作用于有梯度的参数 |
 | `max_grad_norm` | `1.0` | 同步后全部可训练参数的梯度裁剪阈值 |
 | `rps_weight` | `0.0` | SFT 中 Score 的 RPS 权重；RLCD 必须为 0 |

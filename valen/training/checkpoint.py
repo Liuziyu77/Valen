@@ -1,9 +1,19 @@
-"""Store only trainable deltas, optimizer and RNG; original backbone stays pinned."""
+"""Store trainable weights, optimizer and RNG; frozen base weights stay pinned."""
 import json
 import random
 from pathlib import Path
 import torch
 from valen.modeling.manifest import read_model_manifest, manifests_match
+
+
+def file_sha256(path):
+    # 全参数 ckpt 可能很大，分块校验。 / Hash large full-training checkpoints in chunks.
+    import hashlib
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(8 * 1024**2), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def capture_rank_state(progress, rng):
@@ -33,7 +43,7 @@ def save_checkpoint(path, model, optimizer, config, progress, rng, rank_states=N
 
 def load_checkpoint(path, model, optimizer=None, rng=None, strict=True, rank=0, world_size=1):
     # Only load checkpoints produced by this project and from trusted local storage.
-    payload = torch.load(Path(path) / "checkpoint.pt", map_location="cpu", weights_only=False)
+    payload = torch.load(Path(path) / "checkpoint.pt", map_location="cpu", weights_only=False, mmap=True)
     if optimizer is not None or rng is not None:
         saved_world_size = payload.get("distributed", {}).get("world_size", 1)
         if saved_world_size != world_size:

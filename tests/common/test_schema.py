@@ -2,7 +2,21 @@ import json
 
 import pytest
 
-from valen.data.schema import read_jsonl
+from valen.data.schema import candidates, read_jsonl
+
+
+@pytest.mark.parametrize('bins', [11, 255])
+def test_score_supports_large_ordered_counting_scales(bins):
+    question = {'type': 'score', 'instructions': 'Count objects.',
+                'criteria': [f'Count {i}' for i in range(bins)]}
+    assert candidates(question) == [(str(i), f'Count {i}') for i in range(bins)]
+
+
+@pytest.mark.parametrize('bins', [1, 256])
+def test_score_rejects_unsupported_candidate_counts(bins):
+    with pytest.raises(ValueError, match='2–255'):
+        candidates({'type': 'score', 'instructions': 'Count objects.',
+                    'criteria': [f'Count {i}' for i in range(bins)]})
 
 
 @pytest.mark.parametrize('separator', ['\u0085', '\u2028', '\u2029'])

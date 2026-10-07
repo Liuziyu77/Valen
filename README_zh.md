@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  A multimodal decision model inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> — text, images and video in; decision probabilities out.
+  受 <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev</a> 启发的多模态决策模型——输入文本、图像和视频，输出决策概率。
 </p>
 
 <p align="center">
@@ -37,15 +37,15 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 📰 News
 
-- **2026-10-06**：发布支持文本、图像和视频的最新多模态 System One 模型 **Valen（[0.8B](https://huggingface.co/Valen-Team/Valen-0.8B) / [2B](https://huggingface.co/Valen-Team/Valen-2B) / [4B](https://huggingface.co/Valen-Team/Valen-4B)）**，以及 [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 评测基准。
+- **2026-10-07**：**更快、更准、更通用。** 发布支持文本、图像和视频的最新多模态 System One 模型 **Valen（[0.8B](https://huggingface.co/Valen-Team/Valen-0.8B) / [2B](https://huggingface.co/Valen-Team/Valen-2B) / [4B](https://huggingface.co/Valen-Team/Valen-4B)）**，以及 [**VisualDecisionBench**](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 评测基准。
 - **2026-09-30**：**Training&Inference Support:** 支持 Flash Attention 2 训练与推理、多机多卡训练，并提高训练时的 GPU 显存利用率。
-- **2026-09-23**：**Valen** 仓库开源，同时发布 [**Valen-preview**](https://huggingface.co/Valen-Team/Valen-Preview-0923) 及其对应的[**训练数据**](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)。
+- **2026-09-23**：**Valen** 仓库开源，同时发布 [**Valen-preview-0923**](https://huggingface.co/Valen-Team/Valen-Preview-0923) 及其对应的[**训练数据**](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k)。
 
 <a id="演示"></a>
 
 ## 🎬 演示
 
-在 [Hugging Face Space](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923) 在线体验 **Valen-preview**。
+在[在线演示](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923)中体验 **Valen-preview-0923**。最新版 Valen 模型的在线演示即将上线。
 
 <a id="demo-comparison"></a>
 
@@ -77,20 +77,12 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 📥 模型与数据集
 
-**Valen** 模型与 **VisualDecisionBench** 数据集可从 Hugging Face 下载。
-
-### Model（模型）
-
 | 模型 | 下载 |
 | --- | --- |
 | Valen 0.8B | [🤗 Valen-0.8B](https://huggingface.co/Valen-Team/Valen-0.8B) |
 | Valen 2B | [🤗 Valen-2B](https://huggingface.co/Valen-Team/Valen-2B) |
 | Valen 4B | [🤗 Valen-4B](https://huggingface.co/Valen-Team/Valen-4B) |
-| Valen-preview（早期版本） | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
-
-上方演示使用 **Valen-preview**，需要同时下载 **Valen checkpoint** 和 **Qwen3.5-2B Base 模型**；下方快速开始使用当前正式版。
-
-### Dataset（数据集）
+| Valen-preview-0923（早期版本） | [🤗 Hugging Face](https://huggingface.co/Valen-Team/Valen-Preview-0923) |
 
 [VisualDecisionBench](https://huggingface.co/datasets/Valen-Team/VisualDecisionBench) 包含 Image 和 Video 两个子集，用于图像与视频决策评测。此前发布的 [General 100k](https://huggingface.co/datasets/Valen-Team/Valen-Training-General-100k) 用于训练，[General 5k](https://huggingface.co/datasets/Valen-Team/Valen-Eval-General-5k) 用于评测，[Sokoban](https://huggingface.co/datasets/Valen-Team/Valen-Eval-Game) 用于游戏训练与评测。
 
@@ -98,7 +90,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 📊 评测结果 — Valen
 
-**覆盖 0.8B、2B、4B 的视觉决策模型。** Valen 采用 Qwen3.5 + Mixer 和共享 state 推理，在 Million 级别的数据集上进行SFT。以下为 **VisualDecisionBench-Image、VisualDecisionBench-Video、公开 JevBench** 三组评测。
+**覆盖 0.8B、2B、4B 的视觉决策模型。** Valen 采用 Qwen3.5 + Mixer 和共享 state 推理，在百万级样本上进行 SFT。以下在 **VisualDecisionBench-Image、VisualDecisionBench-Video、公开 JevBench** 三组评测中，与已发布的决策模型进行对比。
 
 <p align="center">
   <a href="assets/figures/evaluation-20261006/eval_v1.png"><img src="assets/figures/evaluation-20261006/eval_v1.png" alt="Valen VisualDecisionBench-Image 准确率按模型规模排列：0.8B 71.59%、2B 79.18%、4B 83.06%，与发布基线比较。" width="1400"></a>
@@ -122,21 +114,13 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ### 1. 推理
 
-默认加载完整合并模型；设置 `use_lora=True`，即可加载独立的 LoRA、Mixer 和视觉 merger，程序会自动下载固定版本的 Qwen 基座。使用 0.8B 或 4B 时替换仓库 ID。
-
 ```python
 import torch
-from huggingface_hub import snapshot_download
 from transformers import AutoModel
 
-use_lora = False
-folder = snapshot_download(
-    "Valen-Team/Valen-2B", allow_patterns="unmerged/*" if use_lora else None,
-)
 model = AutoModel.from_pretrained(
-    f"{folder}/unmerged" if use_lora else folder,
-    trust_remote_code=True, dtype=torch.bfloat16,
-    attn_implementation="sdpa", local_files_only=False,
+    "Valen-Team/Valen-2B", trust_remote_code=True, dtype="auto",
+    attn_implementation="sdpa",
 ).to("cuda").eval()
 torch.set_float32_matmul_precision("highest")
 torch.backends.cudnn.allow_tf32 = False
@@ -165,7 +149,7 @@ python -m evaluation.visualdecisionbench.evaluate \
   --output output/visualdecisionbench
 ```
 
-添加 `--lora` 可评估未合并模型。输出 `predictions.jsonl` 和 `metrics.json`，包含图像/视频、Choice/Noul/Score 分项与耗时。视频采样 16 帧；准确率仅统计硬标签题，软标签 Score 题参与概率指标计算。
+添加 `--lora --revision lora-ckpt` 可评估旧 LoRA 模型。输出 `predictions.jsonl` 和 `metrics.json`，包含图像/视频、Choice/Noul/Score 分项与耗时。视频采样 16 帧；准确率仅统计硬标签题，软标签 Score 题参与概率指标计算。
 
 ### 3. 训练
 
@@ -184,13 +168,20 @@ python -m valen.train --config configs/train/qwen/rlcd_shared_state_joint.json \
   --initialize output/qwen-shared-state/joint/latest
 ```
 
+切换为 **full training** 时保留预热阶段，将联合 SFT 的配置替换为 [`sft_shared_state_full_joint.json`](configs/train/qwen/sft_shared_state_full_joint.json)，继续使用相同的 `--initialize` checkpoint。该配方设置 `model.finetuning_type="full"`，更新语言主干、视觉主干和 Mixer；设为 `"lora"` 则使用 LoRA。两个阶段的模型与数据路径需保持一致。
+
+```bash
+python -m valen.train --config configs/train/qwen/sft_shared_state_full_joint.json \
+  --initialize output/qwen-shared-state/warmup/latest
+```
+
 多卡使用 `VALEN_GPUS=8 bash scripts/train/launch.sh <config> [--initialize <checkpoint>]`。奖励设置与 checkpoint 恢复见[训练指南](valen/training/README.md)。
 
 <a id="参与贡献"></a>
 
 ## 🤝 参与贡献
 
-欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。
+欢迎一起改进 Valen。你可以通过 [Issues](https://github.com/Liuziyu77/Valen/issues) 反馈问题、分享应用场景和实验结果，也可以提交 [Pull Requests](https://github.com/Liuziyu77/Valen/pulls) 改进代码与文档、补充训练数据或评测任务。积极为 Valen 作出贡献的开发者有机会加入核心开发团队。
 
 欢迎扫描下方二维码加入 Valen 微信群，一起讨论项目、交流使用体验和实验结果。
 
