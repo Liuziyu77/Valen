@@ -51,6 +51,18 @@ Valen (万澜) brings visual perception to System One decision-making. Inspired 
   <a href="assets/demos/Valen.mp4"><img src="assets/demos/valen-demo-preview.gif" alt="Valen demo preview. Click to watch the full video." width="1000"></a>
 </p>
 
+**Game decision-making** — five successful Valen rollouts. Click any preview to watch the full video.
+
+<p align="center">
+  <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen solves a Sokoban puzzle." width="31%"></a>
+  <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen navigates Frozen Lake." width="31%"></a>
+  <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen solves a maze." width="31%"></a>
+</p>
+<p align="center">
+  <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen completes Lane Racer." width="31%"></a>
+  <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen completes Parkour Runner." width="31%"></a>
+</p>
+
 <a id="model-downloads"></a>
 
 ## 📥 Models and datasets

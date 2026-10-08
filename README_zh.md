@@ -51,6 +51,18 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
   <a href="assets/demos/Valen.mp4"><img src="assets/demos/valen-demo-preview.gif" alt="Valen 演示预览，点击观看完整视频。" width="1000"></a>
 </p>
 
+**游戏决策演示**——五条由 Valen 成功完成的游戏轨迹。点击任一预览可观看完整视频。
+
+<p align="center">
+  <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen 完成推箱子关卡。" width="31%"></a>
+  <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen 完成冰湖导航。" width="31%"></a>
+  <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen 完成迷宫关卡。" width="31%"></a>
+</p>
+<p align="center">
+  <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen 完成车道竞速关卡。" width="31%"></a>
+  <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen 完成跑酷关卡。" width="31%"></a>
+</p>
+
 <a id="模型下载"></a>
 
 ## 📥 模型与数据集
