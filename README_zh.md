@@ -53,15 +53,32 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 **游戏决策演示**——五条由 Valen 成功完成的游戏轨迹。点击任一预览可观看完整视频。
 
-<p align="center">
-  <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen 完成推箱子关卡。" width="31%"></a>
-  <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen 完成冰湖导航。" width="31%"></a>
-  <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen 完成迷宫关卡。" width="31%"></a>
-</p>
-<p align="center">
-  <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen 完成车道竞速关卡。" width="31%"></a>
-  <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen 完成跑酷关卡。" width="31%"></a>
-</p>
+<table>
+  <tr>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen 完成推箱子关卡。" width="300"></a><br>
+      <b>推箱子</b><br><sub>规划 13 步最优解。</sub>
+    </td>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen 完成冰湖导航。" width="300"></a><br>
+      <b>冰湖</b><br><sub>规划 11 步最优路线，绕开危险区域。</sub>
+    </td>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen 完成迷宫关卡。" width="300"></a><br>
+      <b>迷宫</b><br><sub>完成 22 步长程路线规划。</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" width="50%" align="center">
+      <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen 完成车道竞速关卡。" width="300"></a><br>
+      <b>车道竞速</b><br><sub>连续变道避障，10 步完成赛道。</sub>
+    </td>
+    <td colspan="3" width="50%" align="center">
+      <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen 完成跑酷关卡。" width="300"></a><br>
+      <b>跑酷</b><br><sub>组合 14 步跳跃、冲刺、下蹲与奔跑动作。</sub>
+    </td>
+  </tr>
+</table>
 
 <a id="模型下载"></a>
 

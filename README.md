@@ -53,15 +53,32 @@ Valen (万澜) brings visual perception to System One decision-making. Inspired 
 
 **Game decision-making** — five successful Valen rollouts. Click any preview to watch the full video.
 
-<p align="center">
-  <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen solves a Sokoban puzzle." width="31%"></a>
-  <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen navigates Frozen Lake." width="31%"></a>
-  <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen solves a maze." width="31%"></a>
-</p>
-<p align="center">
-  <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen completes Lane Racer." width="31%"></a>
-  <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen completes Parkour Runner." width="31%"></a>
-</p>
+<table>
+  <tr>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-sokoban.mp4"><img src="assets/demos/games/valen-sokoban-preview.gif" alt="Valen solves a Sokoban puzzle." width="300"></a><br>
+      <b>Sokoban</b><br><sub>Plans a 13-step optimal solution.</sub>
+    </td>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen navigates Frozen Lake." width="300"></a><br>
+      <b>Frozen Lake</b><br><sub>Finds an 11-step optimal route around hazards.</sub>
+    </td>
+    <td colspan="2" width="33%" align="center">
+      <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen solves a maze." width="300"></a><br>
+      <b>Maze</b><br><sub>Completes a 22-step long-horizon route.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" width="50%" align="center">
+      <a href="assets/demos/games/valen-lane-racer.mp4"><img src="assets/demos/games/valen-lane-racer-preview.gif" alt="Valen completes Lane Racer." width="300"></a><br>
+      <b>Lane Racer</b><br><sub>Changes lanes and clears the course in 10 steps.</sub>
+    </td>
+    <td colspan="3" width="50%" align="center">
+      <a href="assets/demos/games/valen-parkour.mp4"><img src="assets/demos/games/valen-parkour-preview.gif" alt="Valen completes Parkour Runner." width="300"></a><br>
+      <b>Parkour Runner</b><br><sub>Chains jumps, dashes, ducks and runs over 14 steps.</sub>
+    </td>
+  </tr>
+</table>
 
 <a id="model-downloads"></a>
 
