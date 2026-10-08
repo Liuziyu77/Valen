@@ -45,32 +45,10 @@ Valen (万澜) brings visual perception to System One decision-making. Inspired 
 
 ## 🎬 Demos
 
-Try **Valen-preview-0923** in the [online demo](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923). A demo for the latest Valen models is coming soon.
-
-<a id="demo-comparison"></a>
-
-### Against a 27B generation model
-
-**Valen-preview** reads the board image and selects a movement direction at each step. On the same level, Valen-preview solves the puzzle in 9 decisions with 1.13 seconds of cumulative decision latency. Qwen3.8-27B-FP8 takes 198.05 seconds in thinking mode and fails to solve it in no-thinking mode.
+**Valen** image and video decision-making — click the preview to watch the full demo.
 
 <p align="center">
-  <img src="assets/demos/sokoban-model-comparison.gif" alt="Side-by-side Sokoban demo comparing Valen-preview with Qwen3.8-27B-FP8 in no-thinking and thinking modes." width="1000"><br>
-</p>
-
-### Image blur and action confidence
-
-Gaussian blur reveals how **Valen-preview** adapts its decisions and confidence as visual detail decreases. Decision confidence is 91.6% on the clear image and 19.2% at the strongest blur.
-
-<p align="center">
-  <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-preview action probabilities and decision confidence across nine measured levels of Gaussian image blur." width="1000"><br>
-</p>
-
-### Four games in parallel
-
-Four successful **Valen-preview** trajectories run side by side at 1× speed with no playback acceleration. Each game takes 7–10 decisions, averaging 122–128 ms per step, and all four finish within 1.24 seconds.
-
-<p align="center">
-  <img src="assets/demos/sokoban-four-game-showcase.gif" alt="Four successful Valen-preview games replayed in parallel at recorded speed." width="1000"><br>
+  <a href="assets/demos/Valen.mp4"><img src="assets/demos/valen-demo-preview.gif" alt="Valen demo preview. Click to watch the full video." width="1000"></a>
 </p>
 
 <a id="model-downloads"></a>

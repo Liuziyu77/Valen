@@ -45,32 +45,10 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 
 ## 🎬 演示
 
-在[在线演示](https://huggingface.co/spaces/yuhangzang/Valen-Preview-0923)中体验 **Valen-preview-0923**。最新版 Valen 模型的在线演示即将上线。
-
-<a id="demo-comparison"></a>
-
-### 与 27B 生成模型对比
-
-**Valen-preview** 读取棋盘图像，在每一步选择移动方向。在相同关卡，Valen-preview 用 9 次决策通关，累计决策耗时为 1.13 秒。Qwen3.8-27B-FP8 的 thinking 模式耗时 198.05 秒，no-thinking 模式未通关。
+**Valen** 图像与视频决策演示，点击预览观看完整视频。
 
 <p align="center">
-  <img src="assets/demos/sokoban-model-comparison.gif" alt="Valen-preview 与 Qwen3.8-27B-FP8 的 no-thinking 和 thinking 模式并排对比。" width="1000"><br>
-</p>
-
-### 图像模糊与动作置信度
-
-高斯模糊展示 **Valen-preview** 如何应对视觉细节的减少，决策与置信度动态变化的情况。清晰图像上的决策置信度为 91.6%，最强模糊下为 19.2%。
-
-<p align="center">
-  <img src="assets/demos/valen-preview-0923-blur-confidence.gif" alt="Valen-preview 在九档高斯图像模糊下的动作概率和决策置信度。" width="1000"><br>
-</p>
-
-### 四局并行能力展示
-
-四条成功的 **Valen-preview** 轨迹以 1× 速度并排播放，不做加速。每局需要 7–10 次决策，平均每步 122–128 毫秒，四局均于 1.24 秒内完成。
-
-<p align="center">
-  <img src="assets/demos/sokoban-four-game-showcase.gif" alt="四局 Valen-preview 成功轨迹以记录速度并行播放。" width="1000"><br>
+  <a href="assets/demos/Valen.mp4"><img src="assets/demos/valen-demo-preview.gif" alt="Valen 演示预览，点击观看完整视频。" width="1000"></a>
 </p>
 
 <a id="模型下载"></a>
