@@ -1,4 +1,4 @@
-"""Draw three Valen accuracy charts from the reviewed October 6 snapshot.
+"""Draw three Valen accuracy charts from the reviewed evaluation snapshot.
 
 Style follows plot_readme_overview.py: white canvas, gray baselines, teal Valen
 bars with rounded tops, exact value labels, and the existing Valen eye mark.
@@ -111,7 +111,7 @@ def draw(snapshot, benchmark, icon):
     mode = "One task per request" if benchmark == "jevbench" else "Valen: shared state · Baselines: serial"
     fig.text(.065, .02, mode + "  |  Overall accuracy, weighted by question count",
              fontsize=9, color=MUTED)
-    fig.text(.985, .02, "2026-10-06", ha="right", fontsize=9, color=MUTED)
+    fig.text(.985, .02, snapshot.get("updated_date", snapshot["report_date"]), ha="right", fontsize=9, color=MUTED)
     for suffix in ("png", "svg", "pdf"):
         kwargs = {"dpi": 180} if suffix == "png" else {
             "metadata": {"Date": None} if suffix == "svg" else {"CreationDate": None, "ModDate": None}}

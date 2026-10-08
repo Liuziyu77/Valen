@@ -93,15 +93,15 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
 **覆盖 0.8B、2B、4B 的视觉决策模型。** Valen 采用 Qwen3.5 + Mixer 和共享 state 推理，在百万级样本上进行 SFT。以下在 **VisualDecisionBench-Image、VisualDecisionBench-Video、公开 JevBench** 三组评测中，与已发布的决策模型进行对比。
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/eval_v1.png"><img src="assets/figures/evaluation-20261006/eval_v1.png" alt="Valen VisualDecisionBench-Image 准确率按模型规模排列：0.8B 71.59%、2B 79.18%、4B 83.06%，与发布基线比较。" width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/eval_v1.png"><img src="assets/figures/evaluation-20261006/eval_v1.png" alt="Valen VisualDecisionBench-Image 准确率按模型规模排列：0.8B 75.94%、2B 80.41%、4B 83.06%，与发布基线比较。" width="1400"></a>
 </p>
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/video.png"><img src="assets/figures/evaluation-20261006/video.png" alt="Valen VisualDecisionBench-Video 准确率按模型规模排列：0.8B 79.71%、2B 82.85%、4B 87.36%，与发布基线比较。" width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/video.png"><img src="assets/figures/evaluation-20261006/video.png" alt="Valen VisualDecisionBench-Video 准确率按模型规模排列：0.8B 79.03%、2B 82.85%、4B 87.36%，与发布基线比较。" width="1400"></a>
 </p>
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/jevbench.png"><img src="assets/figures/evaluation-20261006/jevbench.png" alt="Valen 公开 JevBench 准确率：0.8B 73.59%、2B 78.79%、4B 83.12%；InternDecision 4B 为 86.58%。" width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/jevbench.png"><img src="assets/figures/evaluation-20261006/jevbench.png" alt="Valen 公开 JevBench 准确率：0.8B 77.92%、2B 83.55%、4B 83.12%；InternDecision 4B 为 86.58%。" width="1400"></a>
 </p>
 
 早期结果保留在[归档 README](history/README_zh_preview.md)。

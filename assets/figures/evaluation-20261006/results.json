@@ -3,9 +3,9 @@
   "report_date": "2026-10-06",
   "source_report": "jev_models_accuracy_speed_20261006.md",
   "source_updated": "更新：2026-10-06T15:01:10+08:00（香港时间）。",
-  "precision": "Percentages transcribed at the report's displayed precision (two decimal places).",
-  "valen_training": "1225k records, 1626911 QA; two-stage shared-state SFT; no RL",
-  "weight_form": "Original unmerged checkpoints; these are not full-benchmark measurements of merged HF exports.",
+  "precision": "Overall percentages for Valen 0.8B/2B are transcribed from their Hugging Face model cards; other results retain the original report precision (two decimal places).",
+  "valen_training": "SFT on millions of samples; updated Valen 0.8B/2B results from their model cards, with Valen 4B results retained from the October 6 report.",
+  "weight_form": "Valen 0.8B/2B: results from their current model cards. Valen 4B: original unmerged checkpoint results from the October 6 report.",
   "selection": "Same model selection as the three reviewed tables. External models: serial; Valen: shared_state on visual benchmarks, one task per request on JevBench.",
   "size_note": "Reported model-size labels, not independently counted parameters. Laya size is not specified in the source report and is displayed separately.",
   "models": [
@@ -27,11 +27,12 @@
     },
     {
       "id": "valen-0.8b",
-      "source_name": "Valen-0.8b (1225k)",
+      "source_name": "Valen-0.8B",
       "family": "Valen",
       "chart_label": "Valen",
       "size_b": 0.8,
-      "highlight": true
+      "highlight": true,
+      "source_url": "https://huggingface.co/Valen-Team/Valen-0.8B/blob/faf2cf4b836235d78b6e05daee1e924a4e84f0c4/README.md"
     },
     {
       "id": "qwen-2b",
@@ -67,11 +68,12 @@
     },
     {
       "id": "valen-2b",
-      "source_name": "Valen-2b (1225k)",
+      "source_name": "Valen-2B",
       "family": "Valen",
       "chart_label": "Valen",
       "size_b": 2,
-      "highlight": true
+      "highlight": true,
+      "source_url": "https://huggingface.co/Valen-Team/Valen-2B/blob/480770b4797a2304eccaccf34c32c64ebb5311d6/README.md"
     },
     {
       "id": "rsi-v5-3b",
@@ -186,13 +188,9 @@
       "benchmark": "eval_v1",
       "mode": "shared_state",
       "questions": 2000,
-      "answered": 2000,
       "accuracy_n": 1700,
-      "accuracy_pct": 71.59,
-      "choice_pct": 73.83,
-      "noul_pct": 72.75,
-      "score_pct": 40.0,
-      "score_mae": 0.7864
+      "accuracy_pct": 75.94,
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "qwen-2b",
@@ -252,13 +250,9 @@
       "benchmark": "eval_v1",
       "mode": "shared_state",
       "questions": 2000,
-      "answered": 2000,
       "accuracy_n": 1700,
-      "accuracy_pct": 79.18,
-      "choice_pct": 82.75,
-      "noul_pct": 76.0,
-      "score_pct": 49.0,
-      "score_mae": 0.9023
+      "accuracy_pct": 80.41,
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "rsi-v5-3b",
@@ -369,13 +363,9 @@
       "benchmark": "video",
       "mode": "shared_state",
       "questions": 7143,
-      "answered": 7143,
       "accuracy_n": 7143,
-      "accuracy_pct": 79.71,
-      "choice_pct": 85.26,
-      "noul_pct": 81.09,
-      "score_pct": 59.62,
-      "score_mae": 0.8571
+      "accuracy_pct": 79.03,
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "qwen-2b",
@@ -434,13 +424,9 @@
       "benchmark": "video",
       "mode": "shared_state",
       "questions": 7143,
-      "answered": 7143,
       "accuracy_n": 7143,
       "accuracy_pct": 82.85,
-      "choice_pct": 88.78,
-      "noul_pct": 89.92,
-      "score_pct": 58.57,
-      "score_mae": 0.728
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "rsi-v5-3b",
@@ -559,17 +545,9 @@
       "benchmark": "jevbench",
       "mode": "serial",
       "questions": 231,
-      "answered": 231,
       "accuracy_n": 231,
-      "accuracy_pct": 73.59,
-      "choice_pct": 76.26,
-      "noul_pct": 67.57,
-      "score_pct": 77.78,
-      "score_mae": 0.286,
-      "easy_pct": 100.0,
-      "standard_pct": 83.33,
-      "hard_pct": 55.86,
-      "correct": 170
+      "accuracy_pct": 77.92,
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "qwen-2b",
@@ -644,17 +622,9 @@
       "benchmark": "jevbench",
       "mode": "serial",
       "questions": 231,
-      "answered": 231,
       "accuracy_n": 231,
-      "accuracy_pct": 78.79,
-      "choice_pct": 77.7,
-      "noul_pct": 79.73,
-      "score_pct": 83.33,
-      "score_mae": 0.227,
-      "easy_pct": 100.0,
-      "standard_pct": 91.67,
-      "hard_pct": 61.26,
-      "correct": 182
+      "accuracy_pct": 83.55,
+      "accuracy_source_note": "Overall accuracy from the Hugging Face model card, retrieved 2026-10-08. Per-task/difficulty metrics and answer coverage are not reported there; benchmark question counts retain the existing evaluation-set definition."
     },
     {
       "model_id": "rsi-v5-3b",
@@ -775,5 +745,6 @@
       "hard_pct": 33.33,
       "correct": 134
     }
-  ]
+  ],
+  "updated_date": "2026-10-08"
 }

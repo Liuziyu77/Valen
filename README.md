@@ -93,15 +93,15 @@ Four successful **Valen-preview** trajectories run side by side at 1× speed wit
 **Visual decisions at 0.8B, 2B and 4B.** Valen uses Qwen3.5 + Mixer with shared-state inference, trained with SFT on millions of samples. The evaluation compares these checkpoints with published decision models on **VisualDecisionBench-Image, VisualDecisionBench-Video and public JevBench**.
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/eval_v1.png"><img src="assets/figures/evaluation-20261006/eval_v1.png" alt="Valen VisualDecisionBench-Image accuracy by model size: 0.8B 71.59%, 2B 79.18%, 4B 83.06%, compared with published baselines." width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/eval_v1.png"><img src="assets/figures/evaluation-20261006/eval_v1.png" alt="Valen VisualDecisionBench-Image accuracy by model size: 0.8B 75.94%, 2B 80.41%, 4B 83.06%, compared with published baselines." width="1400"></a>
 </p>
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/video.png"><img src="assets/figures/evaluation-20261006/video.png" alt="Valen VisualDecisionBench-Video accuracy by model size: 0.8B 79.71%, 2B 82.85%, 4B 87.36%, compared with published baselines." width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/video.png"><img src="assets/figures/evaluation-20261006/video.png" alt="Valen VisualDecisionBench-Video accuracy by model size: 0.8B 79.03%, 2B 82.85%, 4B 87.36%, compared with published baselines." width="1400"></a>
 </p>
 
 <p align="center">
-  <a href="assets/figures/evaluation-20261006/jevbench.png"><img src="assets/figures/evaluation-20261006/jevbench.png" alt="Valen public JevBench accuracy: 0.8B 73.59%, 2B 78.79%, 4B 83.12%. InternDecision 4B scores 86.58%." width="1400"></a>
+  <a href="assets/figures/evaluation-20261006/jevbench.png"><img src="assets/figures/evaluation-20261006/jevbench.png" alt="Valen public JevBench accuracy: 0.8B 77.92%, 2B 83.55%, 4B 83.12%. InternDecision 4B scores 86.58%." width="1400"></a>
 </p>
 
 Earlier results remain in the [archived README](history/README_preview.md).
