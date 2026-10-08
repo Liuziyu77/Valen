@@ -61,7 +61,7 @@ Valen（万澜）将视觉感知引入 System One 决策。受 [Jev](https://typ
     </td>
     <td colspan="2" width="33%" align="center">
       <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen 完成冰湖导航。" width="100%"></a><br>
-      <b>冰湖</b><br><sub>规划 11 步最优路线，绕开危险区域。</sub>
+      <b>冰湖</b><br><sub>11 步安全最优路线。</sub>
     </td>
     <td colspan="2" width="33%" align="center">
       <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen 完成迷宫关卡。" width="100%"></a><br>

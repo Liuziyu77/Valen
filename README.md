@@ -61,7 +61,7 @@ Valen (万澜) brings visual perception to System One decision-making. Inspired 
     </td>
     <td colspan="2" width="33%" align="center">
       <a href="assets/demos/games/valen-frozen-lake.mp4"><img src="assets/demos/games/valen-frozen-lake-preview.gif" alt="Valen navigates Frozen Lake." width="100%"></a><br>
-      <b>Frozen Lake</b><br><sub>Finds an 11-step optimal route around hazards.</sub>
+      <b>Frozen Lake</b><br><sub>11-step optimal safe route.</sub>
     </td>
     <td colspan="2" width="33%" align="center">
       <a href="assets/demos/games/valen-maze.mp4"><img src="assets/demos/games/valen-maze-preview.gif" alt="Valen solves a maze." width="100%"></a><br>
